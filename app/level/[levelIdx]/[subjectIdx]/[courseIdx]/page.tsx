@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { university, getLevel, getSubject, getCourse } from "@/lib/data";
@@ -54,15 +55,17 @@ export default async function CoursePage({
             <p className="text-sm">لا توجد دروس متاحة حالياً</p>
           </div>
         ) : (
-          <CoursePlayer
-            lessons={course.files}
-            col={col}
-            levelIdx={lIdx}
-            subjectIdx={sIdx}
-            courseIdx={cIdx}
-            courseTitle={course.title}
-            levelTitle={level.title}
-          />
+          <Suspense fallback={<div className="h-64 flex items-center justify-center text-stone-400 text-sm">جارٍ التحميل…</div>}>
+            <CoursePlayer
+              lessons={course.files}
+              col={col}
+              levelIdx={lIdx}
+              subjectIdx={sIdx}
+              courseIdx={cIdx}
+              courseTitle={course.title}
+              levelTitle={level.title}
+            />
+          </Suspense>
         )}
 
         {siblings.length > 1 && (
