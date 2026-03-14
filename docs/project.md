@@ -16,6 +16,7 @@ The content is scraped once, stored as a static JSON file, and served through a 
 | Subjects | 81    |
 | Courses  | 132   |
 | Lessons  | 2,237 |
+| Scholars | 18    |
 
 ---
 
@@ -27,6 +28,7 @@ The content is scraped once, stored as a static JSON file, and served through a 
 - **Layout**: RTL (`dir="rtl"`, `lang="ar"`)
 - **Data**: Static JSON (`data/kibbarulmauni.json`) — no DB
 - **Scraper**: Node.js with `axios` + `cheerio`
+- **Search**: Fuse.js (client-side fuzzy search)
 
 ---
 
@@ -47,10 +49,13 @@ The scraper (`scripts/scrape.js`) traverses the site recursively — handling se
 
 | URL | Page |
 |-----|------|
-| `/` | Home — all 8 levels |
+| `/` | Home — all 8 levels + recently watched |
 | `/level/[levelIdx]` | Level — all subjects |
-| `/level/[levelIdx]/[subjectIdx]` | Subject — all courses |
+| `/level/[levelIdx]/[subjectIdx]` | Subject — all courses with scholar names |
 | `/level/[levelIdx]/[subjectIdx]/[courseIdx]` | Course — video player + playlist |
+| `/search` | Search — fuzzy search across lessons, courses, subjects |
+| `/scholars` | Scholars index — all 18 scholars sorted by lesson count |
+| `/scholars/[name]` | Scholar — all courses by a specific scholar |
 
 ---
 
@@ -86,12 +91,26 @@ Design system: 8 distinct color palettes (`LEVEL_COLORS`) — one per level — 
 
 ---
 
-### Phase 2 — Search & Discovery (Planned)
-- Full-text search across all lessons, courses, and subjects
-- Filter by level or subject
-- Scholar index page — browse all content by a specific scholar
-- Recently watched (localStorage)
-- Quick-jump from home to any level/subject
+### Phase 2 — Search & Discovery ✅
+
+**Search (`/search`)**
+- Fuzzy search via Fuse.js across 2,237 lessons + 132 courses + 81 subjects
+- Results grouped by type: دروس / مقررات / مواد
+- Each result shows level + subject breadcrumb context
+- Navbar search icon opens a modal overlay; Enter navigates to `/search?q=...`
+- URL param `?q=` is read on page load so results appear immediately
+
+**المشايخ (`/scholars`, `/scholars/[name]`)**
+- 18 scholars indexed and ranked by total lesson count
+- Scholar names extracted from lesson titles via regex, normalized through a shared alias map (`lib/scholarAliases.ts`) so all name variants (e.g. "ابن عثيمين", "صالح العثيمين" → "محمد بن صالح العثيمين") are unified everywhere — on subject pages, the scholars index, and scholar detail pages
+- Scholar detail page lists all courses taught by that scholar across all levels
+- Fake entries ("كبار العلماء", "السفارينية", etc.) filtered out via the alias map
+
+**Recently Watched**
+- `saveWatched()` called automatically when a course page is opened
+- Stores last 6 courses in localStorage with lesson index
+- Displayed as a "شاهدت مؤخراً" card grid on the home page (hidden on first visit)
+- `?lesson=N` URL param lets search results link directly to a specific lesson in the player
 
 ---
 
