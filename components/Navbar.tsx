@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { UserButton } from "./UserButton";
 
 export function Navbar() {
   const [open, setOpen] = useState(false);
@@ -48,6 +49,8 @@ export function Navbar() {
                 <path d="m21 21-4.35-4.35" />
               </svg>
             </button>
+
+            <UserButton />
           </div>
         </div>
       </nav>

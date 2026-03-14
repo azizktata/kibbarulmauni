@@ -5,6 +5,10 @@ import { university, getLevel, getSubject, getCourse } from "@/lib/data";
 import { LEVEL_COLORS } from "@/lib/constants";
 import { CoursePlayer } from "@/components/CoursePlayer";
 
+function lessonWord(n: number) {
+  return n === 1 ? "درس" : "دروس";
+}
+
 export function generateStaticParams() {
   const params = [];
   for (let l = 0; l < university.length; l++)
@@ -44,7 +48,7 @@ export default async function CoursePage({
             <span className="text-white font-medium">{course.title}</span>
           </nav>
           <h1 className="text-xl font-bold leading-snug">{course.title}</h1>
-          <p className="text-white/70 mt-1 text-xs">{course.files.length} درس</p>
+          <p className="text-white/70 mt-1 text-xs">{course.files.length} {lessonWord(course.files.length)}</p>
         </div>
       </header>
 
@@ -90,7 +94,7 @@ export default async function CoursePage({
                       {idx + 1}
                     </span>
                     <span className="flex-1 truncate">{sib.title}</span>
-                    <span className="text-xs opacity-60">{sib.files.length} درس</span>
+                    <span className="text-xs opacity-60">{sib.files.length} {lessonWord(sib.files.length)}</span>
                   </Link>
                 );
               })}

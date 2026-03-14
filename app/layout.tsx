@@ -1,5 +1,8 @@
 import type { Metadata } from "next";
-import { Cairo } from "next/font/google";
+import { Cairo, Amiri } from "next/font/google";
+import { SessionProvider } from "next-auth/react";
+import { auth } from "@/auth";
+import { WatchedProvider } from "@/lib/watchedContext";
 import { Navbar } from "@/components/Navbar";
 import "./globals.css";
 
@@ -9,19 +12,31 @@ const cairo = Cairo({
   variable: "--font-cairo",
 });
 
+const amiri = Amiri({
+  subsets: ["arabic"],
+  weight: ["400", "700"],
+  variable: "--font-amiri",
+});
+
 export const metadata: Metadata = {
   title: "جامعة كبار العلماء",
   description: "منهج الدراسة لكلية الشريعة وفق جامعة محمد بن سعود الإسلامية",
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
+  const session = await auth();
+
   return (
-    <html lang="ar" dir="rtl" className={cairo.variable}>
+    <html lang="ar" dir="rtl" className={`${cairo.variable} ${amiri.variable}`}>
       <body className="antialiased font-cairo bg-stone-50 text-stone-900">
-        <Navbar />
-        {children}
+        <SessionProvider session={session}>
+          <WatchedProvider isLoggedIn={!!session?.user?.id}>
+            <Navbar />
+            {children}
+          </WatchedProvider>
+        </SessionProvider>
       </body>
     </html>
   );
