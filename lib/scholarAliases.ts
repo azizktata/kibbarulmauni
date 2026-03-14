@@ -1,0 +1,61 @@
+/**
+ * Canonical name map: raw short-name (last 2 words) → canonical display name.
+ * null = not a real scholar, omit entirely.
+ */
+export const SCHOLAR_ALIASES: Record<string, string | null> = {
+  // ابن عثيمين variants
+  "صالح العثيمين":          "محمد بن صالح العثيمين",
+  "ابن عثيمين":             "محمد بن صالح العثيمين",
+  "محمد العثيمين":          "محمد بن صالح العثيمين",
+  // الطحان variants
+  "الرحيم الطحان":          "عبد الرحيم الطحان",
+  "ارحيم الطحان":           "عبد الرحيم الطحان",
+  "رحيم الطحان":            "عبد الرحيم الطحان",
+  // الشثري variants
+  "ناصر الشثري":            "سعد بن ناصر الشثري",
+  "سعد الشثري":             "سعد بن ناصر الشثري",
+  "سعد الشتري":             "سعد بن ناصر الشثري",
+  "ناصر الشتري":            "سعد بن ناصر الشثري",
+  // السعدي variants
+  "ابن السعدي":             "ابن سعدي",
+  "ناصر السعدي":            "ابن سعدي",
+  // آل الشيخ
+  "صالح آل":                "صالح آل الشيخ",
+  "آل الشيخ":               "صالح آل الشيخ",
+  // الفوزان
+  "فوزان الفوزان":          "صالح الفوزان",
+  // ابن باز
+  "بن باز":                 "ابن باز",
+  // البدر
+  "الرزاق البدر":           "عبد الرزاق البدر",
+  "رزاق البدر":             "عبد الرزاق البدر",
+  // بن حميد
+  "بن حميد":                "صالح بن حميد",
+  // المشيقح
+  "علي المشيقح":            "خالد بن علي المشيقح",
+  // الجامي
+  "أمان الجامي":            "محمد أمان الجامي",
+  // الراجحي
+  "العزيز الراجحي":         "عبد العزيز الراجحي",
+  // الألباني
+  "الدين الألباني":         "ناصر الدين الألباني",
+  "الألباني":               "ناصر الدين الألباني",
+  // not real scholars
+  "كبار العلماء":           null,
+  "السفارينية":             null,
+  "السفارينه":              null,
+  "للعقيدة السفارينية":    null,
+  "العقيدة السفارينية":    null,
+};
+
+export function shortName(full: string): string {
+  const parts = full.split(/\s+/);
+  return parts.length >= 2 ? parts.slice(-2).join(" ") : full;
+}
+
+/** Returns canonical display name, or null to suppress entirely. */
+export function canonicalize(raw: string): string | null {
+  const short = shortName(raw);
+  if (short in SCHOLAR_ALIASES) return SCHOLAR_ALIASES[short];
+  return short;
+}
