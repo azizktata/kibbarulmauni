@@ -6,12 +6,13 @@ import type { LevelColor } from "@/lib/constants";
 
 interface AmbientNotePanelProps {
   lessonKey: string;
+  lessonTitle: string;
   col: LevelColor;
   currentTime: number;
   onSeek: (s: number) => void;
 }
 
-export function AmbientNotePanel({ lessonKey, col }: AmbientNotePanelProps) {
+export function AmbientNotePanel({ lessonKey, lessonTitle }: AmbientNotePanelProps) {
   const { getNotesByLesson, openNote, deleteNote, createNote, folders, createFolder, isLoggedIn, notes } = useNotes();
 
   if (!isLoggedIn) {
@@ -23,17 +24,19 @@ export function AmbientNotePanel({ lessonKey, col }: AmbientNotePanelProps) {
     );
   }
 
-  const lessonNotes = getNotesByLesson(lessonKey);
+  // Find lesson folder by title (same logic as CoursePlayer and NotesSidebar)
+  const lessonFolder = folders.find((f) => f.name === lessonTitle && !f.parentId) ?? null;
 
-  // Find the lesson title from the folder that matches this lessonKey's notes
-  const lessonFolderId = lessonNotes.find(n => n.folderId)?.folderId ?? null;
-  const lessonFolder = lessonFolderId ? folders.find(f => f.id === lessonFolderId) : null;
+  // All notes for this lesson: by lessonKey OR by folder
+  const lessonNotesByKey = getNotesByLesson(lessonKey);
+  const allLessonNotes = lessonFolder
+    ? notes.filter((n) => n.lessonKey === lessonKey || n.folderId === lessonFolder.id)
+    : lessonNotesByKey;
 
   async function handleCreateNote() {
-    const folderName = lessonFolder?.name ?? `درس ${lessonKey}`;
     let folderId = lessonFolder?.id ?? null;
     if (!folderId) {
-      folderId = await createFolder(folderName);
+      folderId = await createFolder(lessonTitle);
     }
     const id = await createNote({
       lessonKey,
@@ -51,9 +54,9 @@ export function AmbientNotePanel({ lessonKey, col }: AmbientNotePanelProps) {
         <div className="flex items-center gap-1.5">
           <NotebookPenIcon className="w-3.5 h-3.5 text-neutral-500" />
           <span className="text-xs font-semibold text-neutral-300">ملاحظات الدرس</span>
-          {lessonNotes.length > 0 && (
+          {allLessonNotes.length > 0 && (
             <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-neutral-800 text-neutral-400">
-              {lessonNotes.length}
+              {allLessonNotes.length}
             </span>
           )}
         </div>
@@ -69,7 +72,7 @@ export function AmbientNotePanel({ lessonKey, col }: AmbientNotePanelProps) {
 
       {/* Notes list */}
       <div className="flex-1 overflow-y-auto px-2 py-2 flex flex-col gap-1.5">
-        {lessonNotes.length === 0 ? (
+        {allLessonNotes.length === 0 ? (
           <div className="flex flex-col items-center gap-3 py-10 px-4 text-center">
             <NotebookPenIcon className="w-7 h-7 text-neutral-800" />
             <p className="text-xs text-neutral-600">لا توجد ملاحظات لهذا الدرس بعد</p>
@@ -81,7 +84,7 @@ export function AmbientNotePanel({ lessonKey, col }: AmbientNotePanelProps) {
             </button>
           </div>
         ) : (
-          lessonNotes.map((note) => (
+          allLessonNotes.map((note) => (
             <div
               key={note.id}
               className="group flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-neutral-800 cursor-pointer transition-colors"

@@ -1,6 +1,6 @@
 import { db } from "./index";
 import { users, watchedLessons, noteFolders, notes } from "./schema";
-import { eq, and, desc, isNull } from "drizzle-orm";
+import { eq, and, desc, isNull, or, like } from "drizzle-orm";
 
 export async function upsertUser(email: string, name: string | null): Promise<string> {
   const id = crypto.randomUUID();
@@ -207,4 +207,43 @@ export async function deleteNote(id: string, userId: string): Promise<void> {
   await db
     .delete(notes)
     .where(and(eq(notes.id, id), eq(notes.userId, userId)));
+}
+
+export async function searchNotes(userId: string, q: string) {
+  const rows = await db
+    .select({
+      id: notes.id,
+      userId: notes.userId,
+      folderId: notes.folderId,
+      lessonKey: notes.lessonKey,
+      noteType: notes.noteType,
+      title: notes.title,
+      content: notes.content,
+      isPinned: notes.isPinned,
+      sortOrder: notes.sortOrder,
+      createdAt: notes.createdAt,
+      updatedAt: notes.updatedAt,
+    })
+    .from(notes)
+    .where(
+      and(
+        eq(notes.userId, userId),
+        or(like(notes.title, `%${q}%`), like(notes.content, `%${q}%`))
+      )
+    )
+    .orderBy(desc(notes.updatedAt));
+
+  return rows.map(({ content, ...summary }) => {
+    const matchIdx = content.toLowerCase().indexOf(q.toLowerCase());
+    let snippet: string | null = null;
+    if (matchIdx !== -1) {
+      const start = Math.max(0, matchIdx - 40);
+      const end = Math.min(content.length, matchIdx + q.length + 40);
+      snippet =
+        (start > 0 ? "…" : "") +
+        content.slice(start, end) +
+        (end < content.length ? "…" : "");
+    }
+    return { ...summary, snippet };
+  });
 }

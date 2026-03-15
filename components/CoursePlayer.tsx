@@ -284,10 +284,13 @@ export function CoursePlayer({ lessons, col, levelIdx, subjectIdx, courseIdx, co
   );
 
   // ── Notes context (must be before ambientOverlay JSX) ────────────────────────
-  const { createNote: createNoteCtx, openNote, isLoggedIn: notesLoggedIn, getNotesByLesson, folders, createFolder } = useNotes();
+  const { createNote: createNoteCtx, openNote, isLoggedIn: notesLoggedIn, getNotesByLesson, folders, createFolder, notes: allNotes } = useNotes();
   const currentLessonKey = `${levelIdx}:${subjectIdx}:${courseIdx}:${selected}`;
   const lessonNotes = getNotesByLesson(currentLessonKey);
-  const lessonNoteCount = lessonNotes.length;
+  const lessonFolder = folders.find((f) => f.name === lesson.title && !f.parentId);
+  const lessonNoteCount = lessonFolder
+    ? allNotes.filter((n) => n.lessonKey === currentLessonKey || n.folderId === lessonFolder.id).length
+    : lessonNotes.length;
 
   // ── Ambient overlay ───────────────────────────────────────────────────────────
   const ambientOverlay = (
@@ -374,6 +377,7 @@ export function CoursePlayer({ lessons, col, levelIdx, subjectIdx, courseIdx, co
           <div dir="rtl" className="w-80 shrink-0 border-l border-neutral-800 overflow-hidden bg-neutral-900">
             <AmbientNotePanel
               lessonKey={`${levelIdx}:${subjectIdx}:${courseIdx}:${selected}`}
+              lessonTitle={lesson.title}
               col={col}
               currentTime={currentTime}
               onSeek={seekTo}
@@ -553,18 +557,20 @@ export function CoursePlayer({ lessons, col, levelIdx, subjectIdx, courseIdx, co
                 </button>
               </div>
               <div className="max-h-52 overflow-y-auto py-1">
-                {lessonNotes.length > 0 ? (
-                  lessonNotes.map((note) => (
-                    <button
-                      key={note.id}
-                      onClick={() => { openNote(note.id); setPickerOpen(false); }}
-                      className="w-full text-right px-3 py-2 text-xs text-stone-700 hover:bg-stone-50 flex items-center gap-2 transition-colors"
-                    >
-                      <NotebookPenIcon className="w-3 h-3 text-stone-300 shrink-0" />
-                      <span className="truncate">{note.title}</span>
-                    </button>
-                  ))
-                ) : (
+                {(lessonFolder
+                  ? allNotes.filter((n) => n.lessonKey === currentLessonKey || n.folderId === lessonFolder.id)
+                  : lessonNotes
+                ).map((note) => (
+                  <button
+                    key={note.id}
+                    onClick={() => { openNote(note.id); setPickerOpen(false); }}
+                    className="w-full text-right px-3 py-2 text-xs text-stone-700 hover:bg-stone-50 flex items-center gap-2 transition-colors"
+                  >
+                    <NotebookPenIcon className="w-3 h-3 text-stone-300 shrink-0" />
+                    <span className="truncate">{note.title}</span>
+                  </button>
+                ))}
+                {lessonNoteCount === 0 && (
                   <p className="px-3 py-4 text-xs text-stone-400 text-center">لا توجد ملاحظات لهذا الدرس بعد</p>
                 )}
               </div>

@@ -45,6 +45,7 @@ type UpdateNoteFields = {
   lessonKey?: string | null;
   noteType?: string;
   isPinned?: number;
+  sortOrder?: number;
 };
 
 type NotesContextValue = {
@@ -64,7 +65,7 @@ type NotesContextValue = {
   updateNoteMeta: (id: string, fields: UpdateNoteFields) => Promise<void>;
   deleteNote: (id: string) => Promise<void>;
   createFolder: (name: string, parentId?: string | null) => Promise<string>;
-  updateFolder: (id: string, fields: { name?: string; parentId?: string | null }) => Promise<void>;
+  updateFolder: (id: string, fields: { name?: string; parentId?: string | null; sortOrder?: number }) => Promise<void>;
   deleteFolder: (id: string) => Promise<void>;
   getNotesByFolder: (folderId: string | null) => NoteSummary[];
   getNotesByLesson: (lessonKey: string) => NoteSummary[];
@@ -224,7 +225,7 @@ export function NotesProvider({
   );
 
   const updateFolder = useCallback(
-    async (id: string, fields: { name?: string; parentId?: string | null }): Promise<void> => {
+    async (id: string, fields: { name?: string; parentId?: string | null; sortOrder?: number }): Promise<void> => {
       setFolders((prev) => prev.map((f) => (f.id === id ? { ...f, ...fields } : f)));
       await fetch(`/api/notes/folders/${id}`, {
         method: "PATCH",

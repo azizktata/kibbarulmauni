@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useCallback } from "react";
-import { ChevronDownIcon, ChevronLeftIcon, FolderIcon, FolderOpenIcon, PlusIcon, NotebookPenIcon, SearchIcon, BookOpenIcon, RotateCcwIcon, PinIcon, FileTextIcon, Trash2Icon, FolderPlusIcon, ArrowRightIcon } from "lucide-react";
+import { useState, useCallback, useEffect, useRef } from "react";
+import { ChevronDownIcon, ChevronLeftIcon, FolderIcon, FolderOpenIcon, PlusIcon, NotebookPenIcon, SearchIcon, BookOpenIcon, RotateCcwIcon, PinIcon, FileTextIcon, Trash2Icon, FolderPlusIcon, ArrowRightIcon, GripVerticalIcon } from "lucide-react";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Collapsible, CollapsibleTrigger, CollapsibleContent } from "@/components/ui/collapsible";
 import { useNotes, type NoteFolder, type NoteSummary } from "@/lib/notesContext";
@@ -21,19 +21,54 @@ function NoteRow({
   note,
   onOpen,
   onDelete,
+  onDropNote,
+  snippet,
 }: {
   note: NoteSummary;
   onOpen: (id: string) => void;
   onDelete: (id: string) => void;
+  onDropNote: (draggedId: string, targetId: string, position: "before" | "after") => void;
+  snippet?: string | null;
 }) {
   const [hovered, setHovered] = useState(false);
+  const [dropPos, setDropPos] = useState<"before" | "after" | null>(null);
+
   return (
     <div
-      className="group flex items-center gap-2 px-3 py-1.5 rounded-lg hover:bg-stone-100 cursor-pointer"
+      draggable
+      onDragStart={(e) => {
+        e.dataTransfer.setData("note-drag", note.id);
+        e.dataTransfer.effectAllowed = "move";
+        // Keep backward compat for folder drop targets
+        e.dataTransfer.setData("noteId", note.id);
+      }}
+      onDragOver={(e) => {
+        // Only react to note drags
+        if (!e.dataTransfer.types.includes("note-drag")) return;
+        e.preventDefault();
+        e.dataTransfer.dropEffect = "move";
+        const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
+        setDropPos(e.clientY < rect.top + rect.height / 2 ? "before" : "after");
+      }}
+      onDragLeave={() => setDropPos(null)}
+      onDrop={(e) => {
+        e.preventDefault();
+        const draggedId = e.dataTransfer.getData("note-drag");
+        if (draggedId && draggedId !== note.id && dropPos) {
+          onDropNote(draggedId, note.id, dropPos);
+        }
+        setDropPos(null);
+      }}
+      className={cn(
+        "group relative flex items-center gap-2 px-3 py-1.5 rounded-lg hover:bg-stone-100 cursor-pointer",
+        dropPos === "before" && "border-t-2 border-blue-400",
+        dropPos === "after" && "border-b-2 border-blue-400",
+      )}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
       onClick={() => onOpen(note.id)}
     >
+      <GripVerticalIcon className="w-3 h-3 text-stone-300 shrink-0 opacity-0 group-hover:opacity-100 cursor-grab" />
       <NoteTypeIcon
         type={note.noteType}
         className={
@@ -44,8 +79,11 @@ function NoteRow({
             : "text-stone-400 shrink-0"
         }
       />
-      <span className="flex-1 text-xs text-stone-700 truncate leading-snug">
-        {note.title}
+      <span className="flex-1 min-w-0">
+        <span className="block text-xs text-stone-700 truncate leading-snug">{note.title}</span>
+        {snippet && (
+          <span className="block text-[10px] text-stone-400 truncate leading-snug mt-0.5">{snippet}</span>
+        )}
       </span>
       {note.isPinned === 1 && !hovered && (
         <PinIcon className="w-3 h-3 text-stone-300 shrink-0" />
@@ -76,6 +114,9 @@ function FolderNode({
   onNoteDelete,
   onCreateNote,
   onDeleteFolder,
+  onMoveNote,
+  onReorderNote,
+  onReorderFolder,
   searchQuery,
   defaultOpen = true,
 }: {
@@ -87,18 +128,26 @@ function FolderNode({
   onNoteDelete: (id: string) => void;
   onCreateNote: (folderId: string) => void;
   onDeleteFolder: (id: string) => void;
+  onMoveNote: (noteId: string, folderId: string | null) => void;
+  onReorderNote: (draggedId: string, targetId: string, position: "before" | "after") => void;
+  onReorderFolder: (draggedId: string, targetId: string, position: "before" | "after") => void;
   searchQuery: string;
   defaultOpen?: boolean;
 }) {
   const [open, setOpen] = useState(defaultOpen);
   const [hovered, setHovered] = useState(false);
+  // "into" = note dragged over folder header (move into)
+  // "before"/"after" = folder dragged over folder header (reorder)
+  const [dropIndicator, setDropIndicator] = useState<"into" | "before" | "after" | null>(null);
 
-  const children = allFolders.filter((f) => f.parentId === folder.id);
-  const folderNotes = allNotes.filter((n) => n.folderId === folder.id);
+  const children = allFolders
+    .filter((f) => f.parentId === folder.id)
+    .sort((a, b) => a.sortOrder - b.sortOrder);
+  const folderNotes = allNotes
+    .filter((n) => n.folderId === folder.id)
+    .sort((a, b) => a.sortOrder - b.sortOrder);
   const filteredNotes = searchQuery
-    ? folderNotes.filter((n) =>
-        n.title.toLowerCase().includes(searchQuery.toLowerCase())
-      )
+    ? folderNotes.filter((n) => n.title.toLowerCase().includes(searchQuery.toLowerCase()))
     : folderNotes;
 
   const hasContent = children.length > 0 || filteredNotes.length > 0;
@@ -106,11 +155,50 @@ function FolderNode({
   return (
     <Collapsible open={open} onOpenChange={setOpen}>
       <div
-        className="flex items-center gap-1 rounded-lg hover:bg-stone-100 group/folder"
+        draggable
+        onDragStart={(e) => {
+          e.dataTransfer.setData("folder-drag", folder.id);
+          e.dataTransfer.effectAllowed = "move";
+        }}
+        className={cn(
+          "flex items-center gap-1 rounded-lg hover:bg-stone-100 group/folder transition-colors",
+          dropIndicator === "into" && "bg-amber-50 ring-1 ring-amber-300",
+          dropIndicator === "before" && "border-t-2 border-blue-400",
+          dropIndicator === "after" && "border-b-2 border-blue-400",
+        )}
         style={{ paddingRight: `${depth * 12 + 8}px`, paddingLeft: "8px" }}
         onMouseEnter={() => setHovered(true)}
         onMouseLeave={() => setHovered(false)}
+        onDragOver={(e) => {
+          const types = e.dataTransfer.types;
+          if (types.includes("note-drag")) {
+            // Note dragged over folder → move into
+            e.preventDefault();
+            e.dataTransfer.dropEffect = "move";
+            setDropIndicator("into");
+          } else if (types.includes("folder-drag")) {
+            // Folder dragged over folder → reorder
+            e.preventDefault();
+            e.dataTransfer.dropEffect = "move";
+            const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
+            setDropIndicator(e.clientY < rect.top + rect.height / 2 ? "before" : "after");
+          }
+        }}
+        onDragLeave={() => setDropIndicator(null)}
+        onDrop={(e) => {
+          e.preventDefault();
+          const noteId = e.dataTransfer.getData("note-drag") || e.dataTransfer.getData("noteId");
+          const folderId = e.dataTransfer.getData("folder-drag");
+
+          if (noteId && dropIndicator === "into") {
+            onMoveNote(noteId, folder.id);
+          } else if (folderId && folderId !== folder.id && (dropIndicator === "before" || dropIndicator === "after")) {
+            onReorderFolder(folderId, folder.id, dropIndicator);
+          }
+          setDropIndicator(null);
+        }}
       >
+        <GripVerticalIcon className="w-3 h-3 text-stone-300 shrink-0 opacity-0 group-hover/folder:opacity-100 cursor-grab" />
         <CollapsibleTrigger className="flex items-center gap-1.5 flex-1 py-1.5 min-w-0">
           {open ? (
             <FolderOpenIcon className="w-3.5 h-3.5 text-amber-400 shrink-0" />
@@ -157,12 +245,20 @@ function FolderNode({
             onNoteDelete={onNoteDelete}
             onCreateNote={onCreateNote}
             onDeleteFolder={onDeleteFolder}
+            onMoveNote={onMoveNote}
+            onReorderNote={onReorderNote}
+            onReorderFolder={onReorderFolder}
             searchQuery={searchQuery}
           />
         ))}
         {filteredNotes.map((note) => (
           <div key={note.id} style={{ paddingRight: `${(depth + 1) * 12}px` }}>
-            <NoteRow note={note} onOpen={onNoteOpen} onDelete={onNoteDelete} />
+            <NoteRow
+              note={note}
+              onOpen={onNoteOpen}
+              onDelete={onNoteDelete}
+              onDropNote={onReorderNote}
+            />
           </div>
         ))}
         {!hasContent && !searchQuery && (
@@ -188,6 +284,8 @@ export function NotesSidebar() {
     folders,
     openNote,
     createNote,
+    updateNoteMeta,
+    updateFolder,
     deleteNote,
     createFolder,
     deleteFolder,
@@ -201,18 +299,44 @@ export function NotesSidebar() {
   const [search, setSearch] = useState("");
   const [creatingFolder, setCreatingFolder] = useState(false);
   const [newFolderName, setNewFolderName] = useState("");
+  const [rootDragOver, setRootDragOver] = useState(false);
+
+  type SearchResult = NoteSummary & { snippet: string | null };
+  const [searchResults, setSearchResults] = useState<SearchResult[] | null>(null);
+  const [searchLoading, setSearchLoading] = useState(false);
+  const searchTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    if (searchTimerRef.current) clearTimeout(searchTimerRef.current);
+    if (!search.trim()) {
+      setSearchResults(null);
+      setSearchLoading(false);
+      return;
+    }
+    setSearchLoading(true);
+    searchTimerRef.current = setTimeout(async () => {
+      try {
+        const res = await fetch(`/api/notes/search?q=${encodeURIComponent(search.trim())}`);
+        const { results } = await res.json() as { results: SearchResult[] };
+        setSearchResults(results);
+      } finally {
+        setSearchLoading(false);
+      }
+    }, 350);
+    return () => { if (searchTimerRef.current) clearTimeout(searchTimerRef.current); };
+  }, [search]);
 
   const rootNotes = getNotesByFolder(null);
   const revisionNotes = getRevisionNotes();
   const pinnedNotes = notes.filter((n) => n.isPinned === 1);
 
-  const filteredRoot = search
-    ? rootNotes.filter((n) => n.title.toLowerCase().includes(search.toLowerCase()))
-    : rootNotes;
+  const sortedRootFolders = [...folders.filter((f) => !f.parentId)].sort(
+    (a, b) => a.sortOrder - b.sortOrder
+  );
 
-  const filteredAll = search
-    ? notes.filter((n) => n.title.toLowerCase().includes(search.toLowerCase()))
-    : null;
+  const sortedRootNotes = [...rootNotes].sort((a, b) => a.sortOrder - b.sortOrder);
+
+  const filteredRoot = search ? [] : sortedRootNotes;
 
   // Active lesson folder and its notes
   const activeFolder = activeFolderId ? folders.find((f) => f.id === activeFolderId) : null;
@@ -224,11 +348,22 @@ export function NotesSidebar() {
 
   const handleCreateNote = useCallback(
     async (folderId: string | null = null) => {
-      const id = await createNote({ folderId: folderId ?? null });
+      // Use activeLessonKey if available, otherwise inherit from existing notes in this folder
+      const lessonKey =
+        (folderId === activeFolderId && activeLessonKey)
+          ? activeLessonKey
+          : folderId
+          ? (notes.find((n) => n.folderId === folderId && n.lessonKey)?.lessonKey ?? null)
+          : null;
+      const id = await createNote({
+        folderId: folderId ?? null,
+        lessonKey: lessonKey ?? undefined,
+        noteType: lessonKey ? "lesson" : "concept",
+      });
       setSidebarOpen(false);
       openNote(id);
     },
-    [createNote, openNote, setSidebarOpen]
+    [createNote, openNote, setSidebarOpen, activeFolderId, activeLessonKey, notes]
   );
 
   const handleCreateLessonNote = useCallback(async () => {
@@ -248,10 +383,63 @@ export function NotesSidebar() {
     setCreatingFolder(false);
   }, [newFolderName, createFolder]);
 
+  // ── Reorder notes (fractional sortOrder) ─────────────────────────────────
+  const handleReorderNote = useCallback(
+    (draggedId: string, targetId: string, position: "before" | "after") => {
+      const target = notes.find((n) => n.id === targetId);
+      if (!target) return;
+      const siblings = notes
+        .filter((n) => n.folderId === target.folderId)
+        .sort((a, b) => a.sortOrder - b.sortOrder);
+      const targetIdx = siblings.findIndex((n) => n.id === targetId);
+      let newSortOrder: number;
+      if (position === "before") {
+        const prev = siblings[targetIdx - 1];
+        newSortOrder = prev
+          ? (prev.sortOrder + target.sortOrder) / 2
+          : target.sortOrder - 1000;
+      } else {
+        const next = siblings[targetIdx + 1];
+        newSortOrder = next
+          ? (target.sortOrder + next.sortOrder) / 2
+          : target.sortOrder + 1000;
+      }
+      updateNoteMeta(draggedId, { folderId: target.folderId, sortOrder: newSortOrder });
+    },
+    [notes, updateNoteMeta]
+  );
+
+  // ── Reorder folders ──────────────────────────────────────────────────────
+  const handleReorderFolder = useCallback(
+    (draggedId: string, targetId: string, position: "before" | "after") => {
+      const target = folders.find((f) => f.id === targetId);
+      if (!target) return;
+      const siblings = folders
+        .filter((f) => f.parentId === target.parentId)
+        .sort((a, b) => a.sortOrder - b.sortOrder);
+      const targetIdx = siblings.findIndex((f) => f.id === targetId);
+      let newSortOrder: number;
+      if (position === "before") {
+        const prev = siblings[targetIdx - 1];
+        newSortOrder = prev
+          ? (prev.sortOrder + target.sortOrder) / 2
+          : target.sortOrder - 1000;
+      } else {
+        const next = siblings[targetIdx + 1];
+        newSortOrder = next
+          ? (target.sortOrder + next.sortOrder) / 2
+          : target.sortOrder + 1000;
+      }
+      updateFolder(draggedId, { sortOrder: newSortOrder });
+    },
+    [folders, updateFolder]
+  );
+
   if (!isLoggedIn) return null;
 
+  const isSearching = !!search.trim();
   // Determine if we're in lesson-context mode
-  const isLessonMode = !search && !!activeLessonKey;
+  const isLessonMode = !isSearching && !!activeLessonKey;
 
   return (
     <Sheet open={sidebarOpen} onOpenChange={setSidebarOpen}>
@@ -339,7 +527,7 @@ export function NotesSidebar() {
         <div className="flex-1 overflow-y-auto py-2 px-2">
 
           {/* ── Lesson mode: show lesson folder prominently ── */}
-          {isLessonMode && !filteredAll && (
+          {isLessonMode && !isSearching && (
             <div>
               {/* Lesson folder with all its notes */}
               {activeFolder ? (
@@ -352,6 +540,9 @@ export function NotesSidebar() {
                   onNoteDelete={deleteNote}
                   onCreateNote={handleCreateNote}
                   onDeleteFolder={deleteFolder}
+                  onMoveNote={(noteId, folderId) => updateNoteMeta(noteId, { folderId })}
+                  onReorderNote={handleReorderNote}
+                  onReorderFolder={handleReorderFolder}
                   searchQuery=""
                   defaultOpen={true}
                 />
@@ -364,6 +555,7 @@ export function NotesSidebar() {
                       note={note}
                       onOpen={(id) => { setSidebarOpen(false); openNote(id); }}
                       onDelete={deleteNote}
+                      onDropNote={handleReorderNote}
                     />
                   ))
                 ) : (
@@ -383,12 +575,7 @@ export function NotesSidebar() {
               {/* Divider + "back to all notes" link */}
               <div className="mt-4 pt-3 border-t border-stone-100 px-2">
                 <button
-                  onClick={() => {
-                    // Show all notes by navigating away from lesson mode
-                    // We achieve this by clearing via search box showing or just collapsing
-                    setSearch(" ");
-                    setTimeout(() => setSearch(""), 0);
-                  }}
+                  onClick={() => setSearch("")}
                   className="flex items-center gap-1.5 text-[11px] text-stone-400 hover:text-stone-600 transition-colors"
                 >
                   <ArrowRightIcon className="w-3 h-3" />
@@ -399,29 +586,33 @@ export function NotesSidebar() {
           )}
 
           {/* ── Normal mode (non-lesson or searching) ── */}
-          {(!isLessonMode || filteredAll) && (
+          {(!isLessonMode || isSearching) && (
             <>
-              {/* Search results — flat list across all folders */}
-              {filteredAll && (
+              {/* Search results — server-side, searches title + content */}
+              {isSearching && (
                 <div>
-                  {filteredAll.length === 0 ? (
-                    <p className="text-xs text-stone-400 text-center py-6">
-                      لا توجد نتائج
-                    </p>
+                  {searchLoading ? (
+                    <div className="flex justify-center py-6">
+                      <div className="w-4 h-4 border-2 border-stone-200 border-t-stone-400 rounded-full animate-spin" />
+                    </div>
+                  ) : searchResults === null ? null : searchResults.length === 0 ? (
+                    <p className="text-xs text-stone-400 text-center py-6">لا توجد نتائج</p>
                   ) : (
-                    filteredAll.map((note) => (
+                    searchResults.map((note) => (
                       <NoteRow
                         key={note.id}
                         note={note}
                         onOpen={(id) => { setSidebarOpen(false); openNote(id); }}
                         onDelete={deleteNote}
+                        onDropNote={handleReorderNote}
+                        snippet={note.snippet}
                       />
                     ))
                   )}
                 </div>
               )}
 
-              {!filteredAll && (
+              {!isSearching && (
                 <>
                   {/* Pinned */}
                   {pinnedNotes.length > 0 && (
@@ -438,6 +629,7 @@ export function NotesSidebar() {
                             note={note}
                             onOpen={(id) => { setSidebarOpen(false); openNote(id); }}
                             onDelete={deleteNote}
+                            onDropNote={handleReorderNote}
                           />
                         ))}
                       </CollapsibleContent>
@@ -459,6 +651,7 @@ export function NotesSidebar() {
                             note={note}
                             onOpen={(id) => { setSidebarOpen(false); openNote(id); }}
                             onDelete={deleteNote}
+                            onDropNote={handleReorderNote}
                           />
                         ))}
                       </CollapsibleContent>
@@ -466,7 +659,7 @@ export function NotesSidebar() {
                   )}
 
                   {/* Folders */}
-                  {folders.filter((f) => !f.parentId).map((folder) => (
+                  {sortedRootFolders.map((folder) => (
                     <FolderNode
                       key={folder.id}
                       folder={folder}
@@ -477,28 +670,52 @@ export function NotesSidebar() {
                       onNoteDelete={deleteNote}
                       onCreateNote={handleCreateNote}
                       onDeleteFolder={deleteFolder}
+                      onMoveNote={(noteId, folderId) => updateNoteMeta(noteId, { folderId })}
+                      onReorderNote={handleReorderNote}
+                      onReorderFolder={handleReorderFolder}
                       searchQuery={search}
                     />
                   ))}
 
-                  {/* Root notes (no folder) */}
-                  {filteredRoot.length > 0 && (
-                    <div className="mt-1">
-                      {folders.length > 0 && (
-                        <p className="px-2 py-1 text-[11px] font-semibold text-stone-400 uppercase tracking-wide">
-                          بدون مجلد
-                        </p>
-                      )}
-                      {filteredRoot.map((note) => (
-                        <NoteRow
-                          key={note.id}
-                          note={note}
-                          onOpen={(id) => { setSidebarOpen(false); openNote(id); }}
-                          onDelete={deleteNote}
-                        />
-                      ))}
-                    </div>
-                  )}
+                  {/* Root notes (no folder) — also a drop target */}
+                  <div
+                    className={cn(
+                      "mt-1 rounded-lg transition-colors",
+                      rootDragOver && "bg-stone-100 ring-1 ring-stone-300"
+                    )}
+                    onDragOver={(e) => {
+                      if (!e.dataTransfer.types.includes("note-drag")) return;
+                      e.preventDefault();
+                      e.dataTransfer.dropEffect = "move";
+                      setRootDragOver(true);
+                    }}
+                    onDragEnter={(e) => { e.preventDefault(); setRootDragOver(true); }}
+                    onDragLeave={() => setRootDragOver(false)}
+                    onDrop={(e) => {
+                      e.preventDefault();
+                      setRootDragOver(false);
+                      const noteId = e.dataTransfer.getData("note-drag") || e.dataTransfer.getData("noteId");
+                      if (noteId) updateNoteMeta(noteId, { folderId: null });
+                    }}
+                  >
+                    {folders.length > 0 && (
+                      <p className="px-2 py-1 text-[11px] font-semibold text-stone-400 uppercase tracking-wide">
+                        بدون مجلد
+                      </p>
+                    )}
+                    {filteredRoot.map((note) => (
+                      <NoteRow
+                        key={note.id}
+                        note={note}
+                        onOpen={(id) => { setSidebarOpen(false); openNote(id); }}
+                        onDelete={deleteNote}
+                        onDropNote={handleReorderNote}
+                      />
+                    ))}
+                    {filteredRoot.length === 0 && rootDragOver && (
+                      <p className="text-[11px] text-stone-400 text-center py-2">اسحب هنا لإزالة من المجلد</p>
+                    )}
+                  </div>
 
                   {/* Empty state */}
                   {notes.length === 0 && (
