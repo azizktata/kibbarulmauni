@@ -128,6 +128,52 @@ In ambient (full-screen) mode the transcript panel uses `variant="dark"`:
 
 ---
 
+## Text Selection — Copy & Share
+
+Selecting text inside the transcript panel triggers a floating popover with two actions.
+
+### Popover
+
+Appears above the selection (fixed-positioned, portal-rendered so it's never clipped):
+
+- **نسخ** — copies the selected text to clipboard with timestamps stripped, then dismisses
+- **مشاركة** — opens the share dialog
+
+Timestamp chips (`<button>` elements) are excluded by cloning the selection range and calling `fragment.querySelectorAll("button").forEach(b => b.remove())` before reading `textContent`.
+
+### Time range detection
+
+After extracting clean text, the code checks which segment `<span>` refs are intersected by the selection range via `range.intersectsNode(el)`. The first and last matching segment indices give the time range: `fmt(first.start) – fmt(last.start + last.dur)`.
+
+### Share dialog
+
+Displays a styled quote card (not raw `<pre>` text):
+
+- **Quote body** — white background, large decorative quotation mark, selected text
+- **Signature footer** — stone-50 background:
+  - Left: lesson title + YouTube link
+  - Right: time range chip (clock icon + monospace `0:00 – 1:30`)
+
+The **نسخ النص** button copies plain text in this format:
+
+```
+[selected text]
+
+[lesson title]
+[يوتيوب](https://youtube.com/...) (0:05 – 2:29)
+```
+
+### Props added to TranscriptPanel
+
+| Prop | Type | Purpose |
+|------|------|---------|
+| `lessonTitle?` | `string` | Shown in share dialog footer and copied text |
+| `youtubeUrl?` | `string` | Linked in share dialog footer and copied text |
+
+Both are passed from `CoursePlayer` for both the inline panel and the ambient overlay panel.
+
+---
+
 ## Adding a Transcript (CLI)
 
 Use the helper script for bulk or offline additions:
