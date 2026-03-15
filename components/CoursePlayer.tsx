@@ -289,28 +289,28 @@ export function CoursePlayer({ lessons, col, levelIdx, subjectIdx, courseIdx, co
   const ambientOverlay = (
     <div className="fixed inset-0 z-50 flex flex-col bg-neutral-950" dir="rtl">
       {/* Top bar */}
-      <div className="shrink-0 flex items-center gap-2 px-5 py-3 border-b border-neutral-800">
+      <div className="shrink-0 flex items-center gap-1.5 px-3 lg:px-5 py-2.5 lg:py-3 border-b border-neutral-800">
         <div className="flex-1 min-w-0">
           <p className="text-sm font-semibold text-white truncate">{lesson.title}</p>
-          <p className={`text-xs mt-0.5 ${col.text}`}>الدرس {toAr(selected)} من {toAr(lessons.length - 1)}</p>
+          <p className={`text-xs mt-0.5 ${col.text} hidden lg:block`}>الدرس {toAr(selected)} من {toAr(lessons.length - 1)}</p>
         </div>
         <button onClick={() => setSelected((s) => Math.max(s - 1, 0))} disabled={selected === 0}
-          className="flex items-center gap-1.5 text-xs text-neutral-400 hover:text-white disabled:opacity-25 transition-colors px-2.5 py-1.5 rounded-lg hover:bg-neutral-800">
+          className="flex items-center gap-1.5 text-xs text-neutral-400 hover:text-white disabled:opacity-25 transition-colors px-2 lg:px-2.5 py-1.5 rounded-lg hover:bg-neutral-800">
           <svg className="w-3.5 h-3.5" viewBox="0 0 16 16" fill="currentColor"><path d="M10.5 8L6 4l-1 1L8.5 8 5 11l1 1 4.5-4z" /></svg>
-          السابق
+          <span className="hidden lg:inline">السابق</span>
         </button>
         <button onClick={goNext} disabled={selected === lessons.length - 1}
-          className="flex items-center gap-1.5 text-xs text-neutral-400 hover:text-white disabled:opacity-25 transition-colors px-2.5 py-1.5 rounded-lg hover:bg-neutral-800">
-          التالي
+          className="flex items-center gap-1.5 text-xs text-neutral-400 hover:text-white disabled:opacity-25 transition-colors px-2 lg:px-2.5 py-1.5 rounded-lg hover:bg-neutral-800">
+          <span className="hidden lg:inline">التالي</span>
           <svg className="w-3.5 h-3.5 rotate-180" viewBox="0 0 16 16" fill="currentColor"><path d="M10.5 8L6 4l-1 1L8.5 8 5 11l1 1 4.5-4z" /></svg>
         </button>
         {transcript.length > 0 && (
           <button onClick={() => setAmbientTranscriptOpen((v) => !v)}
-            className="flex items-center gap-1.5 text-xs text-neutral-400 hover:text-white transition-colors px-2.5 py-1.5 rounded-lg hover:bg-neutral-800">
+            className="flex items-center gap-1.5 text-xs text-neutral-400 hover:text-white transition-colors px-2 lg:px-2.5 py-1.5 rounded-lg hover:bg-neutral-800">
             <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
               <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
             </svg>
-            {ambientTranscriptOpen ? "إخفاء النص" : "إظهار النص"}
+            <span className="hidden lg:inline">{ambientTranscriptOpen ? "إخفاء النص" : "إظهار النص"}</span>
           </button>
         )}
         <button onClick={() => setAmbientMode(false)}
@@ -320,19 +320,22 @@ export function CoursePlayer({ lessons, col, levelIdx, subjectIdx, courseIdx, co
           </svg>
         </button>
       </div>
-      {/* Body */}
-      <div className="flex-1 flex overflow-hidden">
-        <div className="flex-1 flex items-center justify-center p-6">
-          <div className="aspect-video w-full rounded-2xl overflow-hidden bg-black" style={{ maxHeight: "calc(100vh - 110px)" }}>
+      {/* Body — column below lg, row on lg+ */}
+      <div className="flex-1 flex flex-col lg:flex-row overflow-hidden">
+        <div className="flex-none lg:flex-1 flex items-center justify-center p-2 lg:p-6">
+          <div className="aspect-video w-full rounded-xl lg:rounded-2xl overflow-hidden bg-black" style={{ maxHeight: "calc(100vh - 110px)" }}>
             {ytId ? <div ref={ambientDivRef} className="w-full h-full" /> : noVideo}
           </div>
         </div>
         {ambientTranscriptOpen && transcript.length > 0 && (
-          <div className="flex flex-col overflow-hidden shrink-0 relative border-r border-neutral-800" style={{ width: transcriptWidth }}>
-            {/* Drag handle */}
+          <div
+            className="flex-1 lg:flex-none lg:shrink-0 w-full lg:w-[var(--transcript-w)] flex flex-col overflow-hidden relative border-t lg:border-t-0 lg:border-r border-neutral-800 min-h-0"
+            style={{ '--transcript-w': `${transcriptWidth}px` } as React.CSSProperties}
+          >
+            {/* Drag handle — lg+ only */}
             <div
               onMouseDown={onResizeStart}
-              className="absolute right-0 top-0 bottom-0 w-1 cursor-col-resize hover:bg-neutral-600 transition-colors z-10"
+              className="hidden lg:block absolute right-0 top-0 bottom-0 w-1 cursor-col-resize hover:bg-neutral-600 transition-colors z-10"
             />
             <TranscriptPanel segments={transcript} currentTime={currentTime} col={col} onSeek={seekTo} variant="dark" />
           </div>
