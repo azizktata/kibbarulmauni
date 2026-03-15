@@ -3,12 +3,15 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { NotebookPenIcon } from "lucide-react";
 import { UserButton } from "./UserButton";
+import { useNotes } from "@/lib/notesContext";
 
 export function Navbar() {
   const [open, setOpen] = useState(false);
   const [q, setQ] = useState("");
   const router = useRouter();
+  const { isLoggedIn, notes, setSidebarOpen } = useNotes();
 
   function submit(e: React.FormEvent) {
     e.preventDefault();
@@ -49,6 +52,20 @@ export function Navbar() {
                 <path d="m21 21-4.35-4.35" />
               </svg>
             </button>
+
+            {/* Notes button */}
+            {isLoggedIn && (
+              <button
+                onClick={() => setSidebarOpen(true)}
+                aria-label="ملاحظاتي"
+                className="relative p-2 rounded-lg text-white/60 hover:text-white hover:bg-white/10 transition-colors"
+              >
+                <NotebookPenIcon className="w-4 h-4" />
+                {notes.length > 0 && (
+                  <span className="absolute top-1.5 right-1.5 w-1.5 h-1.5 rounded-full bg-emerald-400" />
+                )}
+              </button>
+            )}
 
             <UserButton />
           </div>

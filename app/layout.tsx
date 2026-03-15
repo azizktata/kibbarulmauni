@@ -3,7 +3,10 @@ import { Cairo, Amiri } from "next/font/google";
 import { SessionProvider } from "next-auth/react";
 import { auth } from "@/auth";
 import { WatchedProvider } from "@/lib/watchedContext";
+import { NotesProvider } from "@/lib/notesContext";
 import { Navbar } from "@/components/Navbar";
+import { NotesSidebar } from "@/components/NotesSidebar";
+import { NoteEditor } from "@/components/NoteEditor";
 import "./globals.css";
 
 const cairo = Cairo({
@@ -32,10 +35,14 @@ export default async function RootLayout({
     <html lang="ar" dir="rtl" className={`${cairo.variable} ${amiri.variable}`}>
       <body className="antialiased font-cairo bg-stone-50 text-stone-900">
         <SessionProvider session={session}>
-          <WatchedProvider isLoggedIn={!!session?.user?.id}>
-            <Navbar />
-            {children}
-          </WatchedProvider>
+          <NotesProvider isLoggedIn={!!session?.user?.id}>
+            <WatchedProvider isLoggedIn={!!session?.user?.id}>
+              <Navbar />
+              <NotesSidebar />
+              <NoteEditor />
+              {children}
+            </WatchedProvider>
+          </NotesProvider>
         </SessionProvider>
       </body>
     </html>

@@ -1,6 +1,6 @@
 import { db } from "./index";
-import { users, watchedLessons } from "./schema";
-import { eq, and } from "drizzle-orm";
+import { users, watchedLessons, noteFolders, notes } from "./schema";
+import { eq, and, desc, isNull } from "drizzle-orm";
 
 export async function upsertUser(email: string, name: string | null): Promise<string> {
   const id = crypto.randomUUID();
@@ -65,4 +65,146 @@ export async function unmarkWatched(userId: string, lessonKey: string): Promise<
   await db
     .delete(watchedLessons)
     .where(and(eq(watchedLessons.userId, userId), eq(watchedLessons.lessonKey, lessonKey)));
+}
+
+// ── Note folders ──────────────────────────────────────────────────────────────
+
+export async function getFolders(userId: string) {
+  return db
+    .select()
+    .from(noteFolders)
+    .where(eq(noteFolders.userId, userId))
+    .orderBy(noteFolders.sortOrder, noteFolders.createdAt);
+}
+
+export async function createFolder(
+  userId: string,
+  name: string,
+  parentId: string | null = null
+): Promise<string> {
+  const id = crypto.randomUUID();
+  await db.insert(noteFolders).values({ id, userId, name, parentId });
+  return id;
+}
+
+export async function updateFolder(
+  id: string,
+  userId: string,
+  fields: { name?: string; parentId?: string | null; sortOrder?: number }
+): Promise<void> {
+  await db
+    .update(noteFolders)
+    .set(fields)
+    .where(and(eq(noteFolders.id, id), eq(noteFolders.userId, userId)));
+}
+
+export async function deleteFolder(id: string, userId: string): Promise<void> {
+  // Orphan notes to root before deleting folder
+  await db
+    .update(notes)
+    .set({ folderId: null })
+    .where(and(eq(notes.folderId, id), eq(notes.userId, userId)));
+  await db
+    .delete(noteFolders)
+    .where(and(eq(noteFolders.id, id), eq(noteFolders.userId, userId)));
+}
+
+// ── Notes ─────────────────────────────────────────────────────────────────────
+
+// Returns all note metadata except content (for sidebar performance)
+export async function getNoteSummaries(userId: string) {
+  return db
+    .select({
+      id: notes.id,
+      userId: notes.userId,
+      folderId: notes.folderId,
+      lessonKey: notes.lessonKey,
+      noteType: notes.noteType,
+      title: notes.title,
+      isPinned: notes.isPinned,
+      sortOrder: notes.sortOrder,
+      createdAt: notes.createdAt,
+      updatedAt: notes.updatedAt,
+    })
+    .from(notes)
+    .where(eq(notes.userId, userId))
+    .orderBy(desc(notes.updatedAt));
+}
+
+export async function getNoteContent(
+  id: string,
+  userId: string
+): Promise<{ content: string } | undefined> {
+  return db
+    .select({ content: notes.content })
+    .from(notes)
+    .where(and(eq(notes.id, id), eq(notes.userId, userId)))
+    .get();
+}
+
+export async function getNotesByLesson(userId: string, lessonKey: string) {
+  return db
+    .select({
+      id: notes.id,
+      userId: notes.userId,
+      folderId: notes.folderId,
+      lessonKey: notes.lessonKey,
+      noteType: notes.noteType,
+      title: notes.title,
+      isPinned: notes.isPinned,
+      sortOrder: notes.sortOrder,
+      createdAt: notes.createdAt,
+      updatedAt: notes.updatedAt,
+    })
+    .from(notes)
+    .where(and(eq(notes.userId, userId), eq(notes.lessonKey, lessonKey)))
+    .orderBy(desc(notes.updatedAt));
+}
+
+export async function createNote(
+  userId: string,
+  fields: {
+    title?: string;
+    content?: string;
+    folderId?: string | null;
+    lessonKey?: string | null;
+    noteType?: string;
+  } = {}
+): Promise<string> {
+  const id = crypto.randomUUID();
+  await db.insert(notes).values({
+    id,
+    userId,
+    title: fields.title ?? "ملاحظة جديدة",
+    content: fields.content ?? "",
+    folderId: fields.folderId ?? null,
+    lessonKey: fields.lessonKey ?? null,
+    noteType: fields.noteType ?? "concept",
+  });
+  return id;
+}
+
+export async function updateNote(
+  id: string,
+  userId: string,
+  fields: {
+    title?: string;
+    content?: string;
+    folderId?: string | null;
+    lessonKey?: string | null;
+    noteType?: string;
+    isPinned?: number;
+    sortOrder?: number;
+  }
+): Promise<void> {
+  await db
+    .update(notes)
+    .set({ ...fields, updatedAt: Date.now() })
+    .where(and(eq(notes.id, id), eq(notes.userId, userId)));
+}
+
+export async function deleteNote(id: string, userId: string): Promise<void> {
+  await db
+    .delete(notes)
+    .where(and(eq(notes.id, id), eq(notes.userId, userId)));
 }

@@ -36,6 +36,14 @@ Next.js 16 app (App Router, React 19) that serves as a browsable index for Islam
 - `/api/transcript` — serves transcript segments. Accepts `?v={youtubeId}` (fetches live YouTube captions, Arabic then English fallback) or `?file={name}.txt` (reads from `data/transcripts/`). Returns `{ segments: TranscriptSegment[] }` with 24h cache headers.
 - `components/TranscriptPanel.tsx` — renders segments as flowing inline text, auto-scrolls active segment (synced to `currentTime`) into view.
 - `scripts/add-transcript.mjs` — utility to add a new transcript file.
+- `components/TranscriptUploadButton.tsx` — admin-only UI to upload transcript `.txt` files (checks session email against hardcoded admin).
+
+**Audio:**
+- `data/audio/` — static `.mp3` files named `{levelIdx}-{subjectIdx}-{courseIdx}-{lessonIdx}.mp3`.
+- `/api/audio` — GET serves/checks MP3 files (`?file=`, `?check=1`); POST uploads (admin-only, same hardcoded email gate). 24h cache headers.
+- `components/AudioUploadButton.tsx` — admin-only UI to upload MP3 files; download button appears for all users when audio exists.
+
+**Admin gating:** Both audio and transcript upload APIs check `session.user.email === "azizktata77@gmail.com"` directly (no DB role).
 
 **Routing:**
 - `/` — home page (level list)

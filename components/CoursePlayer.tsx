@@ -7,11 +7,15 @@ import type { Lesson, TranscriptSegment } from "@/lib/data";
 import type { LevelColor } from "@/lib/constants";
 import { saveWatched } from "@/lib/useRecentlyWatched";
 import { useWatched } from "@/lib/watchedContext";
+import { NotebookPenIcon, PlusIcon, XIcon } from "lucide-react";
 import { WatchButton } from "./WatchButton";
 import { SignInDialog } from "./SignInDialog";
 import { TranscriptPanel } from "./TranscriptPanel";
 import { TranscriptUploadButton } from "./TranscriptUploadButton";
 import { AudioUploadButton } from "./AudioUploadButton";
+import { AmbientNotePanel } from "./AmbientNotePanel";
+import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from "@/components/ui/resizable";
+import { useNotes } from "@/lib/notesContext";
 
 // ── YouTube IFrame API types ───────────────────────────────────────────────────
 declare global {
@@ -82,9 +86,8 @@ export function CoursePlayer({ lessons, col, levelIdx, subjectIdx, courseIdx, co
   const [audioVersion, setAudioVersion] = useState(0);
   const [ambientMode, setAmbientMode] = useState(false);
   const [ambientTranscriptOpen, setAmbientTranscriptOpen] = useState(true);
-  const [transcriptWidth, setTranscriptWidth] = useState(360);
+  const [ambientNotesOpen, setAmbientNotesOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
-  const isResizing = useRef(false);
   const ambientStartAtRef = useRef(0);
 
   // YT player refs
@@ -106,25 +109,6 @@ export function CoursePlayer({ lessons, col, levelIdx, subjectIdx, courseIdx, co
   useEffect(() => { toggleWatchedRef.current = toggleWatched; }, [toggleWatched]);
 
   useEffect(() => { setMounted(true); }, []);
-
-  function onResizeStart(e: React.MouseEvent) {
-    isResizing.current = true;
-    const startX = e.clientX;
-    const startWidth = transcriptWidth;
-    const onMove = (mv: MouseEvent) => {
-      if (!isResizing.current) return;
-      // transcript is on the left; dragging handle left = wider
-      const delta = mv.clientX - startX;
-      setTranscriptWidth(Math.max(240, Math.min(640, startWidth + delta)));
-    };
-    const onUp = () => {
-      isResizing.current = false;
-      window.removeEventListener("mousemove", onMove);
-      window.removeEventListener("mouseup", onUp);
-    };
-    window.addEventListener("mousemove", onMove);
-    window.addEventListener("mouseup", onUp);
-  }
 
   const lesson = lessons[selected];
   const ytId = lesson.youtube?.match(/[?&]v=([^&]+)/)?.[1] ?? null;
@@ -299,6 +283,12 @@ export function CoursePlayer({ lessons, col, levelIdx, subjectIdx, courseIdx, co
     </div>
   );
 
+  // ── Notes context (must be before ambientOverlay JSX) ────────────────────────
+  const { createNote: createNoteCtx, openNote, isLoggedIn: notesLoggedIn, getNotesByLesson, folders, createFolder } = useNotes();
+  const currentLessonKey = `${levelIdx}:${subjectIdx}:${courseIdx}:${selected}`;
+  const lessonNotes = getNotesByLesson(currentLessonKey);
+  const lessonNoteCount = lessonNotes.length;
+
   // ── Ambient overlay ───────────────────────────────────────────────────────────
   const ambientOverlay = (
     <div className="fixed inset-0 z-50 flex flex-col bg-neutral-950" dir="rtl">
@@ -327,6 +317,13 @@ export function CoursePlayer({ lessons, col, levelIdx, subjectIdx, courseIdx, co
             <span className="hidden lg:inline">{ambientTranscriptOpen ? "إخفاء النص" : "إظهار النص"}</span>
           </button>
         )}
+        {notesLoggedIn && (
+          <button onClick={() => setAmbientNotesOpen((v) => !v)}
+            className={`flex items-center gap-1.5 text-xs transition-colors px-2 lg:px-2.5 py-1.5 rounded-lg hover:bg-neutral-800 ${ambientNotesOpen ? "text-white" : "text-neutral-400 hover:text-white"}`}>
+            <NotebookPenIcon className="w-3.5 h-3.5" />
+            <span className="hidden lg:inline">{ambientNotesOpen ? "إخفاء الملاحظات" : "الملاحظات"}</span>
+          </button>
+        )}
         <button onClick={() => setAmbientMode(false)}
           className="flex items-center justify-center w-7 h-7 rounded-lg text-neutral-400 hover:text-white hover:bg-neutral-800 transition-colors">
           <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
@@ -334,24 +331,53 @@ export function CoursePlayer({ lessons, col, levelIdx, subjectIdx, courseIdx, co
           </svg>
         </button>
       </div>
-      {/* Body — column below lg, row on lg+ */}
-      <div className="flex-1 flex flex-col lg:flex-row overflow-hidden">
-        <div className="flex-none lg:flex-1 flex items-center justify-center p-2 lg:p-6">
-          <div className="aspect-video w-full rounded-xl lg:rounded-2xl overflow-hidden bg-black" style={{ maxHeight: "calc(100vh - 110px)" }}>
+      {/* Body — mobile: column stack; desktop: resizable panels */}
+      {/* Mobile */}
+      <div className="flex-1 flex flex-col lg:hidden overflow-hidden">
+        <div className="flex items-center justify-center p-2">
+          <div className="aspect-video w-full rounded-xl overflow-hidden bg-black">
             {ytId ? <div ref={ambientDivRef} className="w-full h-full" /> : noVideo}
           </div>
         </div>
         {ambientTranscriptOpen && transcript.length > 0 && (
-          <div
-            className="flex-1 lg:flex-none lg:shrink-0 w-full lg:w-[var(--transcript-w)] flex flex-col overflow-hidden relative border-t lg:border-t-0 lg:border-r border-neutral-800 min-h-0"
-            style={{ '--transcript-w': `${transcriptWidth}px` } as React.CSSProperties}
-          >
-            {/* Drag handle — lg+ only */}
-            <div
-              onMouseDown={onResizeStart}
-              className="hidden lg:block absolute right-0 top-0 bottom-0 w-1 cursor-col-resize hover:bg-neutral-600 transition-colors z-10"
-            />
+          <div className="flex-1 overflow-hidden border-t border-neutral-800 min-h-0">
             <TranscriptPanel segments={transcript} currentTime={currentTime} col={col} onSeek={seekTo} variant="dark" lessonTitle={lesson.title} youtubeUrl={lesson.youtube ?? undefined} />
+          </div>
+        )}
+      </div>
+      {/* Desktop: flex row — video+transcript in ResizablePanelGroup, notes as separate sibling */}
+      <div className="hidden lg:flex flex-1 overflow-hidden" dir="ltr">
+        {/* Video + Transcript */}
+        <div className="flex-1 min-w-0 overflow-hidden">
+          <ResizablePanelGroup className="h-full">
+            <ResizablePanel defaultSize={ambientTranscriptOpen ? 58 : 100} minSize={30}>
+              <div dir="rtl" className="flex items-center justify-center p-6 h-full">
+                <div className="aspect-video w-full rounded-2xl overflow-hidden bg-black" style={{ maxHeight: "calc(100vh - 110px)" }}>
+                  {ytId ? <div ref={ambientDivRef} className="w-full h-full" /> : noVideo}
+                </div>
+              </div>
+            </ResizablePanel>
+            {ambientTranscriptOpen && transcript.length > 0 && (
+              <>
+                <ResizableHandle className="bg-neutral-800 hover:bg-neutral-600 transition-colors" />
+                <ResizablePanel defaultSize={42} minSize={15} maxSize={65}>
+                  <div dir="rtl" className="h-full overflow-hidden">
+                    <TranscriptPanel segments={transcript} currentTime={currentTime} col={col} onSeek={seekTo} variant="dark" lessonTitle={lesson.title} youtubeUrl={lesson.youtube ?? undefined} />
+                  </div>
+                </ResizablePanel>
+              </>
+            )}
+          </ResizablePanelGroup>
+        </div>
+        {/* Notes panel — separate flex item, fixed width, no ResizablePanelGroup needed */}
+        {ambientNotesOpen && (
+          <div dir="rtl" className="w-80 shrink-0 border-l border-neutral-800 overflow-hidden bg-neutral-900">
+            <AmbientNotePanel
+              lessonKey={`${levelIdx}:${subjectIdx}:${courseIdx}:${selected}`}
+              col={col}
+              currentTime={currentTime}
+              onSeek={seekTo}
+            />
           </div>
         )}
       </div>
@@ -359,9 +385,26 @@ export function CoursePlayer({ lessons, col, levelIdx, subjectIdx, courseIdx, co
   );
 
   // ── Render ────────────────────────────────────────────────────────────────────
+  const [pickerOpen, setPickerOpen] = useState(false);
+
+  async function handleCreateLessonNote() {
+    const lessonFolder = folders.find((f) => f.name === lesson.title && !f.parentId);
+    const folderId = lessonFolder ? lessonFolder.id : await createFolder(lesson.title);
+    const id = await createNoteCtx({
+      lessonKey: currentLessonKey,
+      noteType: "lesson",
+      title: "ملاحظة جديدة",
+      folderId,
+    });
+    openNote(id);
+    setPickerOpen(false);
+  }
+
   return (
     <>
+      {/* Shared grid — desktop 3-col, mobile stacked */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
+
         {/* ── Video panel ── */}
         <div className="lg:col-span-2 flex flex-col gap-3">
 
@@ -474,7 +517,7 @@ export function CoursePlayer({ lessons, col, levelIdx, subjectIdx, courseIdx, co
           <div className="divide-y divide-stone-50 overflow-y-auto" style={{ maxHeight: "min(60vh, 520px)" }}>
             {lessons.map((l, idx) => {
               const isActive = idx === selected;
-              const lessonKey = `${levelIdx}:${subjectIdx}:${courseIdx}:${idx}`;
+              const lKey = `${levelIdx}:${subjectIdx}:${courseIdx}:${idx}`;
               return (
                 <button key={idx} onClick={() => setSelected(idx)}
                   className={`w-full text-right px-3.5 py-3 flex items-start gap-2.5 border-r-2 transition-colors ${isActive ? `${col.light} ${col.activeBorder}` : "border-r-transparent hover:bg-stone-50"}`}>
@@ -484,13 +527,75 @@ export function CoursePlayer({ lessons, col, levelIdx, subjectIdx, courseIdx, co
                   <p className={`flex-1 text-xs leading-relaxed text-right ${isActive ? `${col.text} font-semibold` : "text-stone-600"}`}>
                     {l.title}
                   </p>
-                  <WatchButton lessonKey={lessonKey} col={col} />
+                  <WatchButton lessonKey={lKey} col={col} />
                 </button>
               );
             })}
           </div>
         </div>
       </div>
+
+      {/* ── Lesson notes FAB + picker ── */}
+      {notesLoggedIn && (
+        <>
+          {/* Backdrop to close picker */}
+          {pickerOpen && (
+            <div className="fixed inset-0 z-40" onClick={() => setPickerOpen(false)} />
+          )}
+
+          {/* Notes picker popup */}
+          {pickerOpen && (
+            <div className="fixed bottom-24 right-6 z-50 bg-white rounded-xl shadow-2xl border border-stone-100 w-64 overflow-hidden" dir="rtl">
+              <div className="px-3 py-2.5 border-b border-stone-100 flex items-center justify-between">
+                <span className="text-xs font-semibold text-stone-700">ملاحظات الدرس</span>
+                <button onClick={() => setPickerOpen(false)} className="p-0.5 text-stone-300 hover:text-stone-600">
+                  <XIcon className="w-3.5 h-3.5" />
+                </button>
+              </div>
+              <div className="max-h-52 overflow-y-auto py-1">
+                {lessonNotes.length > 0 ? (
+                  lessonNotes.map((note) => (
+                    <button
+                      key={note.id}
+                      onClick={() => { openNote(note.id); setPickerOpen(false); }}
+                      className="w-full text-right px-3 py-2 text-xs text-stone-700 hover:bg-stone-50 flex items-center gap-2 transition-colors"
+                    >
+                      <NotebookPenIcon className="w-3 h-3 text-stone-300 shrink-0" />
+                      <span className="truncate">{note.title}</span>
+                    </button>
+                  ))
+                ) : (
+                  <p className="px-3 py-4 text-xs text-stone-400 text-center">لا توجد ملاحظات لهذا الدرس بعد</p>
+                )}
+              </div>
+              <div className="border-t border-stone-100 p-2">
+                <button
+                  onClick={handleCreateLessonNote}
+                  className={`w-full flex items-center justify-center gap-1.5 py-2 rounded-lg text-xs font-medium text-white ${col.bg} transition-colors`}
+                >
+                  <PlusIcon className="w-3.5 h-3.5" />
+                  ملاحظة جديدة
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* FAB */}
+          <button
+            onClick={() => setPickerOpen((v) => !v)}
+            className={`fixed bottom-6 right-6 z-40 flex items-center gap-2 px-4 py-3 rounded-full shadow-xl transition-all hover:scale-105 active:scale-95 ${col.bg} text-white`}
+            aria-label="ملاحظات الدرس"
+          >
+            <NotebookPenIcon className="w-4 h-4" />
+            <span className="text-sm font-medium">ملاحظات</span>
+            {lessonNoteCount > 0 && (
+              <span className="bg-white/25 text-white text-xs font-bold px-1.5 py-0.5 rounded-full min-w-[20px] text-center">
+                {lessonNoteCount}
+              </span>
+            )}
+          </button>
+        </>
+      )}
 
       {mounted && ambientMode && createPortal(ambientOverlay, document.body)}
       <TranscriptUploadButton
