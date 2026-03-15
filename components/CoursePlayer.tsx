@@ -10,6 +10,7 @@ import { useWatched } from "@/lib/watchedContext";
 import { WatchButton } from "./WatchButton";
 import { SignInDialog } from "./SignInDialog";
 import { TranscriptPanel } from "./TranscriptPanel";
+import { TranscriptUploadButton } from "./TranscriptUploadButton";
 
 // ── YouTube IFrame API types ───────────────────────────────────────────────────
 declare global {
@@ -75,6 +76,7 @@ export function CoursePlayer({ lessons, col, levelIdx, subjectIdx, courseIdx, co
   const [currentTime, setCurrentTime] = useState(0);
   const [transcript, setTranscript] = useState<TranscriptSegment[]>([]);
   const [transcriptOpen, setTranscriptOpen] = useState(true);
+  const [transcriptVersion, setTranscriptVersion] = useState(0);
   const [ambientMode, setAmbientMode] = useState(false);
   const [ambientTranscriptOpen, setAmbientTranscriptOpen] = useState(true);
   const [transcriptWidth, setTranscriptWidth] = useState(360);
@@ -220,15 +222,18 @@ export function CoursePlayer({ lessons, col, levelIdx, subjectIdx, courseIdx, co
   }, [courseIdx]);
 
   // ── Fetch transcript ─────────────────────────────────────────────────────────
+  const transcriptFilename = `${levelIdx}-${subjectIdx}-${courseIdx}-${selected}.txt`;
+
   useEffect(() => {
     setCurrentTime(0);
     setTranscript([]);
 
     const loadFile = () => {
-      if (!lesson.transcriptFile) return;
-      fetch(`/api/transcript?file=${lesson.transcriptFile}`)
+      fetch(`/api/transcript?file=${transcriptFilename}`)
         .then((r) => r.json())
-        .then(({ segments }: { segments: TranscriptSegment[] }) => setTranscript(segments))
+        .then(({ segments }: { segments: TranscriptSegment[] }) => {
+          if (segments.length > 0) setTranscript(segments);
+        })
         .catch(() => {});
     };
 
@@ -242,7 +247,7 @@ export function CoursePlayer({ lessons, col, levelIdx, subjectIdx, courseIdx, co
       })
       .catch(loadFile);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selected]);
+  }, [selected, transcriptVersion]);
 
   // ── Course progress ───────────────────────────────────────────────────────────
   const watchedCount = useMemo(() => {
@@ -458,6 +463,10 @@ export function CoursePlayer({ lessons, col, levelIdx, subjectIdx, courseIdx, co
       </div>
 
       {mounted && ambientMode && createPortal(ambientOverlay, document.body)}
+      <TranscriptUploadButton
+        filename={transcriptFilename}
+        onSaved={() => setTranscriptVersion((v) => v + 1)}
+      />
     </>
   );
 }

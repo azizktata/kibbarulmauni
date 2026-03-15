@@ -1,7 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
-import { readFileSync } from "fs";
+import { readFileSync, writeFileSync } from "fs";
 import { resolve } from "path";
 import type { TranscriptSegment } from "@/lib/data";
+import { auth } from "@/auth";
+
+const ADMIN_EMAIL = "azizktata77@gmail.com";
 
 // ── YouTube captions (timedtext API) ──────────────────────────────────────────
 
@@ -53,7 +56,23 @@ function parseRawTranscript(raw: string): TranscriptSegment[] {
   return segments;
 }
 
-// ── Route handler ─────────────────────────────────────────────────────────────
+// ── POST — admin upload ────────────────────────────────────────────────────────
+
+export async function POST(req: NextRequest) {
+  const session = await auth();
+  if (session?.user?.email !== ADMIN_EMAIL)
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+
+  const { file, content } = (await req.json()) as { file: string; content: string };
+  if (!/^[\w\-]+\.txt$/.test(file))
+    return NextResponse.json({ error: "Invalid file" }, { status: 400 });
+
+  const filePath = resolve(process.cwd(), "data/transcripts", file);
+  writeFileSync(filePath, content, "utf8");
+  return NextResponse.json({ ok: true });
+}
+
+// ── GET handler ────────────────────────────────────────────────────────────────
 
 export async function GET(req: NextRequest) {
   const { searchParams } = req.nextUrl;
