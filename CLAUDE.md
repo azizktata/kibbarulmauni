@@ -28,6 +28,7 @@ Next.js 16 app (App Router, React 19) that serves as a browsable index for Islam
 - `db/index.ts` — Drizzle client via `@libsql/client` (Turso). Requires `TURSO_DATABASE_URL`, `TURSO_AUTH_TOKEN` env vars.
 - `lib/watchedContext.tsx` — `WatchedProvider` / `useWatched` context. Fetches keys from `/api/progress`, posts toggles to `/api/watch`, uses `useOptimistic` for instant UI feedback.
 - `lib/progress.ts` — pure functions (`courseProgress`, `subjectProgress`, `levelProgress`) that compute % watched from a `Set<string>` of watched keys.
+- `lib/useRecentlyWatched.ts` — localStorage hook (`useRecentlyWatched`) + `saveWatched()` for the "recently watched" section on the home page (max 6 entries, keyed by course).
 - `/api/profile` — GET/PATCH for user profile fields (`name`, `age`) stored in `db/queries.ts`.
 
 **Transcripts:**

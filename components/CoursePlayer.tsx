@@ -11,6 +11,7 @@ import { WatchButton } from "./WatchButton";
 import { SignInDialog } from "./SignInDialog";
 import { TranscriptPanel } from "./TranscriptPanel";
 import { TranscriptUploadButton } from "./TranscriptUploadButton";
+import { AudioUploadButton } from "./AudioUploadButton";
 
 // ── YouTube IFrame API types ───────────────────────────────────────────────────
 declare global {
@@ -77,6 +78,8 @@ export function CoursePlayer({ lessons, col, levelIdx, subjectIdx, courseIdx, co
   const [transcript, setTranscript] = useState<TranscriptSegment[]>([]);
   const [transcriptOpen, setTranscriptOpen] = useState(true);
   const [transcriptVersion, setTranscriptVersion] = useState(0);
+  const [audioExists, setAudioExists] = useState(false);
+  const [audioVersion, setAudioVersion] = useState(0);
   const [ambientMode, setAmbientMode] = useState(false);
   const [ambientTranscriptOpen, setAmbientTranscriptOpen] = useState(true);
   const [transcriptWidth, setTranscriptWidth] = useState(360);
@@ -223,6 +226,17 @@ export function CoursePlayer({ lessons, col, levelIdx, subjectIdx, courseIdx, co
 
   // ── Fetch transcript ─────────────────────────────────────────────────────────
   const transcriptFilename = `${levelIdx}-${subjectIdx}-${courseIdx}-${selected}.txt`;
+  const audioFilename = `${levelIdx}-${subjectIdx}-${courseIdx}-${selected}.mp3`;
+
+  // ── Check audio existence ─────────────────────────────────────────────────────
+  useEffect(() => {
+    setAudioExists(false);
+    fetch(`/api/audio?file=${audioFilename}&check=1`)
+      .then((r) => r.json())
+      .then(({ exists }: { exists: boolean }) => setAudioExists(exists))
+      .catch(() => {});
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selected, audioVersion]);
 
   useEffect(() => {
     setCurrentTime(0);
@@ -357,15 +371,28 @@ export function CoursePlayer({ lessons, col, levelIdx, subjectIdx, courseIdx, co
               <p className="font-semibold text-stone-800 text-sm leading-snug">{lesson.title}</p>
               <p className={`text-xs mt-1 ${col.text}`}>الدرس {toAr(selected)} من {toAr(lessons.length - 1)}</p>
             </div>
-            {lesson.youtube && (
-              <a href={lesson.youtube} target="_blank" rel="noopener noreferrer"
-                className="shrink-0 flex items-center gap-1.5 text-xs text-stone-400 hover:text-red-500 transition-colors py-1">
-                <svg className="w-4 h-4" viewBox="0 0 20 14" fill="currentColor">
-                  <path d="M19.6 2.2C19.4 1.4 18.8.8 18 .6 16.4.2 10 .2 10 .2S3.6.2 2 .6C1.2.8.6 1.4.4 2.2 0 3.8 0 7 0 7s0 3.2.4 4.8c.2.8.8 1.4 1.6 1.6C3.6 13.8 10 13.8 10 13.8s6.4 0 8-.4c.8-.2 1.4-.8 1.6-1.6.4-1.6.4-4.8.4-4.8s0-3.2-.4-4.8zM8 10V4l5.3 3L8 10z" />
-                </svg>
-                يوتيوب
-              </a>
-            )}
+            <div className="flex items-center gap-2 shrink-0">
+              {audioExists && (
+                <a href={`/api/audio?file=${audioFilename}&name=${encodeURIComponent(lesson.title + ".mp3")}`} download
+                  className="flex items-center gap-1.5 text-xs text-stone-400 hover:text-emerald-600 transition-colors py-1">
+                  <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
+                    <path d="M9 18V5l12-2v13" />
+                    <circle cx="6" cy="18" r="3" />
+                    <circle cx="18" cy="16" r="3" />
+                  </svg>
+                  تحميل الصوت
+                </a>
+              )}
+              {lesson.youtube && (
+                <a href={lesson.youtube} target="_blank" rel="noopener noreferrer"
+                  className="flex items-center gap-1.5 text-xs text-stone-400 hover:text-red-500 transition-colors py-1">
+                  <svg className="w-4 h-4" viewBox="0 0 20 14" fill="currentColor">
+                    <path d="M19.6 2.2C19.4 1.4 18.8.8 18 .6 16.4.2 10 .2 10 .2S3.6.2 2 .6C1.2.8.6 1.4.4 2.2 0 3.8 0 7 0 7s0 3.2.4 4.8c.2.8.8 1.4 1.6 1.6C3.6 13.8 10 13.8 10 13.8s6.4 0 8-.4c.8-.2 1.4-.8 1.6-1.6.4-1.6.4-4.8.4-4.8s0-3.2-.4-4.8zM8 10V4l5.3 3L8 10z" />
+                  </svg>
+                  يوتيوب
+                </a>
+              )}
+            </div>
           </div>
 
           {/* 2. Video */}
@@ -469,6 +496,10 @@ export function CoursePlayer({ lessons, col, levelIdx, subjectIdx, courseIdx, co
       <TranscriptUploadButton
         filename={transcriptFilename}
         onSaved={() => setTranscriptVersion((v) => v + 1)}
+      />
+      <AudioUploadButton
+        filename={audioFilename}
+        onSaved={() => setAudioVersion((v) => v + 1)}
       />
     </>
   );
