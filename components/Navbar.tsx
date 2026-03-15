@@ -58,7 +58,7 @@ export function Navbar() {
       {/* Search overlay */}
       {open && (
         <div
-          className="fixed inset-0 z-40 bg-black/50 backdrop-blur-sm flex items-start pt-20 px-4"
+          className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-start pt-20 px-4 overflow-hidden"
           onClick={() => setOpen(false)}
         >
           <form

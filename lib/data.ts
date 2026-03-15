@@ -1,10 +1,17 @@
 import raw from "@/data/kibbarulmauni.json";
 import { canonicalize } from "@/lib/scholarAliases";
 
+export type TranscriptSegment = {
+  start: number; // seconds
+  dur: number;   // seconds
+  text: string;
+};
+
 export type Lesson = {
   title: string;
   url: string;
   youtube: string | null;
+  transcriptFile?: string; // filename in data/transcripts/, e.g. "0-2-2-0.txt"
 };
 
 export type Course = {

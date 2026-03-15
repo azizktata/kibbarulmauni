@@ -7,6 +7,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ```bash
 npm run dev      # Start development server
 npm run build    # Production build
+npm run start    # Start production server
 npm run lint     # Run ESLint
 ```
 
@@ -27,6 +28,13 @@ Next.js 16 app (App Router, React 19) that serves as a browsable index for Islam
 - `db/index.ts` — Drizzle client via `@libsql/client` (Turso). Requires `TURSO_DATABASE_URL`, `TURSO_AUTH_TOKEN` env vars.
 - `lib/watchedContext.tsx` — `WatchedProvider` / `useWatched` context. Fetches keys from `/api/progress`, posts toggles to `/api/watch`, uses `useOptimistic` for instant UI feedback.
 - `lib/progress.ts` — pure functions (`courseProgress`, `subjectProgress`, `levelProgress`) that compute % watched from a `Set<string>` of watched keys.
+- `/api/profile` — GET/PATCH for user profile fields (`name`, `age`) stored in `db/queries.ts`.
+
+**Transcripts:**
+- `data/transcripts/` — static `.txt` files named `{levelIdx}-{subjectIdx}-{courseIdx}-{lessonIdx}.txt`. Format: `(M:SS) text` segments.
+- `/api/transcript` — serves transcript segments. Accepts `?v={youtubeId}` (fetches live YouTube captions, Arabic then English fallback) or `?file={name}.txt` (reads from `data/transcripts/`). Returns `{ segments: TranscriptSegment[] }` with 24h cache headers.
+- `components/TranscriptPanel.tsx` — renders segments as flowing inline text, auto-scrolls active segment (synced to `currentTime`) into view.
+- `scripts/add-transcript.mjs` — utility to add a new transcript file.
 
 **Routing:**
 - `/` — home page (level list)
