@@ -351,7 +351,7 @@ export function CoursePlayer({ lessons, col, levelIdx, subjectIdx, courseIdx, co
               onMouseDown={onResizeStart}
               className="hidden lg:block absolute right-0 top-0 bottom-0 w-1 cursor-col-resize hover:bg-neutral-600 transition-colors z-10"
             />
-            <TranscriptPanel segments={transcript} currentTime={currentTime} col={col} onSeek={seekTo} variant="dark" />
+            <TranscriptPanel segments={transcript} currentTime={currentTime} col={col} onSeek={seekTo} variant="dark" lessonTitle={lesson.title} youtubeUrl={lesson.youtube ?? undefined} />
           </div>
         )}
       </div>
@@ -427,7 +427,7 @@ export function CoursePlayer({ lessons, col, levelIdx, subjectIdx, courseIdx, co
               </button>
               {transcriptOpen && (
                 <div className="mt-1.5" style={{ height: "260px" }}>
-                  <TranscriptPanel segments={transcript} currentTime={currentTime} col={col} onSeek={seekTo} />
+                  <TranscriptPanel segments={transcript} currentTime={currentTime} col={col} onSeek={seekTo} lessonTitle={lesson.title} youtubeUrl={lesson.youtube ?? undefined} />
                 </div>
               )}
             </div>
