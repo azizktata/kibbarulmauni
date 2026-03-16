@@ -345,14 +345,25 @@ export function CoursePlayer({ lessons, col, levelIdx, subjectIdx, courseIdx, co
       {/* Body — mobile: column stack; desktop: resizable panels */}
       {isMobile ? (
       <div className="flex-1 flex flex-col overflow-hidden">
-        <div className="flex items-center justify-center p-2">
+        <div className="shrink-0 flex items-center justify-center p-2">
           <div className="aspect-video w-full rounded-xl overflow-hidden bg-black">
             {ytId ? <div ref={ambientDivRef} className="w-full h-full" /> : noVideo}
           </div>
         </div>
         {ambientTranscriptOpen && transcript.length > 0 && (
-          <div className="flex-1 overflow-hidden border-t border-neutral-800 min-h-0">
+          <div className={ambientNotesOpen ? "h-40 overflow-hidden border-t border-neutral-800 min-h-0" : "flex-1 overflow-hidden border-t border-neutral-800 min-h-0"}>
             <TranscriptPanel segments={transcript} currentTime={currentTime} col={col} onSeek={seekTo} variant="dark" lessonTitle={lesson.title} youtubeUrl={lesson.youtube ?? undefined} />
+          </div>
+        )}
+        {ambientNotesOpen && notesLoggedIn && (
+          <div className="flex-1 overflow-hidden border-t border-neutral-800 min-h-0">
+            <AmbientNotePanel
+              lessonKey={`${levelIdx}:${subjectIdx}:${courseIdx}:${selected}`}
+              lessonTitle={lesson.title}
+              col={col}
+              currentTime={currentTime}
+              onSeek={seekTo}
+            />
           </div>
         )}
       </div>

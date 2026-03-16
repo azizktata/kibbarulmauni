@@ -194,7 +194,7 @@ export function NoteEditorBody({
           onChange={(e) => setContent(e.target.value)}
           dir="auto"
           className={cn(
-            "flex-1 resize-none px-4 py-4 text-sm font-mono leading-relaxed focus:outline-none",
+            "flex-1 w-full min-w-0 resize-none px-4 py-4 text-sm font-mono leading-relaxed focus:outline-none",
             isDark
               ? "bg-neutral-950 text-neutral-200 placeholder-neutral-700 caret-emerald-400"
               : "bg-white text-stone-800 placeholder-stone-300 caret-stone-600"
