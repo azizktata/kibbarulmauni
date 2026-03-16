@@ -89,12 +89,21 @@ Global `Sheet` (`side="right"`) mounted in `app/layout.tsx`. Opened from Navbar 
 
 **Drag and drop:**
 - `NoteRow` has `draggable` + `GripVerticalIcon`; sets `dataTransfer["note-drag"]` on drag start
-- `FolderNode` header is draggable (sets `dataTransfer["folder-drag"]`) and a drop target:
+- `FolderNode` header is draggable (sets `dataTransfer["folder-drag"]`) and a drop target with three zones based on cursor vertical position:
   - Note dragged over folder → amber highlight → drop moves note into folder
-  - Folder dragged over folder → blue top/bottom line → drop reorders folders (fractional `sortOrder`)
-- `NoteRow` is also a drop target for other notes → blue line above/below → drop reorders notes within their folder
+  - Folder dragged over top 25% → blue line above → reorder before (fractional `sortOrder`)
+  - Folder dragged over middle 50% → amber highlight → **nest folder inside** (sets `parentId`)
+  - Folder dragged over bottom 25% → blue line below → reorder after (fractional `sortOrder`)
+- Circular nesting prevented: `isDescendant(folders, targetId, ancestorId)` walks ancestry chain; drop silently ignored if target is a descendant of dragged folder
+- `NoteRow` is also a drop target for other notes → blue line above/below → drop reorders notes within their folder (also updates `folderId` to match target's folder)
 - Root "بدون مجلد" zone is a drop target → drop removes note from any folder (`folderId: null`)
 - Reorder uses fractional sortOrder: `(prev.sortOrder + target.sortOrder) / 2`; single API call per move
+
+**Folder rename:**
+- Hover a folder → `PencilIcon` button appears alongside `+` and delete
+- Double-click the folder name also enters edit mode
+- Inline `<input>` replaces the name span; Enter/blur saves, Escape cancels
+- Drag is disabled (`draggable={false}`) while editing to prevent accidental drags
 
 **Note creation in lesson context:**
 When `handleCreateNote(folderId)` is called, it inherits `lessonKey` from:
