@@ -24,7 +24,7 @@ Next.js 16 app (App Router, React 19) that serves as a browsable index for Islam
 
 **Auth & progress tracking:**
 - `auth.ts` — NextAuth v5 with Google provider (JWT strategy). Upserts users into the DB on sign-in. Requires `AUTH_GOOGLE_ID`, `AUTH_GOOGLE_SECRET` env vars.
-- `db/schema.ts` — Drizzle schema: `users` table + `watched_lessons` table. Lesson keys use `"levelIdx:subjectIdx:courseIdx:lessonIdx"` format.
+- `db/schema.ts` — Drizzle schema: `users`, `watched_lessons`, `note_folders`, and `notes` tables. Lesson keys use `"levelIdx:subjectIdx:courseIdx:lessonIdx"` format.
 - `db/index.ts` — Drizzle client via `@libsql/client` (Turso). Requires `TURSO_DATABASE_URL`, `TURSO_AUTH_TOKEN` env vars.
 - `lib/watchedContext.tsx` — `WatchedProvider` / `useWatched` context. Fetches keys from `/api/progress`, posts toggles to `/api/watch`, uses `useOptimistic` for instant UI feedback.
 - `lib/progress.ts` — pure functions (`courseProgress`, `subjectProgress`, `levelProgress`) that compute % watched from a `Set<string>` of watched keys.
@@ -42,6 +42,16 @@ Next.js 16 app (App Router, React 19) that serves as a browsable index for Islam
 - `data/audio/` — static `.mp3` files named `{levelIdx}-{subjectIdx}-{courseIdx}-{lessonIdx}.mp3`.
 - `/api/audio` — GET serves/checks MP3 files (`?file=`, `?check=1`); POST uploads (admin-only, same hardcoded email gate). 24h cache headers.
 - `components/AudioUploadButton.tsx` — admin-only UI to upload MP3 files; download button appears for all users when audio exists.
+
+**Notes:**
+- `db/schema.ts` — `note_folders` (hierarchical, `parentId` self-reference) and `notes` tables. Notes have `noteType` (`"concept"` | `"revision"`), optional `folderId` and `lessonKey`, and `isPinned`/`sortOrder` for ordering.
+- `lib/notesContext.tsx` — `NotesProvider` / `useNotes` context. Fetches all notes+folders from `/api/notes` on mount; all mutations are optimistic. Tracks `activeLessonKey` / `activeFolderId` for the sidebar's lesson-scoped view. `Ctrl+Shift+N` opens the sidebar globally.
+- `/api/notes` — CRUD for notes (GET list, POST create, PATCH/DELETE by `[id]`).
+- `/api/notes/folders` — CRUD for folders (GET/POST, PATCH/DELETE by `[id]`).
+- `/api/notes/search` — full-text search across note titles/content.
+- `components/NotesSidePanel.tsx` / `NotesSidebar.tsx` — side panel UI; `NotesFab.tsx` — floating action button that opens the panel.
+- `components/NoteEditor.tsx` / `NoteEditorBody.tsx` — rich note editor.
+- `components/AmbientNotePanel.tsx` — inline note panel shown within the lesson player.
 
 **Admin gating:** Both audio and transcript upload APIs check `session.user.email === "azizktata77@gmail.com"` directly (no DB role).
 
