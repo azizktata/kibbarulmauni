@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useCallback, useEffect, useRef } from "react";
-import { ChevronDownIcon, ChevronLeftIcon, FolderIcon, FolderOpenIcon, PlusIcon, NotebookPenIcon, SearchIcon, BookOpenIcon, RotateCcwIcon, PinIcon, FileTextIcon, Trash2Icon, FolderPlusIcon, ArrowRightIcon, GripVerticalIcon } from "lucide-react";
+import { ChevronDownIcon, ChevronLeftIcon, FolderIcon, FolderOpenIcon, PlusIcon, NotebookPenIcon, SearchIcon, BookOpenIcon, RotateCcwIcon, PinIcon, FileTextIcon, Trash2Icon, FolderPlusIcon, ArrowRightIcon, GripVerticalIcon, PencilIcon } from "lucide-react";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Collapsible, CollapsibleTrigger, CollapsibleContent } from "@/components/ui/collapsible";
 import { useNotes, type NoteFolder, type NoteSummary } from "@/lib/notesContext";
@@ -114,6 +114,8 @@ function FolderNode({
   onNoteDelete,
   onCreateNote,
   onDeleteFolder,
+  onRenameFolder,
+  onNestFolder,
   onMoveNote,
   onReorderNote,
   onReorderFolder,
@@ -128,6 +130,8 @@ function FolderNode({
   onNoteDelete: (id: string) => void;
   onCreateNote: (folderId: string) => void;
   onDeleteFolder: (id: string) => void;
+  onRenameFolder: (id: string, name: string) => void;
+  onNestFolder: (draggedId: string, parentId: string) => void;
   onMoveNote: (noteId: string, folderId: string | null) => void;
   onReorderNote: (draggedId: string, targetId: string, position: "before" | "after") => void;
   onReorderFolder: (draggedId: string, targetId: string, position: "before" | "after") => void;
@@ -136,9 +140,24 @@ function FolderNode({
 }) {
   const [open, setOpen] = useState(defaultOpen);
   const [hovered, setHovered] = useState(false);
-  // "into" = note dragged over folder header (move into)
-  // "before"/"after" = folder dragged over folder header (reorder)
-  const [dropIndicator, setDropIndicator] = useState<"into" | "before" | "after" | null>(null);
+  const [editing, setEditing] = useState(false);
+  const [editName, setEditName] = useState(folder.name);
+  // "into" = note dragged over folder header (move note into folder)
+  // "nest" = folder dragged over folder middle (nest folder inside)
+  // "before"/"after" = folder dragged over folder top/bottom (reorder)
+  const [dropIndicator, setDropIndicator] = useState<"into" | "nest" | "before" | "after" | null>(null);
+
+  function startEdit(e: React.MouseEvent) {
+    e.stopPropagation();
+    setEditName(folder.name);
+    setEditing(true);
+  }
+
+  function commitEdit() {
+    const trimmed = editName.trim();
+    if (trimmed && trimmed !== folder.name) onRenameFolder(folder.id, trimmed);
+    setEditing(false);
+  }
 
   const children = allFolders
     .filter((f) => f.parentId === folder.id)
@@ -155,14 +174,15 @@ function FolderNode({
   return (
     <Collapsible open={open} onOpenChange={setOpen}>
       <div
-        draggable
+        draggable={!editing}
         onDragStart={(e) => {
+          if (editing) { e.preventDefault(); return; }
           e.dataTransfer.setData("folder-drag", folder.id);
           e.dataTransfer.effectAllowed = "move";
         }}
         className={cn(
           "flex items-center gap-1 rounded-lg hover:bg-stone-100 group/folder transition-colors",
-          dropIndicator === "into" && "bg-amber-50 ring-1 ring-amber-300",
+          (dropIndicator === "into" || dropIndicator === "nest") && "bg-amber-50 ring-1 ring-amber-300",
           dropIndicator === "before" && "border-t-2 border-blue-400",
           dropIndicator === "after" && "border-b-2 border-blue-400",
         )}
@@ -172,50 +192,84 @@ function FolderNode({
         onDragOver={(e) => {
           const types = e.dataTransfer.types;
           if (types.includes("note-drag")) {
-            // Note dragged over folder → move into
             e.preventDefault();
             e.dataTransfer.dropEffect = "move";
             setDropIndicator("into");
           } else if (types.includes("folder-drag")) {
-            // Folder dragged over folder → reorder
             e.preventDefault();
             e.dataTransfer.dropEffect = "move";
             const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
-            setDropIndicator(e.clientY < rect.top + rect.height / 2 ? "before" : "after");
+            const pct = (e.clientY - rect.top) / rect.height;
+            if (pct < 0.25) setDropIndicator("before");
+            else if (pct > 0.75) setDropIndicator("after");
+            else setDropIndicator("nest");
           }
         }}
         onDragLeave={() => setDropIndicator(null)}
         onDrop={(e) => {
           e.preventDefault();
           const noteId = e.dataTransfer.getData("note-drag") || e.dataTransfer.getData("noteId");
-          const folderId = e.dataTransfer.getData("folder-drag");
+          const draggedFolderId = e.dataTransfer.getData("folder-drag");
 
           if (noteId && dropIndicator === "into") {
             onMoveNote(noteId, folder.id);
-          } else if (folderId && folderId !== folder.id && (dropIndicator === "before" || dropIndicator === "after")) {
-            onReorderFolder(folderId, folder.id, dropIndicator);
+          } else if (draggedFolderId && draggedFolderId !== folder.id) {
+            if (dropIndicator === "nest") {
+              onNestFolder(draggedFolderId, folder.id);
+            } else if (dropIndicator === "before" || dropIndicator === "after") {
+              onReorderFolder(draggedFolderId, folder.id, dropIndicator);
+            }
           }
           setDropIndicator(null);
         }}
       >
         <GripVerticalIcon className="w-3 h-3 text-stone-300 shrink-0 opacity-0 group-hover/folder:opacity-100 cursor-grab" />
-        <CollapsibleTrigger className="flex items-center gap-1.5 flex-1 py-1.5 min-w-0">
-          {open ? (
-            <FolderOpenIcon className="w-3.5 h-3.5 text-amber-400 shrink-0" />
-          ) : (
-            <FolderIcon className="w-3.5 h-3.5 text-amber-400 shrink-0" />
-          )}
-          <span className="text-xs font-medium text-stone-600 truncate text-right">
-            {folder.name}
-          </span>
-          {open ? (
-            <ChevronDownIcon className="w-3 h-3 text-stone-300 shrink-0 mr-auto" />
-          ) : (
-            <ChevronLeftIcon className="w-3 h-3 text-stone-300 shrink-0 mr-auto" />
-          )}
-        </CollapsibleTrigger>
-        {hovered && (
+        {editing ? (
+          <div className="flex items-center gap-1 flex-1 py-1 min-w-0" onClick={(e) => e.stopPropagation()}>
+            {open ? (
+              <FolderOpenIcon className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+            ) : (
+              <FolderIcon className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+            )}
+            <input
+              autoFocus
+              value={editName}
+              onChange={(e) => setEditName(e.target.value)}
+              onBlur={commitEdit}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") commitEdit();
+                if (e.key === "Escape") setEditing(false);
+                e.stopPropagation();
+              }}
+              className="flex-1 text-xs font-medium text-stone-700 bg-white border border-stone-300 rounded px-1.5 py-0.5 focus:outline-none focus:ring-1 focus:ring-emerald-400 text-right min-w-0"
+            />
+          </div>
+        ) : (
+          <CollapsibleTrigger className="flex items-center gap-1.5 flex-1 py-1.5 min-w-0" onDoubleClick={startEdit}>
+            {open ? (
+              <FolderOpenIcon className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+            ) : (
+              <FolderIcon className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+            )}
+            <span className="text-xs font-medium text-stone-600 truncate text-right">
+              {folder.name}
+            </span>
+            {open ? (
+              <ChevronDownIcon className="w-3 h-3 text-stone-300 shrink-0 mr-auto" />
+            ) : (
+              <ChevronLeftIcon className="w-3 h-3 text-stone-300 shrink-0 mr-auto" />
+            )}
+          </CollapsibleTrigger>
+        )}
+        {hovered && !editing && (
           <div className="flex items-center gap-0.5 shrink-0">
+            <button
+              onClick={startEdit}
+              className="p-1 rounded text-stone-300 hover:text-stone-600 transition-colors"
+              title="تعديل الاسم"
+            >
+              <PencilIcon className="w-3 h-3" />
+            </button>
             <button
               onClick={(e) => { e.stopPropagation(); onCreateNote(folder.id); }}
               className="p-1 rounded text-stone-300 hover:text-stone-600 transition-colors"
@@ -245,6 +299,8 @@ function FolderNode({
             onNoteDelete={onNoteDelete}
             onCreateNote={onCreateNote}
             onDeleteFolder={onDeleteFolder}
+            onRenameFolder={onRenameFolder}
+            onNestFolder={onNestFolder}
             onMoveNote={onMoveNote}
             onReorderNote={onReorderNote}
             onReorderFolder={onReorderFolder}
@@ -272,6 +328,18 @@ function FolderNode({
       </CollapsibleContent>
     </Collapsible>
   );
+}
+
+// ── Helpers ───────────────────────────────────────────────────────────────────
+
+/** Returns true if `targetId` is a descendant of `ancestorId` in the folder tree. */
+function isDescendant(folders: NoteFolder[], targetId: string, ancestorId: string): boolean {
+  let current = folders.find((f) => f.id === targetId);
+  while (current) {
+    if (current.parentId === ancestorId) return true;
+    current = folders.find((f) => f.id === current!.parentId);
+  }
+  return false;
 }
 
 // ── NotesSidebar ──────────────────────────────────────────────────────────────
@@ -540,6 +608,10 @@ export function NotesSidebar() {
                   onNoteDelete={deleteNote}
                   onCreateNote={handleCreateNote}
                   onDeleteFolder={deleteFolder}
+                  onRenameFolder={(id, name) => updateFolder(id, { name })}
+                  onNestFolder={(id, parentId) => {
+                    if (!isDescendant(folders, parentId, id)) updateFolder(id, { parentId });
+                  }}
                   onMoveNote={(noteId, folderId) => updateNoteMeta(noteId, { folderId })}
                   onReorderNote={handleReorderNote}
                   onReorderFolder={handleReorderFolder}
@@ -670,6 +742,10 @@ export function NotesSidebar() {
                       onNoteDelete={deleteNote}
                       onCreateNote={handleCreateNote}
                       onDeleteFolder={deleteFolder}
+                      onRenameFolder={(id, name) => updateFolder(id, { name })}
+                      onNestFolder={(id, parentId) => {
+                        if (!isDescendant(folders, parentId, id)) updateFolder(id, { parentId });
+                      }}
                       onMoveNote={(noteId, folderId) => updateNoteMeta(noteId, { folderId })}
                       onReorderNote={handleReorderNote}
                       onReorderFolder={handleReorderFolder}
