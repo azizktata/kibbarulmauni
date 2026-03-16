@@ -447,7 +447,7 @@ export function CoursePlayer({ lessons, col, levelIdx, subjectIdx, courseIdx, co
             {ytId ? <div ref={mainDivRef} className="w-full h-full" /> : noVideo}
             {ytId && (
               <button onClick={() => { ambientStartAtRef.current = Math.floor(currentTime); setAmbientMode(true); }}
-                className="absolute top-13 left-2.5 flex items-center gap-1.5 text-[11px] font-medium text-white bg-black/50 hover:bg-black/70 rounded-lg px-2.5 py-1.5 opacity-0 group-hover:opacity-100 transition-opacity">
+                className="absolute top-13 left-2.5 flex items-center gap-1.5 text-[11px] font-medium text-white bg-black/50 hover:bg-black/70 rounded-lg px-2.5 py-1.5 opacity-100 lg:opacity-0 lg:group-hover:opacity-100 transition-opacity">
                 <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
                   <path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3" />
                 </svg>
