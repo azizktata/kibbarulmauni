@@ -145,7 +145,7 @@ export function NoteEditor() {
         }}
         onPointerDown={(e) => e.stopPropagation()}
         onClick={(e) => e.stopPropagation()}
-        className="flex-1 text-xs font-semibold text-stone-700 bg-transparent focus:outline-none placeholder-stone-300 text-right min-w-0 select-text cursor-text"
+        className="flex-1 text-[16px] md:text-xs font-semibold text-stone-700 bg-transparent focus:outline-none placeholder-stone-300 text-right min-w-0 select-text cursor-text"
         placeholder="عنوان الملاحظة..."
         dir="rtl"
       />
