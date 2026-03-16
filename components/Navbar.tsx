@@ -1,10 +1,12 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { NotebookPenIcon } from "lucide-react";
 import { UserButton } from "./UserButton";
+import { ThemeToggle } from "./ThemeToggle";
 import { useNotes } from "@/lib/notesContext";
 
 export function Navbar() {
@@ -24,19 +26,28 @@ export function Navbar() {
 
   return (
     <>
-      <nav className="bg-emerald-950 text-white h-12 flex items-center px-6 sticky top-0 z-50 shadow-md">
+      <nav className="bg-[#193833] text-white h-12 flex items-center px-6 sticky top-0 z-50 shadow-md">
         <div className="max-w-5xl w-full mx-auto flex items-center justify-between gap-4">
-          <Link
-            href="/"
-            className="text-base font-bold text-white hover:text-emerald-200 transition-colors shrink-0"
-          >
-            جامعة كبار العلماء
+          <Link href="/" className="shrink-0 hover:opacity-80 transition-opacity">
+            <Image src="/logo.png" height={32} width={120} alt="جامعة كبار العلماء" className="object-contain" />
           </Link>
 
           <div className="flex items-center gap-1">
             <Link
+              href="/"
+              className="text-xs text-white/60 hover:text-[#F0BC53] transition-colors px-3 py-1.5 rounded-lg hover:bg-white/5"
+            >
+              الرئيسية
+            </Link>
+            <Link
+              href="/about"
+              className="text-xs text-white/60 hover:text-[#F0BC53] transition-colors px-3 py-1.5 rounded-lg hover:bg-white/5"
+            >
+              عن الجامعة
+            </Link>
+            <Link
               href="/scholars"
-              className="text-xs text-white/60 hover:text-white transition-colors px-3 py-1.5 rounded-lg hover:bg-white/5"
+              className="text-xs text-white/60 hover:text-[#F0BC53] transition-colors px-3 py-1.5 rounded-lg hover:bg-white/5"
             >
               المشايخ
             </Link>
@@ -62,11 +73,12 @@ export function Navbar() {
               >
                 <NotebookPenIcon className="w-4 h-4" />
                 {notes.length > 0 && (
-                  <span className="absolute top-1.5 right-1.5 w-1.5 h-1.5 rounded-full bg-emerald-400" />
+                  <span className="absolute top-1.5 right-1.5 w-1.5 h-1.5 rounded-full bg-[#F0BC53]" />
                 )}
               </button>
             )}
 
+            <ThemeToggle />
             <UserButton />
           </div>
         </div>

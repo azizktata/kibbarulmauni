@@ -26,6 +26,7 @@ Next.js 16 app (App Router, React 19) that serves as a browsable index for Islam
 - `auth.ts` — NextAuth v5 with Google provider (JWT strategy). Upserts users into the DB on sign-in. Requires `AUTH_GOOGLE_ID`, `AUTH_GOOGLE_SECRET` env vars.
 - `db/schema.ts` — Drizzle schema: `users`, `watched_lessons`, `note_folders`, and `notes` tables. Lesson keys use `"levelIdx:subjectIdx:courseIdx:lessonIdx"` format.
 - `db/index.ts` — Drizzle client via `@libsql/client` (Turso). Requires `TURSO_DATABASE_URL`, `TURSO_AUTH_TOKEN` env vars.
+- `db/queries.ts` — all DB query functions (user upsert, watched lessons, profile, notes, folders) called from API routes.
 - `lib/watchedContext.tsx` — `WatchedProvider` / `useWatched` context. Fetches keys from `/api/progress`, posts toggles to `/api/watch`, uses `useOptimistic` for instant UI feedback.
 - `lib/progress.ts` — pure functions (`courseProgress`, `subjectProgress`, `levelProgress`) that compute % watched from a `Set<string>` of watched keys.
 - `lib/useRecentlyWatched.ts` — localStorage hook (`useRecentlyWatched`) + `saveWatched()` for the "recently watched" section on the home page (max 6 entries, keyed by course).
@@ -75,9 +76,11 @@ Next.js 16 app (App Router, React 19) that serves as a browsable index for Islam
 - `@base-ui/react` for accessible primitives
 - `lucide-react` for icons
 - `fuse.js` for fuzzy search
+- `react-markdown` for rendering note content
+- `react-resizable-panels` for the resizable notes side panel
 
 **Adding shadcn components:** `npx shadcn add <component-name>`
 
 **Path aliases:** `@/` maps to the project root (components → `@/components`, utils → `@/lib/utils`, etc.)
 
-**Dark mode:** Class-based (`.dark` class), toggled via `@custom-variant dark (&:is(.dark *))` in globals.css.
+**Dark mode:** Class-based (`.dark` class), toggled via `@custom-variant dark (&:is(.dark *))` in globals.css. `components/ThemeToggle.tsx` handles the toggle — reads/writes `localStorage("theme")`, respects `prefers-color-scheme` on first load, and sets the class on `document.documentElement`.

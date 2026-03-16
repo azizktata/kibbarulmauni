@@ -52,7 +52,7 @@ export default async function CoursePage({
         </div>
       </header>
 
-      <main className="max-w-5xl mx-auto px-4 py-8 flex flex-col gap-6">
+      <main className="max-w-5xl 2xl:max-w-7xl mx-auto px-4 py-8 flex flex-col gap-6">
         {course.files.length === 0 ? (
           <div className="text-center py-24 text-stone-400">
             <div className="text-5xl mb-4">🎧</div>
@@ -74,7 +74,7 @@ export default async function CoursePage({
 
         {siblings.length > 1 && (
           <div>
-            <p className="text-xs font-semibold text-stone-400 tracking-widest mb-3">
+            <p className="text-xs font-semibold text-stone-400 dark:text-white/30 tracking-widest mb-3">
               مقررات أخرى في {subject.title}
             </p>
             <div className="flex flex-col gap-1.5">
@@ -87,10 +87,10 @@ export default async function CoursePage({
                     className={`flex items-center gap-3 px-4 py-3 rounded-xl border text-sm font-medium transition-all ${
                       isActive
                         ? `${col.light} ${col.border} ${col.text}`
-                        : "bg-white border-stone-100 text-stone-600 hover:border-stone-200 hover:shadow-sm"
+                        : "bg-white dark:bg-white/[0.04] border-stone-100 dark:border-white/[0.08] text-stone-600 dark:text-white/50 hover:border-stone-200 dark:hover:border-white/[0.15] hover:shadow-sm dark:hover:bg-white/[0.08]"
                     }`}
                   >
-                    <span className={`w-5 h-5 rounded-md text-[11px] font-bold flex items-center justify-center shrink-0 ${isActive ? `${col.bg} text-white` : "bg-stone-100 text-stone-400"}`}>
+                    <span className={`w-5 h-5 rounded-md text-[11px] font-bold flex items-center justify-center shrink-0 ${isActive ? `${col.bg} text-white` : "bg-stone-100 dark:bg-white/10 text-stone-400 dark:text-white/40"}`}>
                       {idx + 1}
                     </span>
                     <span className="flex-1 truncate">{sib.title}</span>

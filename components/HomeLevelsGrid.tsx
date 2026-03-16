@@ -15,9 +15,10 @@ function lessonWord(n: number) {
 
 interface Props {
   levels: Level[];
+  glass?: boolean;
 }
 
-export function HomeLevelsGrid({ levels }: Props) {
+export function HomeLevelsGrid({ levels, glass = false }: Props) {
   const { watchedKeys, isLoaded } = useWatched();
 
   const progresses = useMemo(
@@ -35,9 +36,13 @@ export function HomeLevelsGrid({ levels }: Props) {
           <Link
             key={idx}
             href={`/level/${idx}`}
-            className="group bg-white rounded-2xl shadow-sm border border-stone-100 overflow-hidden hover:shadow-lg hover:-translate-y-1.5 hover:border-stone-200 transition-all duration-200"
+            className={
+              glass
+                ? "group rounded-2xl border border-[#193833]/10 overflow-hidden bg-[#193833]/[0.04] hover:bg-[#193833]/[0.08] hover:-translate-y-1 hover:border-[#193833]/20 hover:shadow-md transition-all duration-200"
+                : "group bg-white dark:bg-white/[0.04] rounded-2xl shadow-sm dark:shadow-none border border-stone-100 dark:border-white/[0.08] overflow-hidden hover:shadow-lg hover:-translate-y-1.5 hover:border-stone-200 dark:hover:border-white/[0.15] dark:hover:bg-white/[0.08] transition-all duration-200"
+            }
           >
-            <div className={`h-1 w-full bg-gradient-to-l ${c.gradient}`} />
+            <div className={`h-1 w-full bg-gradient-to-l ${c.gradient} ${glass ? "opacity-80 h-0.5" : ""}`} />
             <div className="p-5">
               <div
                 className={`w-11 h-11 rounded-xl ${c.bg} text-white flex items-center justify-center text-xl font-bold mb-3 shadow-sm group-hover:scale-110 transition-transform duration-200`}
@@ -47,7 +52,7 @@ export function HomeLevelsGrid({ levels }: Props) {
 
               {/* Title + progress ring on the same row */}
               <div className="flex items-start gap-2 mb-3">
-                <h3 className="flex-1 font-bold text-stone-800 text-sm leading-snug">
+                <h3 className={`flex-1 font-bold text-sm leading-snug ${glass ? "text-[#193833]" : "text-stone-800 dark:text-white/80"}`}>
                   {level.title}
                 </h3>
                 {isLoaded && pct > 0 && (
@@ -57,12 +62,14 @@ export function HomeLevelsGrid({ levels }: Props) {
 
               <div className="flex items-center gap-2 text-xs">
                 <span
-                  className={`${c.light} ${c.text} text-[11px] font-semibold px-1.5 py-0.5 rounded-full`}
+                  className={glass
+                    ? `${c.light} ${c.text} text-[11px] font-semibold px-1.5 py-0.5 rounded-full`
+                    : `${c.light} ${c.text} text-[11px] font-semibold px-1.5 py-0.5 rounded-full`}
                 >
                   {level.subjects.length} مادة
                 </span>
-                <span className="text-stone-300">·</span>
-                <span className="text-stone-400">{lessons} {lessonWord(lessons)}</span>
+                <span className={glass ? "text-[#193833]/20" : "text-stone-300 dark:text-white/20"}>·</span>
+                <span className={glass ? "text-[#193833]/50" : "text-stone-400 dark:text-white/35"}>{lessons} {lessonWord(lessons)}</span>
               </div>
             </div>
           </Link>

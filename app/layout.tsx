@@ -33,7 +33,7 @@ export default async function RootLayout({
 
   return (
     <html lang="ar" dir="rtl" className={`${cairo.variable} ${amiri.variable}`}>
-      <body className="antialiased font-cairo bg-stone-50 text-stone-900">
+      <body className="antialiased font-cairo bg-stone-50 dark:bg-[#111111] text-stone-900 dark:text-stone-100">
         <SessionProvider session={session}>
           <NotesProvider isLoggedIn={!!session?.user?.id}>
             <WatchedProvider isLoggedIn={!!session?.user?.id}>

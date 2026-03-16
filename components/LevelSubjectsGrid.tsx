@@ -40,7 +40,7 @@ export function LevelSubjectsGrid({ levelIdx, subjects, col }: Props) {
           <Link
             key={sIdx}
             href={`/level/${levelIdx}/${sIdx}`}
-            className="group bg-white rounded-2xl border border-stone-100 shadow-sm p-5 hover:shadow-md hover:border-stone-200 transition-all duration-200 flex items-start gap-4"
+            className="group bg-white dark:bg-white/[0.04] rounded-2xl border border-stone-100 dark:border-white/[0.08] shadow-sm dark:shadow-none p-5 hover:shadow-md hover:border-stone-200 dark:hover:border-white/[0.15] dark:hover:bg-white/[0.08] transition-all duration-200 flex items-start gap-4"
           >
             {/* Number badge */}
             <div
@@ -50,14 +50,14 @@ export function LevelSubjectsGrid({ levelIdx, subjects, col }: Props) {
             </div>
 
             <div className="flex-1 min-w-0">
-              <h3 className="font-semibold text-stone-800 text-sm leading-snug group-hover:text-stone-900">
+              <h3 className="font-semibold text-stone-800 dark:text-white/80 text-sm leading-snug group-hover:text-stone-900 dark:group-hover:text-white">
                 {subject.title}
               </h3>
-              <div className="flex items-center gap-2 mt-2 text-xs text-stone-400">
+              <div className="flex items-center gap-2 mt-2 text-xs text-stone-400 dark:text-white/35">
                 <span>{subject.courses.length} مقرر</span>
                 {lessons > 0 && (
                   <>
-                    <span className="text-stone-200">·</span>
+                    <span className="text-stone-200 dark:text-white/15">·</span>
                     <span>{lessons} {lessonWord(lessons)}</span>
                   </>
                 )}
@@ -69,7 +69,7 @@ export function LevelSubjectsGrid({ levelIdx, subjects, col }: Props) {
               {isLoaded && pct > 0 ? (
                 <ProgressRing pct={pct} size={28} stroke={3} color={col.ring} />
               ) : (
-                <div className="text-stone-200 group-hover:text-stone-400 transition-colors">
+                <div className="text-stone-200 dark:text-white/15 group-hover:text-stone-400 dark:group-hover:text-white/40 transition-colors">
                   <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
                     <path d="M10 8L6 4.5l.9-.9L11.8 8 6.9 12.4 6 11.5 10 8z" transform="scale(-1,1) translate(-16,0)" />
                   </svg>

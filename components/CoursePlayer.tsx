@@ -431,15 +431,15 @@ export function CoursePlayer({ lessons, col, levelIdx, subjectIdx, courseIdx, co
         <div className="lg:col-span-2 flex flex-col gap-3">
 
           {/* 1. Lesson title */}
-          <div className="bg-white rounded-xl border border-stone-100 shadow-sm px-4 py-3.5 flex items-start justify-between gap-3">
+          <div className="bg-white dark:bg-white/[0.04] rounded-xl border border-stone-100 dark:border-white/[0.08] shadow-sm dark:shadow-none px-4 py-3.5 flex items-start justify-between gap-3">
             <div>
-              <p className="font-semibold text-stone-800 text-sm leading-snug">{lesson.title}</p>
+              <p className="font-semibold text-stone-800 dark:text-white/80 text-sm leading-snug">{lesson.title}</p>
               <p className={`text-xs mt-1 ${col.text}`}>الدرس {toAr(selected)} من {toAr(lessons.length - 1)}</p>
             </div>
             <div className="flex items-center gap-2 shrink-0">
               {audioExists && (
                 <a href={`/api/audio?file=${audioFilename}&name=${encodeURIComponent(lesson.title + ".mp3")}`} download
-                  className="flex items-center gap-1.5 text-xs text-stone-400 hover:text-emerald-600 transition-colors py-1">
+                  className="flex items-center gap-1.5 text-xs text-stone-400 dark:text-white/35 hover:text-emerald-600 transition-colors py-1">
                   <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
                     <path d="M9 18V5l12-2v13" />
                     <circle cx="6" cy="18" r="3" />
@@ -450,7 +450,7 @@ export function CoursePlayer({ lessons, col, levelIdx, subjectIdx, courseIdx, co
               )}
               {lesson.youtube && (
                 <a href={lesson.youtube} target="_blank" rel="noopener noreferrer"
-                  className="flex items-center gap-1.5 text-xs text-stone-400 hover:text-red-500 transition-colors py-1">
+                  className="flex items-center gap-1.5 text-xs text-stone-400 dark:text-white/35 hover:text-red-500 transition-colors py-1">
                   <svg className="w-4 h-4" viewBox="0 0 20 14" fill="currentColor">
                     <path d="M19.6 2.2C19.4 1.4 18.8.8 18 .6 16.4.2 10 .2 10 .2S3.6.2 2 .6C1.2.8.6 1.4.4 2.2 0 3.8 0 7 0 7s0 3.2.4 4.8c.2.8.8 1.4 1.6 1.6C3.6 13.8 10 13.8 10 13.8s6.4 0 8-.4c.8-.2 1.4-.8 1.6-1.6.4-1.6.4-4.8.4-4.8s0-3.2-.4-4.8zM8 10V4l5.3 3L8 10z" />
                   </svg>
@@ -478,14 +478,14 @@ export function CoursePlayer({ lessons, col, levelIdx, subjectIdx, courseIdx, co
           {transcript.length > 0 && (
             <div>
               <button onClick={() => setTranscriptOpen((v) => !v)}
-                className="w-full flex items-center justify-between gap-2 bg-white border border-stone-100 rounded-xl px-4 py-2.5 shadow-sm hover:bg-stone-50 transition-colors">
+                className="w-full flex items-center justify-between gap-2 bg-white dark:bg-white/[0.04] border border-stone-100 dark:border-white/[0.08] rounded-xl px-4 py-2.5 shadow-sm dark:shadow-none hover:bg-stone-50 dark:hover:bg-white/[0.08] transition-colors">
                 <div className="flex items-center gap-2">
-                  <svg className="w-3.5 h-3.5 text-stone-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
+                  <svg className="w-3.5 h-3.5 text-stone-400 dark:text-white/35" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
                     <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
                   </svg>
-                  <span className="text-xs font-semibold text-stone-500">النص</span>
+                  <span className="text-xs font-semibold text-stone-500 dark:text-white/35">النص</span>
                 </div>
-                <svg className={`w-3.5 h-3.5 text-stone-400 transition-transform ${transcriptOpen ? "rotate-180" : ""}`}
+                <svg className={`w-3.5 h-3.5 text-stone-400 dark:text-white/35 transition-transform ${transcriptOpen ? "rotate-180" : ""}`}
                   viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5}>
                   <path d="m6 9 6 6 6-6" />
                 </svg>
@@ -501,12 +501,12 @@ export function CoursePlayer({ lessons, col, levelIdx, subjectIdx, courseIdx, co
           {/* 4. Prev / Next */}
           <div className="flex justify-between gap-3">
             <button onClick={goNext} disabled={selected === lessons.length - 1}
-              className="flex-1 flex items-center justify-center gap-2 bg-white border border-stone-100 rounded-xl py-2.5 text-xs font-medium text-stone-500 hover:bg-stone-50 hover:text-stone-700 disabled:opacity-30 disabled:cursor-not-allowed transition-colors shadow-sm">
+              className="flex-1 flex items-center justify-center gap-2 bg-white dark:bg-white/[0.04] border border-stone-100 dark:border-white/[0.08] rounded-xl py-2.5 text-xs font-medium text-stone-500 dark:text-white/40 hover:bg-stone-50 dark:hover:bg-white/[0.08] hover:text-stone-700 dark:hover:text-white/70 disabled:opacity-30 disabled:cursor-not-allowed transition-colors shadow-sm dark:shadow-none">
               <svg className="w-4 h-4 rotate-180" viewBox="0 0 16 16" fill="currentColor"><path d="M10.5 8L6 4l-1 1L8.5 8 5 11l1 1 4.5-4z" /></svg>
               الدرس التالي
             </button>
             <button onClick={() => setSelected((s) => Math.max(s - 1, 0))} disabled={selected === 0}
-              className="flex-1 flex items-center justify-center gap-2 bg-white border border-stone-100 rounded-xl py-2.5 text-xs font-medium text-stone-500 hover:bg-stone-50 hover:text-stone-700 disabled:opacity-30 disabled:cursor-not-allowed transition-colors shadow-sm">
+              className="flex-1 flex items-center justify-center gap-2 bg-white dark:bg-white/[0.04] border border-stone-100 dark:border-white/[0.08] rounded-xl py-2.5 text-xs font-medium text-stone-500 dark:text-white/40 hover:bg-stone-50 dark:hover:bg-white/[0.08] hover:text-stone-700 dark:hover:text-white/70 disabled:opacity-30 disabled:cursor-not-allowed transition-colors shadow-sm dark:shadow-none">
               الدرس السابق
               <svg className="w-4 h-4" viewBox="0 0 16 16" fill="currentColor"><path d="M10.5 8L6 4l-1 1L8.5 8 5 11l1 1 4.5-4z" /></svg>
             </button>
@@ -514,21 +514,21 @@ export function CoursePlayer({ lessons, col, levelIdx, subjectIdx, courseIdx, co
         </div>
 
         {/* ── Playlist ── */}
-        <div className="bg-white rounded-2xl border border-stone-100 shadow-sm overflow-hidden flex flex-col self-start">
+        <div className="bg-white dark:bg-white/[0.04] rounded-2xl border border-stone-100 dark:border-white/[0.08] shadow-sm dark:shadow-none overflow-hidden flex flex-col self-start">
           <div className={`px-4 py-3 ${col.bg} text-white shrink-0`}>
             <p className="text-sm font-semibold">قائمة الدروس</p>
             <p className="text-white/70 text-xs mt-0.5">{lessons.length} {lessonWord(lessons.length)}</p>
           </div>
           {isLoaded && isLoggedIn && (
-            <div className="px-4 py-2 border-b border-stone-100 flex items-center gap-2.5">
-              <div className="flex-1 h-1.5 bg-stone-100 rounded-full overflow-hidden">
+            <div className="px-4 py-2 border-b border-stone-100 dark:border-white/[0.06] flex items-center gap-2.5">
+              <div className="flex-1 h-1.5 bg-stone-100 dark:bg-white/10 rounded-full overflow-hidden">
                 <div className={`h-full ${col.bg} rounded-full transition-all duration-500`} style={{ width: `${progressPct}%` }} />
               </div>
               <span className={`text-[11px] font-semibold ${col.text} shrink-0`}>{watchedCount}/{lessons.length}</span>
             </div>
           )}
           {isLoaded && !isLoggedIn && (
-            <div className="px-4 py-2 border-b border-stone-100">
+            <div className="px-4 py-2 border-b border-stone-100 dark:border-white/[0.06]">
               <SignInDialog trigger={
                 <button className="text-[11px] text-stone-400 hover:text-emerald-600 transition-colors underline underline-offset-2">
                   سجّل دخولك لتتبع تقدمك
@@ -536,17 +536,17 @@ export function CoursePlayer({ lessons, col, levelIdx, subjectIdx, courseIdx, co
               } />
             </div>
           )}
-          <div className="divide-y divide-stone-50 overflow-y-auto" style={{ maxHeight: "min(60vh, 520px)" }}>
+          <div className="divide-y divide-stone-50 dark:divide-white/[0.04] overflow-y-auto" style={{ maxHeight: "min(60vh, 520px)" }}>
             {lessons.map((l, idx) => {
               const isActive = idx === selected;
               const lKey = `${levelIdx}:${subjectIdx}:${courseIdx}:${idx}`;
               return (
                 <button key={idx} onClick={() => setSelected(idx)}
-                  className={`w-full text-right px-3.5 py-3 flex items-start gap-2.5 border-r-2 transition-colors ${isActive ? `${col.light} ${col.activeBorder}` : "border-r-transparent hover:bg-stone-50"}`}>
-                  <div className={`shrink-0 w-6 h-6 rounded-md text-[11px] font-bold flex items-center justify-center mt-0.5 ${isActive ? `${col.bg} text-white` : "bg-stone-100 text-stone-400"}`}>
+                  className={`w-full text-right px-3.5 py-3 flex items-start gap-2.5 border-r-2 transition-colors ${isActive ? `${col.light} ${col.activeBorder}` : "border-r-transparent hover:bg-stone-50 dark:hover:bg-white/[0.04]"}`}>
+                  <div className={`shrink-0 w-6 h-6 rounded-md text-[11px] font-bold flex items-center justify-center mt-0.5 ${isActive ? `${col.bg} text-white` : "bg-stone-100 dark:bg-white/10 text-stone-400 dark:text-white/40"}`}>
                     {toAr(idx)}
                   </div>
-                  <p className={`flex-1 text-xs leading-relaxed text-right ${isActive ? `${col.text} font-semibold` : "text-stone-600"}`}>
+                  <p className={`flex-1 text-xs leading-relaxed text-right ${isActive ? `${col.text} font-semibold` : "text-stone-600 dark:text-white/50"}`}>
                     {l.title}
                   </p>
                   <WatchButton lessonKey={lKey} col={col} />
