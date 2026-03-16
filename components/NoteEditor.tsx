@@ -217,7 +217,7 @@ export function NoteEditor() {
         <SheetContent
           side="bottom"
           showCloseButton={false}
-          className="p-0 flex flex-col gap-0 rounded-t-xl"
+          className="p-0 flex flex-col gap-0 rounded-t-xl w-full max-w-full"
           style={{ height: "85dvh" }}
           dir="rtl"
         >

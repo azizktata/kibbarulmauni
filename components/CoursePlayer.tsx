@@ -88,6 +88,7 @@ export function CoursePlayer({ lessons, col, levelIdx, subjectIdx, courseIdx, co
   const [ambientTranscriptOpen, setAmbientTranscriptOpen] = useState(true);
   const [ambientNotesOpen, setAmbientNotesOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
   const ambientStartAtRef = useRef(0);
 
   // YT player refs
@@ -108,7 +109,14 @@ export function CoursePlayer({ lessons, col, levelIdx, subjectIdx, courseIdx, co
   useEffect(() => { isWatchedRef.current = isWatched; }, [isWatched]);
   useEffect(() => { toggleWatchedRef.current = toggleWatched; }, [toggleWatched]);
 
-  useEffect(() => { setMounted(true); }, []);
+  useEffect(() => {
+    setMounted(true);
+    const mq = window.matchMedia("(max-width: 1023px)");
+    setIsMobile(mq.matches);
+    const handler = (e: MediaQueryListEvent) => setIsMobile(e.matches);
+    mq.addEventListener("change", handler);
+    return () => mq.removeEventListener("change", handler);
+  }, []);
 
   const lesson = lessons[selected];
   const ytId = lesson.youtube?.match(/[?&]v=([^&]+)/)?.[1] ?? null;
@@ -335,8 +343,8 @@ export function CoursePlayer({ lessons, col, levelIdx, subjectIdx, courseIdx, co
         </button>
       </div>
       {/* Body — mobile: column stack; desktop: resizable panels */}
-      {/* Mobile */}
-      <div className="flex-1 flex flex-col lg:hidden overflow-hidden">
+      {isMobile ? (
+      <div className="flex-1 flex flex-col overflow-hidden">
         <div className="flex items-center justify-center p-2">
           <div className="aspect-video w-full rounded-xl overflow-hidden bg-black">
             {ytId ? <div ref={ambientDivRef} className="w-full h-full" /> : noVideo}
@@ -348,9 +356,8 @@ export function CoursePlayer({ lessons, col, levelIdx, subjectIdx, courseIdx, co
           </div>
         )}
       </div>
-      {/* Desktop: flex row — video+transcript in ResizablePanelGroup, notes as separate sibling */}
-      <div className="hidden lg:flex flex-1 overflow-hidden" dir="ltr">
-        {/* Video + Transcript */}
+      ) : (
+      <div className="flex flex-1 overflow-hidden" dir="ltr">
         <div className="flex-1 min-w-0 overflow-hidden">
           <ResizablePanelGroup className="h-full">
             <ResizablePanel defaultSize={ambientTranscriptOpen ? 58 : 100} minSize={30}>
@@ -372,7 +379,6 @@ export function CoursePlayer({ lessons, col, levelIdx, subjectIdx, courseIdx, co
             )}
           </ResizablePanelGroup>
         </div>
-        {/* Notes panel — separate flex item, fixed width, no ResizablePanelGroup needed */}
         {ambientNotesOpen && (
           <div dir="rtl" className="w-80 shrink-0 border-l border-neutral-800 overflow-hidden bg-neutral-900">
             <AmbientNotePanel
@@ -385,6 +391,7 @@ export function CoursePlayer({ lessons, col, levelIdx, subjectIdx, courseIdx, co
           </div>
         )}
       </div>
+      )}
     </div>
   );
 
