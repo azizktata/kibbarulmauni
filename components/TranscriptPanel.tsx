@@ -43,6 +43,8 @@ export function TranscriptPanel({ segments, currentTime, col, onSeek, variant = 
   const segRefs = useRef<Map<number, HTMLSpanElement>>(new Map());
   const paraRef = useRef<HTMLParagraphElement>(null);
   const popoverRef = useRef<HTMLDivElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const userScrolledRef = useRef(false);
   const dark = variant === "dark";
 
   const activeIdx = (() => {
@@ -69,7 +71,16 @@ export function TranscriptPanel({ segments, currentTime, col, onSeek, variant = 
   }, [firstMatchIdx]);
 
   useEffect(() => {
+    const el = containerRef.current;
+    if (!el) return;
+    const onScroll = () => { userScrolledRef.current = true; };
+    el.addEventListener("scroll", onScroll, { passive: true });
+    return () => el.removeEventListener("scroll", onScroll);
+  }, []);
+
+  useEffect(() => {
     if (query) return;
+    if (userScrolledRef.current) return;
     if (activeIdx >= 0) {
       segRefs.current.get(activeIdx)?.scrollIntoView({ block: "nearest", behavior: "smooth" });
     }
@@ -215,7 +226,7 @@ export function TranscriptPanel({ segments, currentTime, col, onSeek, variant = 
         </div>
 
         {/* Body */}
-        <div className={`overflow-y-auto px-4 py-3 flex-1 ${dark ? "[&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-track]:bg-neutral-900 [&::-webkit-scrollbar-thumb]:bg-neutral-600 [&::-webkit-scrollbar-thumb]:rounded-full" : ""}`}>
+        <div ref={containerRef} className={`overflow-y-auto px-4 py-3 flex-1 ${dark ? "[&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-track]:bg-neutral-900 [&::-webkit-scrollbar-thumb]:bg-neutral-600 [&::-webkit-scrollbar-thumb]:rounded-full" : ""}`}>
           <p ref={paraRef} onMouseUp={handleMouseUp} className={`text-sm leading-loose ${dark ? "text-neutral-300" : "text-stone-600"}`} dir="rtl">
             {segments.map((seg, idx) => {
               const isActive = idx === activeIdx;
@@ -231,7 +242,7 @@ export function TranscriptPanel({ segments, currentTime, col, onSeek, variant = 
                   }
                 >
                   <button
-                    onClick={() => onSeek?.(seg.start)}
+                    onClick={() => { userScrolledRef.current = false; onSeek?.(seg.start); }}
                     className={`font-mono text-[10px] tabular-nums rounded px-1 py-0.5 mx-1 transition-colors align-middle leading-none ${
                       dark ? "bg-neutral-700 hover:bg-neutral-600 text-neutral-400"
                            : "bg-stone-100 hover:bg-stone-200 text-stone-400"
