@@ -19,17 +19,65 @@ const QUOTES = [
     text: "خَيْرُكُمْ مَنْ تَعَلَّمَ الْقُرْآنَ وَعَلَّمَهُ",
     source: "رواه البخاري",
   },
+  {
+    text: "وَقُل رَّبِّ زِدنِي عِلماً",
+    source: "طه: ١١٤",
+  },
+  {
+    text: "يَرفَعِ اللَّهُ الَّذِينَ آمَنُوا مِنكُم وَالَّذِينَ أُوتُوا الْعِلْمَ دَرَجَاتٍ",
+    source: "المجادلة: ١١",
+  },
+  {
+    text: "إِنَّمَا يَخشَى اللَّهَ مِن عِبَادِهِ الْعُلَمَاءُ",
+    source: "فاطر: ٢٨",
+  },
+  {
+    text: "مَثَلُ مَا بَعَثَنِي اللهُ بِهِ مِنَ الْهُدَىٰ وَالْعِلْمِ كَمَثَلِ غَيْثٍ أَصَابَ أَرْضاً؛ فَكَانَتْ مِنْهَا طَائِفَةٌ طَيِّبَةٌ قَبِلَتِ الْمَاءَ فَأَنْبَتَتِ الْكَلَأَ وَالْعُشْبَ الْكَثِيرَ",
+    source: "متفق عليه — من حديث أبي موسى رضي الله عنه",
+  },
+  {
+    text: "فَوَاللهِ، لَأَنْ يَهْدِيَ اللهُ بِكَ رَجُلًا وَاحِداً خَيْرٌ لَكَ مِنْ حُمْرِ النَّعَمِ",
+    source: "متفق عليه — من حديث سهل بن سعد رضي الله عنه",
+  },
+  {
+    text: "بَلِّغُوا عَنِّي وَلَوْ آيَةً",
+    source: "رواه البخاري — من حديث عبد الله بن عمرو رضي الله عنهما",
+  },
+  {
+    text: "مَنْ دَعَا إِلَىٰ هُدىً كَانَ لَهُ مِنَ الْأَجْرِ مِثْلُ أُجُورِ مَنِ اتَّبَعَهُ، لَا يَنْقُصُ ذَلِكَ مِنْ أُجُورِهِمْ شَيئاً",
+    source: "رواه مسلم — من حديث أبي هريرة رضي الله عنه",
+  },
+  {
+    text: "إِذَا مَاتَ ابْنُ آدَمَ انْقَطَعَ عَمَلُهُ إِلَّا مِنْ ثَلَاثٍ: صَدَقَةٍ جَارِيَةٍ، أَوْ عِلْمٍ يُنْتَفَعُ بِهِ، أَوْ وَلَدٍ صَالِحٍ يَدْعُو لَهُ",
+    source: "رواه مسلم — من حديث أبي هريرة رضي الله عنه",
+  },
+  {
+    text: "الدُّنْيَا مَلْعُونَةٌ، مَلْعُونٌ مَا فِيهَا، إِلَّا ذِكْرَ اللهِ تَعَالَىٰ وَمَا وَالَاهُ، وَعَالِماً أَوْ مُتَعَلِّماً",
+    source: "رواه الترمذي وقال حديث حسن — من حديث أبي هريرة رضي الله عنه",
+  },
+  {
+    text: "مَنْ خَرَجَ فِي طَلَبِ الْعِلْمِ كَانَ فِي سَبِيلِ اللهِ حَتَّىٰ يَرْجِعَ",
+    source: "رواه الترمذي وقال حديث حسن — من حديث أنس رضي الله عنه",
+  },
+  {
+    text: "فَضْلُ الْعَالِمِ عَلَى الْعَابِدِ كَفَضْلِي عَلَىٰ أَدْنَاكُمْ، إِنَّ اللهَ وَمَلَائِكَتَهُ وَأَهْلَ السَّمَاوَاتِ وَالْأَرْضِ، حَتَّىٰ النَّمْلَةَ فِي جُحْرِهَا، وَحَتَّىٰ الْحُوتَ، لَيُصَلُّونَ عَلَىٰ مُعَلِّمِي النَّاسِ الْخَيْرَ",
+    source: "رواه الترمذي وقال حديث حسن — من حديث أبي أمامة رضي الله عنه",
+  },
 ];
 
 export function RotatingQuote() {
-  const [idx, setIdx] = useState(0);
+  const [idx, setIdx] = useState(() => Math.floor(Math.random() * QUOTES.length));
   const [visible, setVisible] = useState(true);
 
   useEffect(() => {
     const id = setInterval(() => {
       setVisible(false);
       setTimeout(() => {
-        setIdx((i) => (i + 1) % QUOTES.length);
+        setIdx((i) => {
+          let next;
+          do { next = Math.floor(Math.random() * QUOTES.length); } while (next === i);
+          return next;
+        });
         setVisible(true);
       }, 500);
     }, 6000);
@@ -39,17 +87,19 @@ export function RotatingQuote() {
   const q = QUOTES[idx];
 
   return (
-    <div
-      className="mt-10 border-t border-white/10 pt-8"
-      style={{ transition: "opacity 0.5s", opacity: visible ? 1 : 0 }}
-    >
-      <p
-        className="text-base sm:text-lg text-emerald-100/80 leading-loose max-w-xl mx-auto"
-        style={{ fontFamily: "var(--font-amiri)" }}
+    <div className="h-32 sm:h-28 flex flex-col items-center justify-center overflow-hidden">
+      <div
+        className="flex flex-col items-center"
+        style={{ transition: "opacity 0.5s", opacity: visible ? 1 : 0 }}
       >
-        &ldquo;{q.text}&rdquo;
-      </p>
-      <p className="text-emerald-400/60 text-xs mt-2">{q.source}</p>
+        <p
+          className="text-base sm:text-lg text-white/90 leading-loose max-w-xl mx-auto line-clamp-3"
+          style={{ fontFamily: "var(--font-amiri)" }}
+        >
+          &ldquo;{q.text}&rdquo;
+        </p>
+        <p className="text-gold text-xs mt-2">{q.source}</p>
+      </div>
     </div>
   );
 }

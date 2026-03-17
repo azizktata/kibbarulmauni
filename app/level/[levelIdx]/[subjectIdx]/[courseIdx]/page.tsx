@@ -31,13 +31,16 @@ export default async function CoursePage({
   const subject = getSubject(lIdx, sIdx);
   const course  = getCourse(lIdx, sIdx, cIdx);
   if (!level || !subject || !course) notFound();
-  const col = LEVEL_COLORS[lIdx];
+  const col = LEVEL_COLORS[0];
   const siblings = subject.courses;
 
   return (
-    <div className="min-h-screen">
-      <header className={`bg-gradient-to-b ${col.gradient} text-white px-6 py-9`}>
-        <div className="max-w-5xl mx-auto">
+    <div className="relative min-h-screen">
+  
+      <header className="relative text-white px-6 py-9 overflow-hidden">
+        <div className="absolute inset-0 bg-center" style={{ backgroundImage: "url('/islamic-geometric-4.jfif')" }} />
+        <div className={`absolute inset-0 bg-gradient-to-b ${col.gradient} opacity-70`} />
+        <div className="relative max-w-5xl mx-auto">
           <nav className="flex items-center gap-1.5 text-white/60 text-xs mb-4 flex-wrap">
             <Link href="/" className="hover:text-white transition-colors">الرئيسية</Link>
             <span>›</span>

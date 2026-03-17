@@ -9,20 +9,18 @@ export default function HomePage() {
   const totalLessons  = university.reduce((s, l) => s + countLevelLessons(l), 0);
 
   return (
-    <div className="min-h-screen">
+    <div className="relative min-h-screen">
+      {/* <div
+        className="fixed inset-0 -z-10 bg-center bg-cover opacity-[0.20]"
+        style={{ backgroundImage: "url('/islamic-geometri-3.jfif')" }}
+      /> */}
       {/* Hero */}
       <header className="relative bg-emerald-950 text-white overflow-hidden">
-        {/* Decorative rings */}
-        <div className="absolute inset-0 pointer-events-none select-none" aria-hidden>
-          <div className="absolute -top-32 -right-32 w-[28rem] h-[28rem] rounded-full border border-white/[0.04]" />
-          <div className="absolute -top-20 -right-20 w-[20rem] h-[20rem] rounded-full border border-white/[0.06]" />
-          <div className="absolute bottom-0 left-0 w-72 h-72 rounded-full border border-white/[0.04] -translate-x-1/3 translate-y-1/3" />
-          <div className="absolute top-6 left-20 w-2 h-2 rounded-full bg-emerald-400/30" />
-          <div className="absolute bottom-10 right-40 w-1.5 h-1.5 rounded-full bg-emerald-400/20" />
-        </div>
+        <div className="absolute inset-0 bg-center " style={{ backgroundImage: "url('/islamic-geometric-4.jfif')" }} />
+        <div className="absolute inset-0 bg-emerald-950/65" />
 
         <div className="relative max-w-5xl mx-auto px-6 py-16 text-center">
-          <div className="flex justify-center mb-8">
+          <div className="flex justify-center mb-4">
                      <Image
                        src="/logo.png"
                        alt="جامعة كبار العلماء"

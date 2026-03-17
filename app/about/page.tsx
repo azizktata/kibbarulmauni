@@ -19,7 +19,7 @@ export default function AboutPage() {
     <div className="min-h-screen">
 
       {/* ── HERO ─────────────────────────────────────────────── */}
-      <header className="relative min-h-[80vh] flex items-center justify-center bg-[#193833] overflow-hidden text-white">
+      <header className="relative min-h-[80vh] flex items-center justify-center bg-primary overflow-hidden text-white">
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
           src="/mosque-art-1.jfif"
@@ -27,10 +27,10 @@ export default function AboutPage() {
           aria-hidden
           className="absolute inset-0 w-full h-full object-cover opacity-25 select-none pointer-events-none"
         />
-        <div className="absolute inset-0 bg-gradient-to-b from-[#193833]/40 via-[#193833]/70 to-[#193833]/95" />
+        <div className="absolute inset-0 bg-gradient-to-b from-primary/40 via-primary/70 to-primary/95" />
 
         <div className="relative max-w-4xl mx-auto px-6 py-20 text-center">
-          {/* <p className="text-[#F0BC53]/70 text-xs tracking-[0.25em] mb-8 font-medium uppercase">
+          {/* <p className="text-gold/70 text-xs tracking-[0.25em] mb-8 font-medium uppercase">
             مشروع الدعوة الإلكترونية
           </p> */}
 
@@ -61,14 +61,14 @@ export default function AboutPage() {
             ].map((s, i) => (
               <div key={i} className="px-7 py-4 text-center first:border-l border-white/10">
                 <div className="text-2xl font-bold tabular-nums">{s.value}</div>
-                <div className="text-[#F0BC53]/70 text-[11px] mt-0.5 font-medium">{s.label}</div>
+                <div className="text-gold/70 text-[11px] mt-0.5 font-medium">{s.label}</div>
               </div>
             ))}
           </div>
 
           <a
             href="/"
-            className="inline-block border border-[#F0BC53] text-[#F0BC53] px-8 py-3 rounded-full text-sm font-medium hover:bg-[#F0BC53] hover:text-[#193833] transition-all duration-300"
+            className="inline-block border border-gold text-gold px-8 py-3 rounded-full text-sm font-medium hover:bg-gold hover:text-primary transition-all duration-300"
           >
             ابدأ التعلم
           </a>
@@ -87,24 +87,24 @@ export default function AboutPage() {
             <img src="/mosque-art-2.jfif" alt="فن إسلامي" className="w-full h-80 object-cover" />
           </div>
           <div className="order-1 md:order-2">
-            <p className="text-[#F0BC53] text-xs tracking-[0.2em] mb-3 font-medium">المحتوى الدراسي</p>
+            <p className="text-gold text-xs tracking-[0.2em] mb-3 font-medium">المحتوى الدراسي</p>
             <h2
-              className="text-3xl md:text-4xl font-bold text-[#193833] mb-6 leading-snug"
+              className="text-3xl md:text-4xl font-bold text-primary mb-6 leading-snug"
               style={{ fontFamily: "var(--font-amiri)" }}
             >
               منهج علمي موثّق ومنظّم
             </h2>
-            <ul className="space-y-4 text-[#193833]/70 text-sm leading-relaxed">
+            <ul className="space-y-4 text-primary/70 text-sm leading-relaxed">
               <li className="flex gap-3 items-start">
-                <span className="text-[#F0BC53] mt-0.5 shrink-0">✦</span>
+                <span className="text-gold mt-0.5 shrink-0">✦</span>
                 ثمانية مستويات دراسية متدرّجة وفق كلية الشريعة في جامعة محمد بن سعود الإسلامية
               </li>
               <li className="flex gap-3 items-start">
-                <span className="text-[#F0BC53] mt-0.5 shrink-0">✦</span>
+                <span className="text-gold mt-0.5 shrink-0">✦</span>
                 مواد شاملة: العقيدة، الفقه، الحديث، التفسير، أصول الفقه، واللغة العربية
               </li>
               <li className="flex gap-3 items-start">
-                <span className="text-[#F0BC53] mt-0.5 shrink-0">✦</span>
+                <span className="text-gold mt-0.5 shrink-0">✦</span>
                 يناسب المبتدئ وطالب العلم المتقدم — من الآجرومية إلى الألفية
               </li>
             </ul>
@@ -113,10 +113,15 @@ export default function AboutPage() {
       </section>
 
       {/* ── FEATURE ROW 2 — dark ────────────────────────────── */}
-      <section className="bg-[#193833] py-24 px-6">
-        <div className="max-w-5xl mx-auto grid md:grid-cols-2 gap-16 items-center">
+      <section className="relative bg-primary py-24 px-6 overflow-hidden">
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        {/* <img src="téléchargement (8).jfif" alt="" aria-hidden className="absolute inset-0 w-full h-full object-contain select-none pointer-events-none" /> */}
+              <div className="absolute inset-0 bg-center " style={{ backgroundImage: "url('/téléchargement (8).jfif')" }} />
+
+        <div className="absolute inset-0 bg-primary/75" />
+        <div className="relative z-10 max-w-5xl mx-auto grid md:grid-cols-2 gap-16 items-center">
           <div>
-            <p className="text-[#F0BC53]/70 text-xs tracking-[0.2em] mb-3 font-medium">العلماء</p>
+            <p className="text-gold/70 text-xs tracking-[0.2em] mb-3 font-medium">العلماء</p>
             <h2
               className="text-3xl md:text-4xl font-bold text-white mb-6 leading-snug"
               style={{ fontFamily: "var(--font-amiri)" }}
@@ -125,22 +130,22 @@ export default function AboutPage() {
             </h2>
             <ul className="space-y-4 text-[#CAC9C3] text-sm leading-relaxed">
               <li className="flex gap-3 items-start">
-                <span className="text-[#F0BC53] mt-0.5 shrink-0">✦</span>
+                <span className="text-gold mt-0.5 shrink-0">✦</span>
                 يجمع فتاوى ودروس كبار العلماء الثقات — ابن باز، ابن عثيمين، الفوزان وغيرهم
               </li>
               <li className="flex gap-3 items-start">
-                <span className="text-[#F0BC53] mt-0.5 shrink-0">✦</span>
+                <span className="text-gold mt-0.5 shrink-0">✦</span>
                 أكثر من مليار مشاهدة لأكثر من عشرين شيخاً عبر المنصات الرقمية
               </li>
               <li className="flex gap-3 items-start">
-                <span className="text-[#F0BC53] mt-0.5 shrink-0">✦</span>
+                <span className="text-gold mt-0.5 shrink-0">✦</span>
                 علم يصحّح السلوك ويبني على الكتاب والسنة — نظري وتطبيقي
               </li>
             </ul>
           </div>
-          <div className="rounded-2xl overflow-hidden shadow-2xl ring-1 ring-[#F0BC53]/20">
+          <div className="rounded-2xl overflow-hidden shadow-2xl ring-1 ring-gold/20">
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="/library.jfif" alt="مكتبة" className="w-full h-80 object-cover" />
+            <img src="/téléchargement (5).jfif" alt="مكتبة" className="w-full h-100 object-cover" />
           </div>
         </div>
       </section>
@@ -153,14 +158,18 @@ export default function AboutPage() {
             <span className="text-xs font-semibold text-[#CAC9C3] tracking-widest">المستويات الدراسية</span>
             <div className="h-px flex-1 bg-[#CAC9C3]/40" />
           </div>
-          <HomeLevelsGrid levels={university} glass />
+          <HomeLevelsGrid levels={university} />
         </div>
       </section>
 
       {/* ── DOCUMENTARY ──────────────────────────────────────── */}
-      <section className="bg-[#193833] py-24 px-6 border-t border-[#F0BC53]/10">
-        <div className="max-w-3xl mx-auto text-center">
-          <p className="text-[#F0BC53]/70 text-xs tracking-[0.2em] mb-3 font-medium uppercase">توثيق المشروع</p>
+      <section className="relative bg-primary py-24 px-6 border-t border-gold/10 overflow-hidden">
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+                     <div className="absolute inset-0 bg-center " style={{ backgroundImage: "url('/téléchargement (9).jfif')" }} />
+
+        <div className="absolute inset-0 bg-primary/80" />
+        <div className="relative z-10 max-w-3xl mx-auto text-center">
+          <p className="text-gold/70 text-xs tracking-[0.2em] mb-3 font-medium uppercase">توثيق المشروع</p>
           <h2
             className="text-3xl md:text-4xl font-bold text-white mb-4"
             style={{ fontFamily: "var(--font-amiri)" }}
@@ -171,7 +180,7 @@ export default function AboutPage() {
             أكثر من مليار مشاهدة لأكثر من ٢٠ شيخاً من كبار العلماء —
             يتحدث الفلم عن الجامعة من الدقيقة ٤٨ إلى ٥٢
           </p>
-          <div className="p-px rounded-2xl bg-gradient-to-b from-[#F0BC53]/30 to-transparent shadow-2xl">
+          <div className="p-px rounded-2xl bg-gradient-to-b from-gold/30 to-transparent shadow-2xl">
             <div className="rounded-2xl overflow-hidden bg-black">
               <iframe
                 src="https://www.youtube.com/embed/FSxwG1aceuw?start=2869"
@@ -188,7 +197,7 @@ export default function AboutPage() {
       <section className="bg-white py-24 px-6">
         <div className="max-w-5xl mx-auto">
           <h2
-            className="text-3xl md:text-4xl font-bold text-[#193833] mb-12 text-center leading-snug"
+            className="text-3xl md:text-4xl font-bold text-primary mb-12 text-center leading-snug"
             style={{ fontFamily: "var(--font-amiri)" }}
           >
 كبار العلماء          </h2>
@@ -214,16 +223,16 @@ export default function AboutPage() {
                 href={url}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="group bg-white rounded-2xl border border-[#CAC9C3]/30 p-4 flex items-center gap-3 hover:border-[#F0BC53]/50 hover:shadow-sm transition-all duration-200"
+                className="group bg-white rounded-2xl border border-[#CAC9C3]/30 p-4 flex items-center gap-3 hover:border-gold/50 hover:shadow-sm transition-all duration-200"
               >
-                <span className="shrink-0 text-[#F0BC53] text-sm leading-none">✦</span>
+                <span className="shrink-0 text-gold text-sm leading-none">✦</span>
                 <p
-                  className="flex-1 text-sm font-semibold text-[#193833] leading-snug truncate"
+                  className="flex-1 text-lg font-semibold text-primary leading-snug truncate"
                   style={{ fontFamily: "var(--font-amiri)" }}
                 >
                   الشيخ {name}
                 </p>
-                <svg className="w-3 h-3 shrink-0 text-[#CAC9C3] group-hover:text-[#F0BC53] transition-colors" viewBox="0 0 20 14" fill="currentColor">
+                <svg className="w-3 h-3 shrink-0 text-[#CAC9C3] group-hover:text-gold transition-colors" viewBox="0 0 20 14" fill="currentColor">
                   <path d="M19.6 2.2C19.4 1.4 18.8.8 18 .6 16.4.2 10 .2 10 .2S3.6.2 2 .6C1.2.8.6 1.4.4 2.2 0 3.8 0 7 0 7s0 3.2.4 4.8c.2.8.8 1.4 1.6 1.6C3.6 13.8 10 13.8 10 13.8s6.4 0 8-.4c.8-.2 1.4-.8 1.6-1.6.4-1.6.4-4.8.4-4.8s0-3.2-.4-4.8zM8 10V4l5.3 3L8 10z" />
                 </svg>
               </a>
@@ -236,11 +245,11 @@ export default function AboutPage() {
       <footer className="border-t border-[#CAC9C3]/20 py-8 text-center text-xs text-[#CAC9C3]/70 flex flex-col items-center gap-2">
         <span>جامعة كبار العلماء · منهج الدراسة الشرعية</span>
         <div className="flex items-center gap-4">
-          <a href="https://www.kibbarulmauni.com" target="_blank" rel="noopener noreferrer" className="hover:text-[#F0BC53] transition-colors">
+          <a href="https://www.kibbarulmauni.com" target="_blank" rel="noopener noreferrer" className="hover:text-gold transition-colors">
             الموقع الرسمي
           </a>
           <span className="text-[#CAC9C3]/30">·</span>
-          <a href="https://www.youtube.com/@kibbarulmauni" target="_blank" rel="noopener noreferrer" className="hover:text-[#F0BC53] transition-colors flex items-center gap-1">
+          <a href="https://www.youtube.com/@kibbarulmauni" target="_blank" rel="noopener noreferrer" className="hover:text-gold transition-colors flex items-center gap-1">
             <svg className="w-3.5 h-3.5" viewBox="0 0 20 14" fill="currentColor">
               <path d="M19.6 2.2C19.4 1.4 18.8.8 18 .6 16.4.2 10 .2 10 .2S3.6.2 2 .6C1.2.8.6 1.4.4 2.2 0 3.8 0 7 0 7s0 3.2.4 4.8c.2.8.8 1.4 1.6 1.6C3.6 13.8 10 13.8 10 13.8s6.4 0 8-.4c.8-.2 1.4-.8 1.6-1.6.4-1.6.4-4.8.4-4.8s0-3.2-.4-4.8zM8 10V4l5.3 3L8 10z" />
             </svg>

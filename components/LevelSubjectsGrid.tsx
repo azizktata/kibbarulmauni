@@ -2,25 +2,19 @@
 
 import Link from "next/link";
 import { useMemo } from "react";
+import { ProgressRing } from "./ProgressRing";
 import { useWatched } from "@/lib/watchedContext";
 import { subjectProgress } from "@/lib/progress";
 import type { Subject } from "@/lib/data";
-import type { LevelColor } from "@/lib/constants";
-import { ARABIC_DIGITS } from "@/lib/constants";
-import { countSubjectLessons } from "@/lib/data";
-import { ProgressRing } from "./ProgressRing";
 
-function lessonWord(n: number) {
-  return n === 1 ? "درس" : "دروس";
-}
+const BG_IMAGE = "/islamic-geometri-2.jfif";
 
 interface Props {
   levelIdx: number;
   subjects: Subject[];
-  col: LevelColor;
 }
 
-export function LevelSubjectsGrid({ levelIdx, subjects, col }: Props) {
+export function LevelSubjectsGrid({ levelIdx, subjects }: Props) {
   const { watchedKeys, isLoaded } = useWatched();
 
   const progresses = useMemo(
@@ -32,49 +26,47 @@ export function LevelSubjectsGrid({ levelIdx, subjects, col }: Props) {
   );
 
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-5">
       {subjects.map((subject, sIdx) => {
-        const lessons = countSubjectLessons(subject);
         const pct = progresses[sIdx];
+        const bgImage = BG_IMAGE;
         return (
           <Link
             key={sIdx}
             href={`/level/${levelIdx}/${sIdx}`}
-            className="group bg-white dark:bg-white/[0.04] rounded-2xl border border-stone-100 dark:border-white/[0.08] shadow-sm dark:shadow-none p-5 hover:shadow-md hover:border-stone-200 dark:hover:border-white/[0.15] dark:hover:bg-white/[0.08] transition-all duration-200 flex items-start gap-4"
+            className="group bg-white dark:bg-white/[0.04] rounded-2xl border border-stone-100 dark:border-white/[0.08] shadow-sm dark:shadow-none overflow-hidden hover:shadow-lg hover:-translate-y-1 hover:border-gold/30 transition-all duration-200 flex flex-col"
           >
-            {/* Number badge */}
-            <div
-              className={`shrink-0 w-9 h-9 rounded-xl ${col.bg} text-white text-sm font-bold flex items-center justify-center shadow-sm mt-0.5`}
-            >
-              {ARABIC_DIGITS[sIdx]}
-            </div>
+            {/* Thumbnail */}
+            <div className="relative w-full h-56 overflow-hidden flex items-center justify-center">
+              <div
+                className="absolute inset-0 bg-cover bg-center scale-105 group-hover:scale-110 transition-transform duration-500"
+                style={{ backgroundImage: `url('${bgImage}')` }}
+              />
+              <div className="absolute inset-0 bg-primary-dark/80 group-hover:bg-primary-dark/75 transition-colors duration-300" />
 
-            <div className="flex-1 min-w-0">
-              <h3 className="font-semibold text-stone-800 dark:text-white/80 text-sm leading-snug group-hover:text-stone-900 dark:group-hover:text-white">
-                {subject.title}
-              </h3>
-              <div className="flex items-center gap-2 mt-2 text-xs text-stone-400 dark:text-white/35">
-                <span>{subject.courses.length} مقرر</span>
-                {lessons > 0 && (
-                  <>
-                    <span className="text-stone-200 dark:text-white/15">·</span>
-                    <span>{lessons} {lessonWord(lessons)}</span>
-                  </>
+              {/* <div className="absolute top-0 inset-x-0 h-px bg-gold/60" />
+              <div className="absolute bottom-0 inset-x-0 h-px bg-gold/30" /> */}
+
+              {/* Circular progress ring + title */}
+              <div className="relative z-10 flex items-center justify-center">
+                {isLoaded && pct > 0 && (
+                  <div className="absolute">
+                    <ProgressRing
+                      pct={pct}
+                      size={148}
+                      stroke={3}
+                      color="stroke-gold"
+                      trackColor="stroke-white/15"
+                    />
+                  </div>
                 )}
+                <h3
+                  className="text-gold text-xl font-bold text-center px-10 leading-relaxed line-clamp-2 drop-shadow-md"
+                  style={{ fontFamily: "var(--font-aref-ruqaa)" }}
+                >
+                  {subject.title}
+                </h3>
               </div>
-            </div>
-
-            {/* Progress ring + arrow */}
-            <div className="shrink-0 flex flex-col items-center gap-1 mt-0.5">
-              {isLoaded && pct > 0 ? (
-                <ProgressRing pct={pct} size={28} stroke={3} color={col.ring} />
-              ) : (
-                <div className="text-stone-200 dark:text-white/15 group-hover:text-stone-400 dark:group-hover:text-white/40 transition-colors">
-                  <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
-                    <path d="M10 8L6 4.5l.9-.9L11.8 8 6.9 12.4 6 11.5 10 8z" transform="scale(-1,1) translate(-16,0)" />
-                  </svg>
-                </div>
-              )}
             </div>
           </Link>
         );

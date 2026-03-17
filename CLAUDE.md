@@ -64,6 +64,7 @@ Next.js 16 app (App Router, React 19) that serves as a browsable index for Islam
 - `/scholars` — scholar index page
 - `/scholars/[name]` — courses taught by a specific scholar
 - `/search` — fuzzy search across subjects, courses, and lessons
+- `/about` — about page
 
 **Key directories:**
 - `app/` — App Router pages and layouts. `globals.css` contains the full Tailwind v4 + shadcn design token setup (CSS variables for colors, radius, etc.)

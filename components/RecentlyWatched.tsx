@@ -1,10 +1,28 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { useSession } from "next-auth/react";
 import { useRecentlyWatched } from "@/lib/useRecentlyWatched";
-import { LEVEL_COLORS } from "@/lib/constants";
-import { SignInDialog } from "./SignInDialog";
+import { getCourse } from "@/lib/data";
+
+
+function extractYoutubeId(url: string): string | null {
+  const m = url.match(/[?&]v=([a-zA-Z0-9_-]{11})/);
+  return m ? m[1] : null;
+}
+
+function getCourseThumbnail(levelIdx: number, subjectIdx: number, courseIdx: number): string | null {
+  const course = getCourse(levelIdx, subjectIdx, courseIdx);
+  if (!course) return null;
+  for (const lesson of course.files) {
+    if (lesson.youtube) {
+      const id = extractYoutubeId(lesson.youtube);
+      if (id) return `https://img.youtube.com/vi/${id}/mqdefault.jpg`;
+    }
+  }
+  return null;
+}
 
 export function RecentlyWatched() {
   const { status } = useSession();
@@ -52,23 +70,40 @@ export function RecentlyWatched() {
 
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
           {visible.map((entry, i) => {
-            const col = LEVEL_COLORS[entry.levelIdx];
+            const thumbUrl = getCourseThumbnail(entry.levelIdx, entry.subjectIdx, entry.courseIdx);
             return (
               <Link
                 key={i}
                 href={`/level/${entry.levelIdx}/${entry.subjectIdx}/${entry.courseIdx}?lesson=${entry.lessonIdx}`}
-                className="group flex items-start gap-3 bg-white dark:bg-white/[0.04] rounded-xl border border-stone-100 dark:border-white/[0.08] p-3 hover:shadow-sm hover:-translate-y-0.5 hover:border-stone-200 dark:hover:border-white/[0.15] transition-all duration-200 overflow-hidden"
+                className="group bg-white dark:bg-white/[0.04] rounded-xl border border-stone-100 dark:border-white/[0.08] shadow-sm dark:shadow-none overflow-hidden hover:shadow-md hover:-translate-y-0.5 hover:border-gold/30 transition-all duration-200 flex flex-col"
               >
-                <div className={`shrink-0 w-9 h-9 rounded-lg ${col.bg} text-white flex items-center justify-center shadow-sm`}>
-                  <svg className="w-3.5 h-3.5 mr-px" viewBox="0 0 24 24" fill="currentColor">
-                    <path d="M8 5v14l11-7z" />
-                  </svg>
+                {/* Thumbnail */}
+                <div className="relative w-full h-24 bg-stone-100 dark:bg-white/[0.06] overflow-hidden">
+                  {thumbUrl ? (
+                    <Image
+                      src={thumbUrl}
+                      alt={entry.courseTitle}
+                      fill
+                      className="object-cover group-hover:scale-105 transition-transform duration-300"
+                      sizes="(max-width: 640px) 100vw, 33vw"
+                    />
+                  ) : (
+                    <div className="absolute inset-0 bg-cover bg-center" style={{ backgroundImage: "url('/islamic-geometri-2.jfif')" }}>
+                      <div className="absolute inset-0 bg-primary/65 flex items-center justify-center">
+                        <svg className="w-7 h-7 text-gold/70" viewBox="0 0 24 24" fill="currentColor">
+                          <path d="M8 5v14l11-7z" />
+                        </svg>
+                      </div>
+                    </div>
+                  )}
                 </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-xs font-semibold text-stone-800 dark:text-white/80 truncate leading-snug">
+
+                {/* Info */}
+                <div className="px-3 py-2 flex flex-col gap-0.5">
+                  <p className="font-semibold text-stone-800 dark:text-white/80 text-xs leading-snug line-clamp-1">
                     {entry.courseTitle}
                   </p>
-                  <p className="text-[11px] text-stone-400 dark:text-white/30 mt-0.5 truncate">
+                  <p className="text-[10px] text-stone-400 dark:text-white/35 truncate">
                     {entry.levelTitle}
                   </p>
                 </div>

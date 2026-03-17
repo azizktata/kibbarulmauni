@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Cairo, Amiri } from "next/font/google";
+import { Cairo, Amiri, Aref_Ruqaa } from "next/font/google";
 import { SessionProvider } from "next-auth/react";
 import { auth } from "@/auth";
 import { WatchedProvider } from "@/lib/watchedContext";
@@ -21,6 +21,12 @@ const amiri = Amiri({
   variable: "--font-amiri",
 });
 
+const arefRuqaa = Aref_Ruqaa({
+  subsets: ["arabic"],
+  weight: ["400", "700"],
+  variable: "--font-aref-ruqaa",
+});
+
 export const metadata: Metadata = {
   title: "جامعة كبار العلماء",
   description: "منهج الدراسة لكلية الشريعة وفق جامعة محمد بن سعود الإسلامية",
@@ -32,7 +38,7 @@ export default async function RootLayout({
   const session = await auth();
 
   return (
-    <html lang="ar" dir="rtl" className={`${cairo.variable} ${amiri.variable}`}>
+    <html lang="ar" dir="rtl" className={`${cairo.variable} ${amiri.variable} ${arefRuqaa.variable}`}>
       <body className="antialiased font-cairo bg-stone-50 dark:bg-[#111111] text-stone-900 dark:text-stone-100">
         <SessionProvider session={session}>
           <NotesProvider isLoggedIn={!!session?.user?.id}>

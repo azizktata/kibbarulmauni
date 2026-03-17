@@ -5,6 +5,7 @@ interface Props {
   size?: number;
   stroke?: number;
   color?: string;
+  trackColor?: string;
   className?: string;
 }
 
@@ -13,6 +14,7 @@ export function ProgressRing({
   size = 36,
   stroke = 3,
   color = "stroke-emerald-700",
+  trackColor,
   className,
 }: Props) {
   const r = (size - stroke) / 2;
@@ -33,7 +35,7 @@ export function ProgressRing({
         r={r}
         fill="none"
         strokeWidth={stroke}
-        className="stroke-stone-200"
+        className={trackColor ?? "stroke-stone-200"}
       />
       <circle
         cx={size / 2}

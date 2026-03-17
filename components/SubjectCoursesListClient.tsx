@@ -1,26 +1,35 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { useMemo } from "react";
 import { useWatched } from "@/lib/watchedContext";
 import { courseProgress } from "@/lib/progress";
 import type { Course } from "@/lib/data";
-import type { LevelColor } from "@/lib/constants";
-import { ARABIC_DIGITS } from "@/lib/constants";
 import { extractScholars } from "@/lib/data";
 
-function lessonWord(n: number) {
-  return n === 1 ? "درس" : "دروس";
+function extractYoutubeId(url: string): string | null {
+  const m = url.match(/[?&]v=([a-zA-Z0-9_-]{11})/);
+  return m ? m[1] : null;
+}
+
+function getFirstYoutubeId(course: Course): string | null {
+  for (const lesson of course.files) {
+    if (lesson.youtube) {
+      const id = extractYoutubeId(lesson.youtube);
+      if (id) return id;
+    }
+  }
+  return null;
 }
 
 interface Props {
   lIdx: number;
   sIdx: number;
   courses: Course[];
-  col: LevelColor;
 }
 
-export function SubjectCoursesListClient({ lIdx, sIdx, courses, col }: Props) {
+export function SubjectCoursesListClient({ lIdx, sIdx, courses }: Props) {
   const { watchedKeys, isLoaded } = useWatched();
 
   const progresses = useMemo(
@@ -41,63 +50,78 @@ export function SubjectCoursesListClient({ lIdx, sIdx, courses, col }: Props) {
   }
 
   return (
-    <div className="flex flex-col gap-2">
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
       {courses.map((course, cIdx) => {
         const scholars = extractScholars(course);
         const pct = progresses[cIdx];
+        const youtubeId = getFirstYoutubeId(course);
+        const thumbUrl = youtubeId
+          ? `https://img.youtube.com/vi/${youtubeId}/mqdefault.jpg`
+          : null;
+
         return (
           <Link
             key={cIdx}
             href={`/level/${lIdx}/${sIdx}/${cIdx}`}
-            className="group bg-white dark:bg-white/[0.04] rounded-xl border border-stone-100 dark:border-white/[0.08] shadow-sm dark:shadow-none px-5 py-4 flex items-center gap-4 hover:shadow-md hover:border-stone-200 dark:hover:border-white/[0.15] dark:hover:bg-white/[0.08] transition-all duration-200"
+            className="group bg-white dark:bg-white/[0.04] rounded-2xl border border-stone-100 dark:border-white/[0.08] shadow-sm dark:shadow-none overflow-hidden hover:shadow-lg hover:-translate-y-1 hover:border-gold/30 transition-all duration-200 flex flex-col"
           >
-            {/* Course number */}
-            <div
-              className={`shrink-0 w-8 h-8 rounded-lg ${col.bg} text-white text-xs font-bold flex items-center justify-center`}
-            >
-              {ARABIC_DIGITS[cIdx]}
-            </div>
+            
+            {/* Thumbnail */}
+            <div className="relative w-full aspect-video bg-stone-100 dark:bg-white/[0.06] overflow-hidden">
 
-            {/* Info */}
-            <div className="flex-1 min-w-0">
-              <h3 className="font-semibold text-stone-800 dark:text-white/80 text-sm leading-snug">
-                {course.title}
-              </h3>
-              {scholars.length > 0 && (
-                <p className="text-xs text-stone-400 dark:text-white/35 mt-1 truncate">
-                  {scholars.map((s) => `الشيخ ${s}`).join("  ·  ")}
-                </p>
+              {thumbUrl ? (
+                <>
+                <Image
+                  src={thumbUrl}
+                  alt={course.title}
+                  fill
+                  className="object-cover group-hover:scale-105 transition-transform duration-300"
+                  sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                  />
+                                            <div className="absolute inset-0 bg-primary-dark/5 group-hover:bg-transparent transition-colors duration-300" />
+                  </>
+
+              ) : (
+                <div className="w-full h-full flex items-center justify-center bg-primary/5">
+                  <svg className="w-10 h-10 text-primary/20" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 14.5v-9l6 4.5-6 4.5z" />
+                  </svg>
+                </div>
               )}
-              {/* Progress bar */}
+
+              {/* Progress bar overlay at bottom of thumbnail */}
               {isLoaded && pct > 0 && (
-                <div className="flex items-center gap-2 mt-2">
-                  <div className="flex-1 h-1 bg-stone-100 dark:bg-white/10 rounded-full overflow-hidden">
-                    <div
-                      className={`h-full ${col.bg} transition-all duration-500`}
-                      style={{ width: `${pct}%` }}
-                    />
-                  </div>
-                  <span className={`text-[11px] font-medium ${col.text}`}>
-                    {pct}٪
-                  </span>
+                <div className="absolute bottom-0 inset-x-0 h-1 bg-black/20">
+                  <div
+                    className="h-full bg-gold transition-all duration-500"
+                    style={{ width: `${pct}%` }}
+                  />
                 </div>
               )}
             </div>
 
-            {/* Lesson count badge */}
-            {course.files.length > 0 && (
-              <span
-                className={`shrink-0 text-xs font-medium px-2 py-0.5 rounded-full ${col.light} ${col.text}`}
-              >
-                {course.files.length} {lessonWord(course.files.length)}
-              </span>
-            )}
-
-            {/* RTL forward arrow */}
-            <div className="shrink-0 text-stone-200 dark:text-white/15 group-hover:text-stone-400 dark:group-hover:text-white/40 transition-colors">
-              <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
-                <path d="M10.5 8L6 4l-1 1L8.5 8 5 11l1 1 4.5-4z" transform="scale(-1,1) translate(-16,0)" />
-              </svg>
+            {/* Info */}
+            <div className="p-4 flex flex-col gap-1 flex-1">
+              <div className="flex items-start justify-between gap-2">
+                <h3 className="font-semibold text-stone-800 dark:text-white/80 text-sm leading-snug line-clamp-2 flex-1">
+                  {course.title}
+                </h3>
+                {course.files.length > 0 && (
+                  <span className="shrink-0 text-[11px] font-semibold px-2 py-0.5 rounded-full bg-gold/15 text-primary dark:text-gold">
+                    {course.files.length} درس
+                  </span>
+                )}
+              </div>
+              {scholars.length > 0 && (
+                <p className="text-xs text-stone-400 dark:text-white/35 truncate">
+                  {scholars.map((s) => `الشيخ ${s}`).join("  ·  ")}
+                </p>
+              )}
+              {isLoaded && pct > 0 && (
+                <p className="text-[11px] font-medium mt-auto pt-1 text-gold">
+                  {pct}٪ مكتمل
+                </p>
+              )}
             </div>
           </Link>
         );
