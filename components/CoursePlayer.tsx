@@ -431,7 +431,7 @@ export function CoursePlayer({ lessons, col, levelIdx, subjectIdx, courseIdx, co
         <div className="lg:col-span-2 flex flex-col gap-3">
 
           {/* 1. Lesson title */}
-          <div className="bg-white dark:bg-white/[0.04] rounded-xl border border-stone-100 dark:border-white/[0.08] shadow-sm dark:shadow-none px-4 py-3.5 flex items-start justify-between gap-3">
+          {/* <div className="bg-white dark:bg-white/[0.04] rounded-xl border border-stone-100 dark:border-white/[0.08] shadow-sm dark:shadow-none px-4 py-3.5 flex items-start justify-between gap-3">
             <div>
               <p className="font-semibold text-stone-800 dark:text-white/80 text-sm leading-snug">{lesson.title}</p>
               <p className={`text-xs mt-1 ${col.text}`}>الدرس {toAr(selected)} من {toAr(lessons.length - 1)}</p>
@@ -458,7 +458,7 @@ export function CoursePlayer({ lessons, col, levelIdx, subjectIdx, courseIdx, co
                 </a>
               )}
             </div>
-          </div>
+          </div> */}
 
           {/* 2. Video */}
           <div className="group relative aspect-video bg-stone-900 rounded-2xl overflow-hidden shadow-lg ring-1 ring-black/5">

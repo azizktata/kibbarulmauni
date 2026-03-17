@@ -19,7 +19,7 @@ export default function AboutPage() {
     <div className="min-h-screen">
 
       {/* ── HERO ─────────────────────────────────────────────── */}
-      <header className="relative min-h-[80vh] flex items-center justify-center bg-primary overflow-hidden text-white">
+      <header className="relative min-h-[80vh] flex items-center justify-center bg-primary-dark overflow-hidden text-white">
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
           src="/mosque-art-1.jfif"
@@ -113,7 +113,7 @@ export default function AboutPage() {
       </section>
 
       {/* ── FEATURE ROW 2 — dark ────────────────────────────── */}
-      <section className="relative bg-primary py-24 px-6 overflow-hidden">
+      <section className="relative bg-primary-dark/50 py-24 px-6 overflow-hidden">
         {/* eslint-disable-next-line @next/next/no-img-element */}
         {/* <img src="téléchargement (8).jfif" alt="" aria-hidden className="absolute inset-0 w-full h-full object-contain select-none pointer-events-none" /> */}
               <div className="absolute inset-0 bg-center " style={{ backgroundImage: "url('/téléchargement (8).jfif')" }} />
