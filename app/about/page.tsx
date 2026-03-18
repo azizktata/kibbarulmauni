@@ -2,6 +2,18 @@ import { university, countLevelLessons } from "@/lib/data";
 import { HomeLevelsGrid } from "@/components/HomeLevelsGrid";
 import Image from "next/image";
 
+function subjectWord(n: number) {
+  if (n === 2) return "مادتان";
+  if (n >= 3 && n <= 10) return "مواد";
+  return "مادة";
+}
+
+function lessonWord(n: number) {
+  if (n === 2) return "درسان";
+  if (n >= 3 && n <= 10) return "دروس";
+  return "درس";
+}
+
 export const metadata = { title: "عن جامعة كبار العلماء" };
 
 export default function AboutPage() {
@@ -56,8 +68,8 @@ export default function AboutPage() {
      <div className="inline-flex items-center bg-white/[0.06] rounded-2xl overflow-hidden ring-1 ring-white/10">
             {[
               { value: "٨",          label: "مستويات" },
-              { value: totalSubjects, label: "مادة"     },
-              { value: totalLessons,  label: "درس"      },
+              { value: totalSubjects, label: subjectWord(totalSubjects) },
+              { value: totalLessons,  label: lessonWord(totalLessons)   },
             ].map((s, i) => (
               <div key={i} className="px-7 py-4 text-center first:border-l border-white/10">
                 <div className="text-2xl font-bold tabular-nums">{s.value}</div>

@@ -59,7 +59,9 @@ function toAr(n: number): string {
   return (n + 1).toString().replace(/\d/g, (d) => "٠١٢٣٤٥٦٧٨٩"[Number(d)]);
 }
 function lessonWord(n: number) {
-  return n === 1 ? "درس" : "دروس";
+  if (n === 2) return "درسان";
+  if (n >= 3 && n <= 10) return "دروس";
+  return "درس";
 }
 
 // ── Component ─────────────────────────────────────────────────────────────────
@@ -89,6 +91,8 @@ export function CoursePlayer({ lessons, col, levelIdx, subjectIdx, courseIdx, co
   const [ambientNotesOpen, setAmbientNotesOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
+  const [countdown, setCountdown] = useState<number | null>(null);
+  const autoplayNextRef = useRef(false);
   const ambientStartAtRef = useRef(0);
 
   // YT player refs
@@ -149,24 +153,46 @@ export function CoursePlayer({ lessons, col, levelIdx, subjectIdx, courseIdx, co
       } else {
         stopPoll();
         if (e.data === 0) {         // ended
-          if (!isLoggedInRef.current) return;
-          const key = `${levelIdx}:${subjectIdx}:${courseIdx}:${selectedRef.current}`;
-          if (!isWatchedRef.current(key)) toggleWatchedRef.current(key);
+          if (isLoggedInRef.current) {
+            const key = `${levelIdx}:${subjectIdx}:${courseIdx}:${selectedRef.current}`;
+            if (!isWatchedRef.current(key)) toggleWatchedRef.current(key);
+          }
+          // Start countdown to next lesson
+          if (selectedRef.current < lessons.length - 1) {
+            setCountdown(5);
+          }
         }
       }
     };
   }
 
+  // ── Countdown to next lesson ──────────────────────────────────────────────────
+  useEffect(() => {
+    if (countdown === null) return;
+    if (countdown === 0) {
+      setCountdown(null);
+      autoplayNextRef.current = true;
+      setSelected((s) => s + 1);
+      return;
+    }
+    const timer = setTimeout(() => setCountdown((c) => (c !== null ? c - 1 : null)), 1000);
+    return () => clearTimeout(timer);
+  }, [countdown]);
+
   // ── Create / destroy main player ──────────────────────────────────────────────
   useEffect(() => {
     if (!ytId || !mainDivRef.current) return;
     let destroyed = false;
+    setCountdown(null); // clear countdown when lesson changes
+
+    const shouldAutoplay = autoplayNextRef.current;
+    autoplayNextRef.current = false;
 
     loadYTApi().then(() => {
       if (destroyed || !mainDivRef.current) return;
       mainPlayerRef.current = new window.YT.Player(mainDivRef.current, {
         videoId: ytId,
-        playerVars: { enablejsapi: 1, rel: 0 },
+        playerVars: { enablejsapi: 1, rel: 0, autoplay: shouldAutoplay ? 1 : 0 },
         events: { onStateChange: makeStateHandler(() => mainPlayerRef.current) },
       });
     });
@@ -295,9 +321,9 @@ export function CoursePlayer({ lessons, col, levelIdx, subjectIdx, courseIdx, co
   const { createNote: createNoteCtx, openNote, isLoggedIn: notesLoggedIn, getNotesByLesson, folders, createFolder, notes: allNotes } = useNotes();
   const currentLessonKey = `${levelIdx}:${subjectIdx}:${courseIdx}:${selected}`;
   const lessonNotes = getNotesByLesson(currentLessonKey);
-  const lessonFolder = folders.find((f) => f.name === lesson.title && !f.parentId);
-  const lessonNoteCount = lessonFolder
-    ? allNotes.filter((n) => n.lessonKey === currentLessonKey || n.folderId === lessonFolder.id).length
+  const topicFolder = folders.find((f) => f.name === courseTitle && !f.parentId);
+  const lessonNoteCount = topicFolder
+    ? allNotes.filter((n) => n.lessonKey === currentLessonKey || n.folderId === topicFolder.id).length
     : lessonNotes.length;
 
   // ── Ambient overlay ───────────────────────────────────────────────────────────
@@ -309,16 +335,36 @@ export function CoursePlayer({ lessons, col, levelIdx, subjectIdx, courseIdx, co
           <p className="text-sm font-semibold text-white truncate">{lesson.title}</p>
           <p className={`text-xs mt-0.5 ${col.text} hidden lg:block`}>الدرس {toAr(selected)} من {toAr(lessons.length - 1)}</p>
         </div>
-        <button onClick={() => setSelected((s) => Math.max(s - 1, 0))} disabled={selected === 0}
+        <button onClick={() => { setCountdown(null); setSelected((s) => Math.max(s - 1, 0)); }} disabled={selected === 0}
           className="flex items-center gap-1.5 text-xs text-neutral-400 hover:text-white disabled:opacity-25 transition-colors px-2 lg:px-2.5 py-1.5 rounded-lg hover:bg-neutral-800">
           <svg className="w-3.5 h-3.5" viewBox="0 0 16 16" fill="currentColor"><path d="M10.5 8L6 4l-1 1L8.5 8 5 11l1 1 4.5-4z" /></svg>
           <span className="hidden lg:inline">السابق</span>
         </button>
-        <button onClick={goNext} disabled={selected === lessons.length - 1}
-          className="flex items-center gap-1.5 text-xs text-neutral-400 hover:text-white disabled:opacity-25 transition-colors px-2 lg:px-2.5 py-1.5 rounded-lg hover:bg-neutral-800">
-          <span className="hidden lg:inline">التالي</span>
-          <svg className="w-3.5 h-3.5 rotate-180" viewBox="0 0 16 16" fill="currentColor"><path d="M10.5 8L6 4l-1 1L8.5 8 5 11l1 1 4.5-4z" /></svg>
-        </button>
+        {countdown !== null ? (
+          <div className="flex items-center gap-1.5 px-2 lg:px-2.5 py-1.5">
+            <div className="relative w-5 h-5 shrink-0">
+              <svg className="w-5 h-5 -rotate-90" viewBox="0 0 20 20">
+                <circle cx="10" cy="10" r="8" fill="none" stroke="white" strokeOpacity="0.2" strokeWidth="2" />
+                <circle cx="10" cy="10" r="8" fill="none" stroke="white" strokeWidth="2"
+                  strokeDasharray={`${2 * Math.PI * 8}`}
+                  strokeDashoffset={`${2 * Math.PI * 8 * (1 - countdown / 5)}`}
+                  className="transition-all duration-1000 ease-linear"
+                />
+              </svg>
+              <span className="absolute inset-0 flex items-center justify-center text-white text-[9px] font-bold">{countdown}</span>
+            </div>
+            <span className="text-xs text-neutral-300 hidden lg:inline">التالي…</span>
+            <button onClick={() => setCountdown(null)} className="text-[11px] text-neutral-400 hover:text-white px-1.5 py-0.5 rounded bg-neutral-800 hover:bg-neutral-700 transition-colors">
+              إلغاء
+            </button>
+          </div>
+        ) : (
+          <button onClick={goNext} disabled={selected === lessons.length - 1}
+            className="flex items-center gap-1.5 text-xs text-neutral-400 hover:text-white disabled:opacity-25 transition-colors px-2 lg:px-2.5 py-1.5 rounded-lg hover:bg-neutral-800">
+            <span className="hidden lg:inline">التالي</span>
+            <svg className="w-3.5 h-3.5 rotate-180" viewBox="0 0 16 16" fill="currentColor"><path d="M10.5 8L6 4l-1 1L8.5 8 5 11l1 1 4.5-4z" /></svg>
+          </button>
+        )}
         {transcript.length > 0 && (
           <button onClick={() => setAmbientTranscriptOpen((v) => !v)}
             className="flex items-center gap-1.5 text-xs text-neutral-400 hover:text-white transition-colors px-2 lg:px-2.5 py-1.5 rounded-lg hover:bg-neutral-800">
@@ -360,6 +406,7 @@ export function CoursePlayer({ lessons, col, levelIdx, subjectIdx, courseIdx, co
             <AmbientNotePanel
               lessonKey={`${levelIdx}:${subjectIdx}:${courseIdx}:${selected}`}
               lessonTitle={lesson.title}
+              courseTitle={courseTitle}
               col={col}
               currentTime={currentTime}
               onSeek={seekTo}
@@ -395,6 +442,7 @@ export function CoursePlayer({ lessons, col, levelIdx, subjectIdx, courseIdx, co
             <AmbientNotePanel
               lessonKey={`${levelIdx}:${subjectIdx}:${courseIdx}:${selected}`}
               lessonTitle={lesson.title}
+              courseTitle={courseTitle}
               col={col}
               currentTime={currentTime}
               onSeek={seekTo}
@@ -410,12 +458,11 @@ export function CoursePlayer({ lessons, col, levelIdx, subjectIdx, courseIdx, co
   const [pickerOpen, setPickerOpen] = useState(false);
 
   async function handleCreateLessonNote() {
-    const lessonFolder = folders.find((f) => f.name === lesson.title && !f.parentId);
-    const folderId = lessonFolder ? lessonFolder.id : await createFolder(lesson.title);
+    const folderId = topicFolder ? topicFolder.id : await createFolder(courseTitle);
     const id = await createNoteCtx({
       lessonKey: currentLessonKey,
       noteType: "lesson",
-      title: "ملاحظة جديدة",
+      title: lesson.title,
       folderId,
     });
     openNote(id);
@@ -471,6 +518,32 @@ export function CoursePlayer({ lessons, col, levelIdx, subjectIdx, courseIdx, co
                 </svg>
                 وضع الانغماس
               </button>
+            )}
+            {/* Next-lesson countdown overlay */}
+            {countdown !== null && (
+              <div className="absolute inset-x-0 bottom-0 flex items-center justify-between gap-3 px-4 py-3 bg-gradient-to-t from-black/85 to-transparent" dir="rtl">
+                <div className="flex items-center gap-2.5">
+                  <div className="relative w-8 h-8 shrink-0">
+                    <svg className="w-8 h-8 -rotate-90" viewBox="0 0 32 32">
+                      <circle cx="16" cy="16" r="13" fill="none" stroke="white" strokeOpacity="0.2" strokeWidth="2.5" />
+                      <circle cx="16" cy="16" r="13" fill="none" stroke="white" strokeWidth="2.5"
+                        strokeDasharray={`${2 * Math.PI * 13}`}
+                        strokeDashoffset={`${2 * Math.PI * 13 * (1 - countdown / 5)}`}
+                        className="transition-all duration-1000 ease-linear"
+                        strokeLinecap="round"
+                      />
+                    </svg>
+                    <span className="absolute inset-0 flex items-center justify-center text-white text-[11px] font-bold">{countdown}</span>
+                  </div>
+                  <span className="text-white text-xs font-medium">الانتقال للدرس التالي…</span>
+                </div>
+                <button
+                  onClick={() => setCountdown(null)}
+                  className="text-white/70 hover:text-white text-xs px-3 py-1.5 rounded-lg bg-white/10 hover:bg-white/20 transition-colors shrink-0"
+                >
+                  إلغاء
+                </button>
+              </div>
             )}
           </div>
 
@@ -575,8 +648,8 @@ export function CoursePlayer({ lessons, col, levelIdx, subjectIdx, courseIdx, co
                 </button>
               </div>
               <div className="max-h-52 overflow-y-auto py-1">
-                {(lessonFolder
-                  ? allNotes.filter((n) => n.lessonKey === currentLessonKey || n.folderId === lessonFolder.id)
+                {(topicFolder
+                  ? allNotes.filter((n) => n.lessonKey === currentLessonKey || n.folderId === topicFolder.id)
                   : lessonNotes
                 ).map((note) => (
                   <button

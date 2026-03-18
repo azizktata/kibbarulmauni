@@ -11,6 +11,22 @@ npm run start    # Start production server
 npm run lint     # Run ESLint
 ```
 
+**DB migrations (Drizzle + Turso):**
+```bash
+npx drizzle-kit generate   # Generate migration files from schema changes
+npx drizzle-kit migrate    # Apply migrations to the Turso DB
+npx drizzle-kit studio     # Open Drizzle Studio (DB browser)
+```
+
+**Required env vars** (create `.env.local`):
+```
+AUTH_GOOGLE_ID=
+AUTH_GOOGLE_SECRET=
+AUTH_SECRET=          # NextAuth secret (generate with: openssl rand -base64 32)
+TURSO_DATABASE_URL=
+TURSO_AUTH_TOKEN=
+```
+
 ## Architecture
 
 Next.js 16 app (App Router, React 19) that serves as a browsable index for Islamic educational content. Content comes from a static JSON file; user progress is persisted in a Turso (libSQL) database via Drizzle ORM.

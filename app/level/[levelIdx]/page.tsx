@@ -4,6 +4,12 @@ import { university, getLevel } from "@/lib/data";
 import { LEVEL_COLORS } from "@/lib/constants";
 import { LevelSubjectsGrid } from "@/components/LevelSubjectsGrid";
 
+function subjectWord(n: number) {
+  if (n === 2) return "مادتان";
+  if (n >= 3 && n <= 10) return "مواد";
+  return "مادة";
+}
+
 export function generateStaticParams() {
   return university.map((_, idx) => ({ levelIdx: String(idx) }));
 }
@@ -40,7 +46,7 @@ export default async function LevelPage({
             <span className="text-white font-medium">{level.title}</span>
           </nav>
           <h1 className="text-3xl font-bold">{level.title}</h1>
-          <p className="text-white/70 mt-1 text-sm">{level.subjects.length} مادة دراسية</p>
+          <p className="text-white/70 mt-1 text-sm">{level.subjects.length} {subjectWord(level.subjects.length)} دراسية</p>
         </div>
       </header>
 

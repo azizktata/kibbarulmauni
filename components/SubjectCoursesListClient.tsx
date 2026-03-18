@@ -8,6 +8,12 @@ import { courseProgress } from "@/lib/progress";
 import type { Course } from "@/lib/data";
 import { extractScholars } from "@/lib/data";
 
+function lessonWord(n: number) {
+  if (n === 2) return "درسان";
+  if (n >= 3 && n <= 10) return "دروس";
+  return "درس";
+}
+
 function extractYoutubeId(url: string): string | null {
   const m = url.match(/[?&]v=([a-zA-Z0-9_-]{11})/);
   return m ? m[1] : null;
@@ -108,7 +114,7 @@ export function SubjectCoursesListClient({ lIdx, sIdx, courses }: Props) {
                 </h3>
                 {course.files.length > 0 && (
                   <span className="shrink-0 text-[11px] font-semibold px-2 py-0.5 rounded-full bg-gold/15 text-primary dark:text-gold">
-                    {course.files.length} درس
+                    {course.files.length} {lessonWord(course.files.length)}
                   </span>
                 )}
               </div>

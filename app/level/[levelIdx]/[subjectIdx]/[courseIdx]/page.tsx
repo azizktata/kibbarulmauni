@@ -6,7 +6,9 @@ import { LEVEL_COLORS } from "@/lib/constants";
 import { CoursePlayer } from "@/components/CoursePlayer";
 
 function lessonWord(n: number) {
-  return n === 1 ? "درس" : "دروس";
+  if (n === 2) return "درسان";
+  if (n >= 3 && n <= 10) return "دروس";
+  return "درس";
 }
 
 export function generateStaticParams() {
@@ -43,11 +45,11 @@ export default async function CoursePage({
         <div className="relative max-w-5xl mx-auto">
           <nav className="flex items-center gap-1.5 text-white/60 text-xs mb-4 flex-wrap">
             <Link href="/" className="hover:text-white transition-colors">الرئيسية</Link>
-            <span>›</span>
+            <span className="text-gold">›</span>
             <Link href={`/level/${lIdx}`} className="hover:text-white transition-colors">{level.title}</Link>
-            <span>›</span>
+            <span className="text-gold">›</span>
             <Link href={`/level/${lIdx}/${sIdx}`} className="hover:text-white transition-colors">{subject.title}</Link>
-            <span>›</span>
+            <span className="text-gold">›</span>
             <span className="text-white font-medium">{course.title}</span>
           </nav>
           <h1 className="text-xl font-bold leading-snug">{course.title}</h1>

@@ -7,12 +7,13 @@ import type { LevelColor } from "@/lib/constants";
 interface AmbientNotePanelProps {
   lessonKey: string;
   lessonTitle: string;
+  courseTitle: string;
   col: LevelColor;
   currentTime: number;
   onSeek: (s: number) => void;
 }
 
-export function AmbientNotePanel({ lessonKey, lessonTitle }: AmbientNotePanelProps) {
+export function AmbientNotePanel({ lessonKey, lessonTitle, courseTitle }: AmbientNotePanelProps) {
   const { getNotesByLesson, openNote, deleteNote, createNote, folders, createFolder, isLoggedIn, notes } = useNotes();
 
   if (!isLoggedIn) {
@@ -24,24 +25,21 @@ export function AmbientNotePanel({ lessonKey, lessonTitle }: AmbientNotePanelPro
     );
   }
 
-  // Find lesson folder by title (same logic as CoursePlayer and NotesSidebar)
-  const lessonFolder = folders.find((f) => f.name === lessonTitle && !f.parentId) ?? null;
+  // Find topic folder by course title (one folder per course/topic)
+  const topicFolder = folders.find((f) => f.name === courseTitle && !f.parentId) ?? null;
 
-  // All notes for this lesson: by lessonKey OR by folder
+  // All notes for this lesson: by lessonKey OR by topic folder
   const lessonNotesByKey = getNotesByLesson(lessonKey);
-  const allLessonNotes = lessonFolder
-    ? notes.filter((n) => n.lessonKey === lessonKey || n.folderId === lessonFolder.id)
+  const allLessonNotes = topicFolder
+    ? notes.filter((n) => n.lessonKey === lessonKey || n.folderId === topicFolder.id)
     : lessonNotesByKey;
 
   async function handleCreateNote() {
-    let folderId = lessonFolder?.id ?? null;
-    if (!folderId) {
-      folderId = await createFolder(lessonTitle);
-    }
+    const folderId = topicFolder?.id ?? await createFolder(courseTitle);
     const id = await createNote({
       lessonKey,
       noteType: "lesson",
-      title: "ملاحظة جديدة",
+      title: lessonTitle,
       folderId,
     });
     openNote(id);
