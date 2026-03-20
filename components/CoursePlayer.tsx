@@ -30,7 +30,7 @@ declare global {
 interface YTOpts {
   videoId: string;
   playerVars?: Record<string, string | number>;
-  events?: { onStateChange?: (e: { data: number }) => void };
+  events?: { onStateChange?: (e: { data: number }) => void; onReady?: () => void };
 }
 interface YTPlayer {
   seekTo(s: number, allow: boolean): void;
@@ -95,6 +95,7 @@ export function CoursePlayer({ lessons, col, levelIdx, subjectIdx, courseIdx, co
   const autoplayNextRef = useRef(false);
   const ambientStartAtRef = useRef(0);
   const lastSaveRef = useRef(0);
+  const lastDbSaveRef = useRef(0);
 
   // YT player refs
   const mainDivRef = useRef<HTMLDivElement>(null);
@@ -145,6 +146,16 @@ export function CoursePlayer({ lessons, col, levelIdx, subjectIdx, courseIdx, co
     if (pollRef.current) { clearInterval(pollRef.current); pollRef.current = null; }
   }
 
+  function savePositionToDb(pos: number) {
+    if (!isLoggedInRef.current || pos <= 5) return;
+    const key = `${levelIdx}:${subjectIdx}:${courseIdx}:${selectedRef.current}`;
+    fetch("/api/recently-visited", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ lessonKey: key, position: Math.floor(pos) }),
+    }).catch(() => {});
+  }
+
   function startPoll(getPlayer: () => YTPlayer | null) {
     stopPoll();
     pollRef.current = setInterval(() => {
@@ -152,10 +163,14 @@ export function CoursePlayer({ lessons, col, levelIdx, subjectIdx, courseIdx, co
       if (!p) return;
       const t = p.getCurrentTime();
       setCurrentTime(t);
-      // save position every 5 seconds
+      // save position every 5 seconds (localStorage) and every 30s (DB)
       if (t - lastSaveRef.current >= 5) {
         lastSaveRef.current = t;
         localStorage.setItem(`playback_${levelIdx}_${subjectIdx}_${courseIdx}_${selectedRef.current}`, String(Math.floor(t)));
+        if (t - lastDbSaveRef.current >= 30) {
+          lastDbSaveRef.current = t;
+          savePositionToDb(t);
+        }
       }
       // mark watched at 80 %
       const dur = p.getDuration();
@@ -164,6 +179,7 @@ export function CoursePlayer({ lessons, col, levelIdx, subjectIdx, courseIdx, co
         if (!isWatchedRef.current(key)) {
           toggleWatchedRef.current(key);
           localStorage.removeItem(`playback_${levelIdx}_${subjectIdx}_${courseIdx}_${selectedRef.current}`);
+          fetch("/api/recently-visited", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ lessonKey: key, position: 0 }) }).catch(() => {});
         }
       }
     }, 500);
@@ -175,6 +191,10 @@ export function CoursePlayer({ lessons, col, levelIdx, subjectIdx, courseIdx, co
         startPoll(getPlayer);
       } else {
         stopPoll();
+        if (e.data === 2) {         // paused — save position to DB
+          const p = getPlayer();
+          if (p) savePositionToDb(p.getCurrentTime());
+        }
         if (e.data === 0) {         // ended
           if (isLoggedInRef.current) {
             const key = `${levelIdx}:${subjectIdx}:${courseIdx}:${selectedRef.current}`;
@@ -211,6 +231,7 @@ export function CoursePlayer({ lessons, col, levelIdx, subjectIdx, courseIdx, co
     const shouldAutoplay = autoplayNextRef.current;
     autoplayNextRef.current = false;
     lastSaveRef.current = 0;
+    lastDbSaveRef.current = 0;
 
     const savedPos = Number(localStorage.getItem(`playback_${levelIdx}_${subjectIdx}_${courseIdx}_${selectedRef.current}`) ?? 0);
 
@@ -219,7 +240,24 @@ export function CoursePlayer({ lessons, col, levelIdx, subjectIdx, courseIdx, co
       mainPlayerRef.current = new window.YT.Player(mainDivRef.current, {
         videoId: ytId,
         playerVars: { enablejsapi: 1, rel: 0, autoplay: shouldAutoplay ? 1 : 0, ...(savedPos > 5 ? { start: Math.floor(savedPos) } : {}) },
-        events: { onStateChange: makeStateHandler(() => mainPlayerRef.current) },
+        events: {
+          onStateChange: makeStateHandler(() => mainPlayerRef.current),
+          onReady: () => {
+            if (!isLoggedInRef.current) return;
+            const lessonKeyAtLoad = `${levelIdx}:${subjectIdx}:${courseIdx}:${selectedRef.current}`;
+            fetch("/api/recently-visited")
+              .then((r) => r.json())
+              .then(({ entries }: { entries: { key: string; position: number }[] }) => {
+                const entry = entries?.find((e) => e.key === lessonKeyAtLoad);
+                const dbPos = entry?.position ?? 0;
+                if (dbPos > savedPos && dbPos > 5) {
+                  mainPlayerRef.current?.seekTo(dbPos, true);
+                  localStorage.setItem(`playback_${levelIdx}_${subjectIdx}_${courseIdx}_${selectedRef.current}`, String(dbPos));
+                }
+              })
+              .catch(() => {});
+          },
+        },
       });
     });
 
@@ -602,13 +640,15 @@ export function CoursePlayer({ lessons, col, levelIdx, subjectIdx, courseIdx, co
           <div className="flex justify-between gap-3">
             <button onClick={goNext} disabled={selected === lessons.length - 1}
               className="flex-1 flex items-center justify-center gap-2 bg-white dark:bg-white/[0.04] border border-stone-100 dark:border-white/[0.08] rounded-xl py-2.5 text-xs font-medium text-stone-500 dark:text-white/40 hover:bg-stone-50 dark:hover:bg-white/[0.08] hover:text-stone-700 dark:hover:text-white/70 disabled:opacity-30 disabled:cursor-not-allowed transition-colors shadow-sm dark:shadow-none">
-              <svg className="w-4 h-4 rotate-180" viewBox="0 0 16 16" fill="currentColor"><path d="M10.5 8L6 4l-1 1L8.5 8 5 11l1 1 4.5-4z" /></svg>
+                           <svg className="w-4 h-4" viewBox="0 0 16 16" fill="currentColor"><path d="M10.5 8L6 4l-1 1L8.5 8 5 11l1 1 4.5-4z" /></svg>
+
               الدرس التالي
             </button>
             <button onClick={() => setSelected((s) => Math.max(s - 1, 0))} disabled={selected === 0}
               className="flex-1 flex items-center justify-center gap-2 bg-white dark:bg-white/[0.04] border border-stone-100 dark:border-white/[0.08] rounded-xl py-2.5 text-xs font-medium text-stone-500 dark:text-white/40 hover:bg-stone-50 dark:hover:bg-white/[0.08] hover:text-stone-700 dark:hover:text-white/70 disabled:opacity-30 disabled:cursor-not-allowed transition-colors shadow-sm dark:shadow-none">
               الدرس السابق
-              <svg className="w-4 h-4" viewBox="0 0 16 16" fill="currentColor"><path d="M10.5 8L6 4l-1 1L8.5 8 5 11l1 1 4.5-4z" /></svg>
+              <svg className="w-4 h-4 rotate-180" viewBox="0 0 16 16" fill="currentColor"><path d="M10.5 8L6 4l-1 1L8.5 8 5 11l1 1 4.5-4z" /></svg>
+
             </button>
           </div>
         </div>

@@ -1,0 +1,1 @@
+ALTER TABLE `recently_visited` ADD `playbackPosition` integer;

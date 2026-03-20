@@ -69,24 +69,26 @@ export async function unmarkWatched(userId: string, lessonKey: string): Promise<
 
 // ── Recently visited ──────────────────────────────────────────────────────────
 
-export async function upsertRecentlyVisited(userId: string, lessonKey: string): Promise<void> {
+export async function upsertRecentlyVisited(userId: string, lessonKey: string, position?: number): Promise<void> {
+  const set: Record<string, unknown> = { visitedAt: Date.now() };
+  if (position !== undefined) set.playbackPosition = position;
   await db
     .insert(recentlyVisited)
-    .values({ userId, lessonKey, visitedAt: Date.now() })
+    .values({ userId, lessonKey, visitedAt: Date.now(), playbackPosition: position ?? null })
     .onConflictDoUpdate({
       target: [recentlyVisited.userId, recentlyVisited.lessonKey],
-      set: { visitedAt: Date.now() },
+      set,
     });
 }
 
-export async function getRecentlyVisited(userId: string): Promise<string[]> {
+export async function getRecentlyVisited(userId: string): Promise<{ key: string; position: number }[]> {
   const rows = await db
-    .select({ lessonKey: recentlyVisited.lessonKey })
+    .select({ lessonKey: recentlyVisited.lessonKey, playbackPosition: recentlyVisited.playbackPosition })
     .from(recentlyVisited)
     .where(eq(recentlyVisited.userId, userId))
     .orderBy(desc(recentlyVisited.visitedAt))
     .limit(6);
-  return rows.map((r) => r.lessonKey);
+  return rows.map((r) => ({ key: r.lessonKey, position: r.playbackPosition ?? 0 }));
 }
 
 // ── Note folders ──────────────────────────────────────────────────────────────
