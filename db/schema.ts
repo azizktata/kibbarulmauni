@@ -26,6 +26,14 @@ export const noteFolders = sqliteTable("note_folder", {
   createdAt: integer("createdAt").$defaultFn(() => Date.now()),
 });
 
+export const recentlyVisited = sqliteTable("recently_visited", {
+  userId:    text("userId").notNull().references(() => users.id, { onDelete: "cascade" }),
+  lessonKey: text("lessonKey").notNull(), // "levelIdx:subjectIdx:courseIdx:lessonIdx"
+  visitedAt: integer("visitedAt").notNull().$defaultFn(() => Date.now()),
+}, (t) => ({
+  pk: primaryKey({ columns: [t.userId, t.lessonKey] }),
+}));
+
 export const notes = sqliteTable("note", {
   id:        text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
   userId:    text("userId").notNull().references(() => users.id, { onDelete: "cascade" }),

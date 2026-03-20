@@ -1,5 +1,5 @@
 import { db } from "./index";
-import { users, watchedLessons, noteFolders, notes } from "./schema";
+import { users, watchedLessons, recentlyVisited, noteFolders, notes } from "./schema";
 import { eq, and, desc, isNull, or, like } from "drizzle-orm";
 
 export async function upsertUser(email: string, name: string | null): Promise<string> {
@@ -65,6 +65,28 @@ export async function unmarkWatched(userId: string, lessonKey: string): Promise<
   await db
     .delete(watchedLessons)
     .where(and(eq(watchedLessons.userId, userId), eq(watchedLessons.lessonKey, lessonKey)));
+}
+
+// ── Recently visited ──────────────────────────────────────────────────────────
+
+export async function upsertRecentlyVisited(userId: string, lessonKey: string): Promise<void> {
+  await db
+    .insert(recentlyVisited)
+    .values({ userId, lessonKey, visitedAt: Date.now() })
+    .onConflictDoUpdate({
+      target: [recentlyVisited.userId, recentlyVisited.lessonKey],
+      set: { visitedAt: Date.now() },
+    });
+}
+
+export async function getRecentlyVisited(userId: string): Promise<string[]> {
+  const rows = await db
+    .select({ lessonKey: recentlyVisited.lessonKey })
+    .from(recentlyVisited)
+    .where(eq(recentlyVisited.userId, userId))
+    .orderBy(desc(recentlyVisited.visitedAt))
+    .limit(6);
+  return rows.map((r) => r.lessonKey);
 }
 
 // ── Note folders ──────────────────────────────────────────────────────────────

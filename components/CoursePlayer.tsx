@@ -114,6 +114,20 @@ export function CoursePlayer({ lessons, col, levelIdx, subjectIdx, courseIdx, co
   useEffect(() => { isWatchedRef.current = isWatched; }, [isWatched]);
   useEffect(() => { toggleWatchedRef.current = toggleWatched; }, [toggleWatched]);
 
+  // Auto-select first unwatched lesson once watched keys are loaded.
+  // If the currently selected lesson is already watched, jump to the first unwatched one.
+  // If the selected lesson is unwatched (e.g. explicit deep-link), leave it as-is.
+  useEffect(() => {
+    if (!isLoaded) return;
+    const currentKey = `${levelIdx}:${subjectIdx}:${courseIdx}:${selected}`;
+    if (!watchedKeys.has(currentKey)) return;
+    const firstUnwatched = lessons.findIndex(
+      (_, i) => !watchedKeys.has(`${levelIdx}:${subjectIdx}:${courseIdx}:${i}`)
+    );
+    if (firstUnwatched >= 0) setSelected(firstUnwatched);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isLoaded]);
+
   useEffect(() => {
     setMounted(true);
     const mq = window.matchMedia("(max-width: 1023px)");
@@ -250,7 +264,7 @@ export function CoursePlayer({ lessons, col, levelIdx, subjectIdx, courseIdx, co
 
   // ── Track recently watched ────────────────────────────────────────────────────
   useEffect(() => {
-    saveWatched({ levelIdx, subjectIdx, courseIdx, lessonIdx: selected, courseTitle, lessonTitle: lessons[selected].title, levelTitle });
+    saveWatched({ levelIdx, subjectIdx, courseIdx, lessonIdx: selected, courseTitle, lessonTitle: lessons[selected].title, levelTitle }, isLoggedInRef.current);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [courseIdx]);
 
