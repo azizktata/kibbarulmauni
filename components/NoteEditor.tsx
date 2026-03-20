@@ -4,7 +4,6 @@ import { useState, useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
 import { XIcon, BookOpenIcon, FileTextIcon, RotateCcwIcon, PinIcon, TrashIcon, MinusIcon, GripVerticalIcon } from "lucide-react";
 import { NoteEditorBody } from "@/components/NoteEditorBody";
-import { Sheet, SheetContent } from "@/components/ui/sheet";
 import { useNotes, type NoteSummary } from "@/lib/notesContext";
 import { cn } from "@/lib/utils";
 
@@ -210,25 +209,23 @@ export function NoteEditor() {
     </>
   );
 
-  // ── Mobile: bottom sheet ───────────────────────────────────────────────────
+  // ── Mobile: overlay-free bottom panel (video remains interactive above) ────
   if (isMobile) {
-    return (
-      <Sheet open={!!openNoteId} onOpenChange={(open) => { if (!open) openNote(null); }}>
-        <SheetContent
-          side="bottom"
-          showCloseButton={false}
-          className="p-0 flex flex-col gap-0 rounded-t-xl w-full max-w-full overflow-hidden"
-          style={{ height: "85dvh" }}
-          dir="rtl"
-        >
-          {/* Drag handle pill */}
-          <div className="flex justify-center pt-2.5 pb-1 shrink-0">
-            <div className="w-10 h-1 rounded-full bg-stone-200" />
-          </div>
-          {titleBar(true)}
-          {editorBody}
-        </SheetContent>
-      </Sheet>
+    if (!openNoteId) return null;
+    return createPortal(
+      <div
+        className="fixed inset-x-0 bottom-0 z-50 flex flex-col bg-white rounded-t-xl shadow-2xl border-t border-stone-200 overflow-hidden"
+        style={{ height: "55dvh" }}
+        dir="rtl"
+      >
+        {/* Drag handle pill */}
+        <div className="flex justify-center pt-2.5 pb-1 shrink-0">
+          <div className="w-10 h-1 rounded-full bg-stone-200" />
+        </div>
+        {titleBar(true)}
+        {editorBody}
+      </div>,
+      document.body
     );
   }
 

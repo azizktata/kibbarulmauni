@@ -166,7 +166,7 @@ export function Navbar() {
                 value={q}
                 onChange={(e) => setQ(e.target.value)}
                 placeholder="ابحث عن درس أو مقرر أو مادة…"
-                className="w-full bg-white rounded-2xl pr-12 pl-4 py-4 text-sm text-stone-800 placeholder-stone-400 outline-none shadow-2xl"
+                className="w-full bg-white rounded-2xl pr-12 pl-4 py-4 text-[16px] text-stone-800 placeholder-stone-400 outline-none shadow-2xl"
               />
             </div>
             <p className="text-white/40 text-xs text-center mt-3">اضغط Enter للبحث · Escape للإغلاق</p>

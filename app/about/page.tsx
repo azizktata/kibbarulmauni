@@ -59,9 +59,9 @@ export default function AboutPage() {
 
 
 
-          <p className="text-[#F6F5F1]/55 text-base max-w-xl mx-auto leading-relaxed mb-10">
-            مرجعية موثوقة في تلقي العلم الشرعي — منهج وفق كلية الشريعة
-            بصوتيات مشايخ كبار العلماء الثقات.
+          <p className="text-[#F6F5F1]/55 text-base max-w-lg mx-auto leading-relaxed mb-10">
+          نحن مشروع كبار العلماء للتسهيل على طلبة العلم قمنا بعمل منهج وفقا لكلية الشريعة في جامعة محمد بن سعود الإسلامية وتم اختيار الصوتيات لمشايخ كبار العلماء وعلى منهج الجامعة.
+
           </p>
 
 <div className="flex flex-col items-center gap-8">
@@ -255,7 +255,10 @@ export default function AboutPage() {
 
       {/* ── FOOTER ───────────────────────────────────────────── */}
       <footer className="border-t border-[#CAC9C3]/20 py-8 text-center text-xs text-[#CAC9C3]/70 flex flex-col items-center gap-2">
-        <span>جامعة كبار العلماء · منهج الدراسة الشرعية</span>
+        <span>
+مرجعية موثوقة في تلقي العلم الشرعي — منهج وفق كلية الشريعة بصوتيات مشايخ كبار العلماء الثقات.
+          </span>
+
         <div className="flex items-center gap-4">
           <a href="https://www.kibbarulmauni.com" target="_blank" rel="noopener noreferrer" className="hover:text-gold transition-colors">
             الموقع الرسمي

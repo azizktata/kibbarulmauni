@@ -57,7 +57,7 @@ export default async function CoursePage({
         </div>
       </header>
 
-      <main className="max-w-5xl 2xl:max-w-7xl mx-auto px-4 py-8 flex flex-col gap-6">
+      <main className="max-w-5xl 2xl:max-w-7xl mx-auto px-4 pt-0 pb-8 lg:py-8 flex flex-col gap-6">
         {course.files.length === 0 ? (
           <div className="text-center py-24 text-stone-400">
             <div className="text-5xl mb-4">🎧</div>

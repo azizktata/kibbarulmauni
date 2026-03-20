@@ -63,7 +63,12 @@ export default function HomePage() {
       </main>
 
       <footer className="border-t border-stone-100 dark:border-white/[0.07] py-8 text-center text-xs text-stone-400 dark:text-white/25 flex flex-col items-center gap-2">
-        <span>جامعة كبار العلماء · منهج الدراسة الشرعية</span>
+        <span >
+          
+            مرجعية موثوقة في تلقي العلم الشرعي — منهج وفق كلية الشريعة
+            بصوتيات مشايخ كبار العلماء الثقات.
+          
+          </span>
         <div className="flex items-center gap-4">
           <a href="https://www.kibbarulmauni.com" target="_blank" rel="noopener noreferrer" className="hover:text-stone-600 dark:hover:text-white/60 transition-colors">
             الموقع الرسمي

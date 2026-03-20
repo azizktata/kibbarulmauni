@@ -31,6 +31,10 @@ TURSO_AUTH_TOKEN=
 
 Next.js 16 app (App Router, React 19) that serves as a browsable index for Islamic educational content. Content comes from a static JSON file; user progress is persisted in a Turso (libSQL) database via Drizzle ORM.
 
+**RTL/Arabic-first:** The entire app is `<html lang="ar" dir="rtl">`. All layout, spacing, and flex/grid direction decisions must account for RTL rendering.
+
+**Provider nesting (`app/layout.tsx`):** `SessionProvider → NotesProvider(isLoggedIn) → WatchedProvider(isLoggedIn)`. Both context providers receive `isLoggedIn` to skip API calls for unauthenticated users.
+
 **Data layer (`lib/` + `data/`):**
 - `data/kibbarulmauni.json` — the entire content tree: `Level[] → Subject[] → Course[] → Lesson[]`. Each lesson has a `title`, `url`, and optional `youtube` field.
 - `lib/data.ts` — typed accessors (`getLevel`, `getSubject`, `getCourse`) and helpers (`countLevelLessons`, `extractScholars`).
@@ -95,6 +99,18 @@ Next.js 16 app (App Router, React 19) that serves as a browsable index for Islam
 - `fuse.js` for fuzzy search
 - `react-markdown` for rendering note content
 - `react-resizable-panels` for the resizable notes side panel
+
+**Custom color tokens** (defined in `@theme inline` in `globals.css`, usable as Tailwind utilities like `bg-primary`, `text-gold`):
+- `primary` → #193833 (dark green)
+- `primary-dark` → #082e27
+- `gold` → #F0BC53
+- `warm-gray` → #CAC9C3
+- `cream` → #F6F5F1 (also the light-mode `--background`)
+
+**Fonts** (loaded via `next/font/google` in `app/layout.tsx`, set as CSS variables on `<html>`):
+- `--font-cairo` — base body font, applied via the `font-cairo` Tailwind utility
+- `--font-amiri` — Arabic serif for decorative headings, used inline: `style={{ fontFamily: "var(--font-amiri)" }}`
+- `--font-aref-ruqaa` — calligraphic style, available for display use
 
 **Adding shadcn components:** `npx shadcn add <component-name>`
 

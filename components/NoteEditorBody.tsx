@@ -106,6 +106,7 @@ export function NoteEditorBody({
         isDark ? "border-neutral-800 bg-neutral-950" : "border-stone-100 bg-stone-50"
       )}>
         <button
+          onPointerDown={(e) => e.preventDefault()}
           onClick={() => insertMarkdown("**", "**")}
           className={cn("p-1.5 rounded text-xs font-bold transition-colors", isDark ? "text-neutral-400 hover:text-white hover:bg-neutral-800" : "text-stone-400 hover:text-stone-700 hover:bg-stone-200")}
           title="خط عريض"
@@ -113,6 +114,7 @@ export function NoteEditorBody({
           <BoldIcon className="w-3.5 h-3.5" />
         </button>
         <button
+          onPointerDown={(e) => e.preventDefault()}
           onClick={() => insertMarkdown("*", "*")}
           className={cn("p-1.5 rounded transition-colors", isDark ? "text-neutral-400 hover:text-white hover:bg-neutral-800" : "text-stone-400 hover:text-stone-700 hover:bg-stone-200")}
           title="خط مائل"
@@ -120,6 +122,7 @@ export function NoteEditorBody({
           <ItalicIcon className="w-3.5 h-3.5" />
         </button>
         <button
+          onPointerDown={(e) => e.preventDefault()}
           onClick={() => insertMarkdown("## ")}
           className={cn("p-1.5 rounded transition-colors", isDark ? "text-neutral-400 hover:text-white hover:bg-neutral-800" : "text-stone-400 hover:text-stone-700 hover:bg-stone-200")}
           title="عنوان"
@@ -127,6 +130,7 @@ export function NoteEditorBody({
           <Heading2Icon className="w-3.5 h-3.5" />
         </button>
         <button
+          onPointerDown={(e) => e.preventDefault()}
           onClick={() => insertMarkdown("- ")}
           className={cn("p-1.5 rounded transition-colors", isDark ? "text-neutral-400 hover:text-white hover:bg-neutral-800" : "text-stone-400 hover:text-stone-700 hover:bg-stone-200")}
           title="قائمة"
@@ -151,6 +155,7 @@ export function NoteEditorBody({
 
         {/* Download */}
         <button
+          onPointerDown={(e) => e.preventDefault()}
           onClick={handleDownload}
           className={cn("p-1.5 rounded transition-colors", isDark ? "text-neutral-500 hover:text-white hover:bg-neutral-800" : "text-stone-300 hover:text-stone-600 hover:bg-stone-200")}
           title="تحميل كـ Markdown"

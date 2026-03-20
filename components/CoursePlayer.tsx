@@ -94,6 +94,7 @@ export function CoursePlayer({ lessons, col, levelIdx, subjectIdx, courseIdx, co
   const [countdown, setCountdown] = useState<number | null>(null);
   const autoplayNextRef = useRef(false);
   const ambientStartAtRef = useRef(0);
+  const lastSaveRef = useRef(0);
 
   // YT player refs
   const mainDivRef = useRef<HTMLDivElement>(null);
@@ -137,11 +138,19 @@ export function CoursePlayer({ lessons, col, levelIdx, subjectIdx, courseIdx, co
       if (!p) return;
       const t = p.getCurrentTime();
       setCurrentTime(t);
+      // save position every 5 seconds
+      if (t - lastSaveRef.current >= 5) {
+        lastSaveRef.current = t;
+        localStorage.setItem(`playback_${levelIdx}_${subjectIdx}_${courseIdx}_${selectedRef.current}`, String(Math.floor(t)));
+      }
       // mark watched at 80 %
       const dur = p.getDuration();
       if (dur > 0 && t / dur >= 0.8 && isLoggedInRef.current) {
         const key = `${levelIdx}:${subjectIdx}:${courseIdx}:${selectedRef.current}`;
-        if (!isWatchedRef.current(key)) toggleWatchedRef.current(key);
+        if (!isWatchedRef.current(key)) {
+          toggleWatchedRef.current(key);
+          localStorage.removeItem(`playback_${levelIdx}_${subjectIdx}_${courseIdx}_${selectedRef.current}`);
+        }
       }
     }, 500);
   }
@@ -187,12 +196,15 @@ export function CoursePlayer({ lessons, col, levelIdx, subjectIdx, courseIdx, co
 
     const shouldAutoplay = autoplayNextRef.current;
     autoplayNextRef.current = false;
+    lastSaveRef.current = 0;
+
+    const savedPos = Number(localStorage.getItem(`playback_${levelIdx}_${subjectIdx}_${courseIdx}_${selectedRef.current}`) ?? 0);
 
     loadYTApi().then(() => {
       if (destroyed || !mainDivRef.current) return;
       mainPlayerRef.current = new window.YT.Player(mainDivRef.current, {
         videoId: ytId,
-        playerVars: { enablejsapi: 1, rel: 0, autoplay: shouldAutoplay ? 1 : 0 },
+        playerVars: { enablejsapi: 1, rel: 0, autoplay: shouldAutoplay ? 1 : 0, ...(savedPos > 5 ? { start: Math.floor(savedPos) } : {}) },
         events: { onStateChange: makeStateHandler(() => mainPlayerRef.current) },
       });
     });
@@ -337,7 +349,8 @@ export function CoursePlayer({ lessons, col, levelIdx, subjectIdx, courseIdx, co
         </div>
         <button onClick={() => { setCountdown(null); setSelected((s) => Math.max(s - 1, 0)); }} disabled={selected === 0}
           className="flex items-center gap-1.5 text-xs text-neutral-400 hover:text-white disabled:opacity-25 transition-colors px-2 lg:px-2.5 py-1.5 rounded-lg hover:bg-neutral-800">
-          <svg className="w-3.5 h-3.5" viewBox="0 0 16 16" fill="currentColor"><path d="M10.5 8L6 4l-1 1L8.5 8 5 11l1 1 4.5-4z" /></svg>
+                     <svg className="w-3.5 h-3.5 rotate-180" viewBox="0 0 16 16" fill="currentColor"><path d="M10.5 8L6 4l-1 1L8.5 8 5 11l1 1 4.5-4z" /></svg>
+
           <span className="hidden lg:inline">السابق</span>
         </button>
         {countdown !== null ? (
@@ -362,7 +375,7 @@ export function CoursePlayer({ lessons, col, levelIdx, subjectIdx, courseIdx, co
           <button onClick={goNext} disabled={selected === lessons.length - 1}
             className="flex items-center gap-1.5 text-xs text-neutral-400 hover:text-white disabled:opacity-25 transition-colors px-2 lg:px-2.5 py-1.5 rounded-lg hover:bg-neutral-800">
             <span className="hidden lg:inline">التالي</span>
-            <svg className="w-3.5 h-3.5 rotate-180" viewBox="0 0 16 16" fill="currentColor"><path d="M10.5 8L6 4l-1 1L8.5 8 5 11l1 1 4.5-4z" /></svg>
+             <svg className="w-3.5 h-3.5" viewBox="0 0 16 16" fill="currentColor"><path d="M10.5 8L6 4l-1 1L8.5 8 5 11l1 1 4.5-4z" /></svg>
           </button>
         )}
         {transcript.length > 0 && (
@@ -508,15 +521,15 @@ export function CoursePlayer({ lessons, col, levelIdx, subjectIdx, courseIdx, co
           </div> */}
 
           {/* 2. Video */}
-          <div className="group relative aspect-video bg-stone-900 rounded-2xl overflow-hidden shadow-lg ring-1 ring-black/5">
+          <div className="group relative aspect-video bg-stone-900 rounded-none lg:rounded-2xl overflow-hidden shadow-lg lg:ring-1 ring-black/5 max-lg:-mx-4">
             {ytId ? <div ref={mainDivRef} className="w-full h-full" /> : noVideo}
             {ytId && (
               <button onClick={() => { ambientStartAtRef.current = Math.floor(currentTime); setAmbientMode(true); }}
-                className="absolute top-13 left-2.5 flex items-center gap-1.5 text-[11px] font-medium text-white bg-black/50 hover:bg-black/70 rounded-lg px-2.5 py-1.5 opacity-100 lg:opacity-0 lg:group-hover:opacity-100 transition-opacity">
+                className="absolute top-2.5 left-2.5 flex items-center gap-1.5 text-[11px] font-medium text-white bg-black/50 hover:bg-black/70 rounded-lg px-2.5 py-1.5 opacity-100 lg:opacity-0 lg:group-hover:opacity-100 transition-opacity">
                 <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
                   <path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3" />
                 </svg>
-                وضع الانغماس
+                <span className="hidden lg:inline">وضع الانغماس</span>
               </button>
             )}
             {/* Next-lesson countdown overlay */}
