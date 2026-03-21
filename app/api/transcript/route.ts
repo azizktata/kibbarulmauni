@@ -6,30 +6,81 @@ import { auth } from "@/auth";
 
 const ADMIN_EMAIL = "azizktata77@gmail.com";
 
-// ── YouTube captions (timedtext API) ──────────────────────────────────────────
+// ── YouTube captions via Android InnerTube API ────────────────────────────────
+// Uses the Android client context which returns caption track URLs accessible server-side.
 
-interface TimedTextEvent {
-  tStartMs: number;
-  dDurationMs?: number;
-  segs?: { utf8: string }[];
+const YT_CLIENT_VERSION = "20.10.38";
+const YT_USER_AGENT = `com.google.android.youtube/${YT_CLIENT_VERSION} (Linux; U; Android 14)`;
+
+function decodeEntities(s: string): string {
+  return s
+    .replace(/&amp;/g, "&").replace(/&lt;/g, "<").replace(/&gt;/g, ">")
+    .replace(/&quot;/g, '"').replace(/&#39;/g, "'").replace(/&apos;/g, "'")
+    .replace(/&#x([0-9a-fA-F]+);/g, (_, h) => String.fromCodePoint(parseInt(h, 16)))
+    .replace(/&#(\d+);/g, (_, d) => String.fromCodePoint(parseInt(d, 10)));
 }
 
-async function fetchCaptions(videoId: string, lang: string): Promise<TranscriptSegment[] | null> {
-  const url = `https://www.youtube.com/api/timedtext?v=${videoId}&lang=${lang}&fmt=json3`;
-  const res = await fetch(url, { headers: { "User-Agent": "Mozilla/5.0" } });
-  if (!res.ok) return null;
+function parseTimedTextXml(xml: string, lang: string): TranscriptSegment[] {
+  // Try <p t="..." d="..."> format (timedtext format 3)
+  const segs: TranscriptSegment[] = [];
+  const pRe = /<p\s+t="(\d+)"\s+d="(\d+)"[^>]*>([\s\S]*?)<\/p>/g;
+  let m: RegExpExecArray | null;
+  while ((m = pRe.exec(xml)) !== null) {
+    const start = parseInt(m[1], 10);
+    const dur = parseInt(m[2], 10);
+    let text = "";
+    // Extract <s> segments if present
+    const sRe = /<s[^>]*>([^<]*)<\/s>/g;
+    let sm: RegExpExecArray | null;
+    while ((sm = sRe.exec(m[3])) !== null) text += sm[1];
+    if (!text) text = m[3].replace(/<[^>]+>/g, "");
+    text = decodeEntities(text).trim();
+    if (text) segs.push({ start: start / 1000, dur: dur / 1000, text });
+  }
+  if (segs.length) return segs;
 
-  const json = (await res.json()) as { events?: TimedTextEvent[] };
-  if (!json.events?.length) return null;
+  // Fallback: <text start="..." dur="..."> format
+  const textRe = /<text start="([^"]*)" dur="([^"]*)">([^<]*)<\/text>/g;
+  while ((m = textRe.exec(xml)) !== null) {
+    const text = decodeEntities(m[3]).trim();
+    if (text) segs.push({ start: parseFloat(m[1]), dur: parseFloat(m[2]), text });
+  }
+  return segs;
+}
 
-  return json.events
-    .filter((e) => e.segs)
-    .map((e) => ({
-      start: e.tStartMs / 1000,
-      dur: (e.dDurationMs ?? 0) / 1000,
-      text: e.segs!.map((s) => s.utf8).join("").replace(/\n/g, " ").trim(),
-    }))
-    .filter((s) => s.text);
+async function fetchYouTubeCaptions(videoId: string): Promise<TranscriptSegment[] | null> {
+  // Step 1: get caption tracks via Android InnerTube player API
+  const playerRes = await fetch("https://www.youtube.com/youtubei/v1/player?prettyPrint=false", {
+    method: "POST",
+    headers: { "Content-Type": "application/json", "User-Agent": YT_USER_AGENT },
+    body: JSON.stringify({
+      context: { client: { clientName: "ANDROID", clientVersion: YT_CLIENT_VERSION } },
+      videoId,
+    }),
+  });
+  if (!playerRes.ok) return null;
+
+  const playerData = await playerRes.json() as {
+    captions?: { playerCaptionsTracklistRenderer?: { captionTracks?: { languageCode: string; kind?: string; baseUrl: string }[] } };
+  };
+  const tracks = playerData.captions?.playerCaptionsTracklistRenderer?.captionTracks ?? [];
+  if (!tracks.length) return null;
+
+  // Step 2: pick best track (Arabic manual → Arabic ASR → English manual → English ASR)
+  const pick = (lang: string, asr: boolean) =>
+    tracks.find((t) => t.languageCode === lang && (asr ? t.kind === "asr" : t.kind !== "asr")) ??
+    (asr ? tracks.find((t) => t.languageCode === lang) : undefined);
+
+  const track = pick("ar", false) ?? pick("ar", true) ?? pick("en", false) ?? pick("en", true) ?? tracks[0];
+
+  // Step 3: fetch the XML caption file
+  const capRes = await fetch(track.baseUrl, { headers: { "User-Agent": "Mozilla/5.0" } });
+  if (!capRes.ok) return null;
+  const xml = await capRes.text();
+  if (!xml) return null;
+
+  const segs = parseTimedTextXml(xml, track.languageCode);
+  return segs.length ? segs : null;
 }
 
 // ── Raw file parser (M:SS) format ─────────────────────────────────────────────
@@ -104,19 +155,11 @@ export async function GET(req: NextRequest) {
   }
 
   try {
-    const segments =
-      (await fetchCaptions(videoId, "ar")) ??
-      (await fetchCaptions(videoId, "en")) ??
-      [];
-
-    return NextResponse.json(
-      { segments },
-      { headers: { "Cache-Control": "public, max-age=86400" } }
-    );
+    const segments = await fetchYouTubeCaptions(videoId) ?? [];
+    // Only cache when we actually got segments; empty means captions unavailable or transient error
+    const cc = segments.length > 0 ? "public, max-age=86400" : "no-store";
+    return NextResponse.json({ segments }, { headers: { "Cache-Control": cc } });
   } catch {
-    return NextResponse.json(
-      { segments: [] },
-      { headers: { "Cache-Control": "public, max-age=3600" } }
-    );
+    return NextResponse.json({ segments: [] }, { headers: { "Cache-Control": "no-store" } });
   }
 }

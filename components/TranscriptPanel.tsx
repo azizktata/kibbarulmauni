@@ -65,26 +65,50 @@ export function TranscriptPanel({ segments, currentTime, col, onSeek, variant = 
   }, [segments, query]);
 
   useEffect(() => {
-    if (firstMatchIdx >= 0) {
-      segRefs.current.get(firstMatchIdx)?.scrollIntoView({ block: "center", behavior: "smooth" });
-    }
+    const el = segRefs.current.get(firstMatchIdx);
+    const container = containerRef.current;
+    if (firstMatchIdx < 0 || !el || !container) return;
+    const containerRect = container.getBoundingClientRect();
+    const elRect = el.getBoundingClientRect();
+    const newScrollTop = container.scrollTop + (elRect.top - containerRect.top) - container.clientHeight / 2;
+    container.scrollTo({ top: newScrollTop, behavior: "smooth" });
   }, [firstMatchIdx]);
 
   useEffect(() => {
     const el = containerRef.current;
     if (!el) return;
-    const onScroll = () => { userScrolledRef.current = true; };
-    el.addEventListener("scroll", onScroll, { passive: true });
-    return () => el.removeEventListener("scroll", onScroll);
+    const onUserScroll = () => { userScrolledRef.current = true; };
+    el.addEventListener("wheel", onUserScroll, { passive: true });
+    el.addEventListener("touchstart", onUserScroll, { passive: true });
+    return () => {
+      el.removeEventListener("wheel", onUserScroll);
+      el.removeEventListener("touchstart", onUserScroll);
+    };
   }, []);
+
+  // Reset user-scroll lock when a new lesson's segments load
+  useEffect(() => {
+    userScrolledRef.current = false;
+  }, [segments]);
 
   useEffect(() => {
     if (query) return;
     if (userScrolledRef.current) return;
-    if (activeIdx >= 0) {
-      segRefs.current.get(activeIdx)?.scrollIntoView({ block: "nearest", behavior: "smooth" });
-    }
-  }, [activeIdx, query]);
+    if (activeIdx < 0) return;
+
+    // Scroll to 3 segments ahead so the active line sits near the top
+    // with upcoming text visible below it
+    const lookAheadIdx = Math.min(activeIdx + 4, segments.length - 1);
+    const targetEl = segRefs.current.get(lookAheadIdx) ?? segRefs.current.get(activeIdx);
+    const container = containerRef.current;
+    if (!targetEl || !container) return;
+
+    // Scroll only the transcript container — never the page
+    const containerRect = container.getBoundingClientRect();
+    const targetRect = targetEl.getBoundingClientRect();
+    const newScrollTop = container.scrollTop + (targetRect.bottom - containerRect.bottom);
+    container.scrollTo({ top: newScrollTop, behavior: "smooth" });
+  }, [activeIdx, query, segments.length]);
 
   // ── Text selection ────────────────────────────────────────────────────────────
   function handleMouseUp() {
@@ -166,22 +190,22 @@ export function TranscriptPanel({ segments, currentTime, col, onSeek, variant = 
       ref={popoverRef}
       style={{ position: "fixed", left: popover.x, top: popover.y, transform: "translate(-50%, -100%)", zIndex: 9999 }}
     >
-      <div className={`flex items-center gap-0.5 rounded-full shadow-lg border px-1 py-1 ${dark ? "bg-neutral-800 border-neutral-700" : "bg-white border-stone-200"}`}>
+      <div className={`flex items-center gap-0.5 rounded-full shadow-lg border px-1 py-1 ${dark ? "bg-neutral-800 border-neutral-700" : "bg-white dark:bg-neutral-800 border-stone-200 dark:border-neutral-700"}`}>
         <button
           onMouseDown={(e) => e.preventDefault()}
           onClick={copyClean}
-          className={`flex items-center gap-1.5 text-[11px] font-medium px-2.5 py-1.5 rounded-full transition-colors ${dark ? "text-neutral-300 hover:bg-neutral-700" : "text-stone-600 hover:bg-stone-100"}`}
+          className={`flex items-center gap-1.5 text-[11px] font-medium px-2.5 py-1.5 rounded-full transition-colors ${dark ? "text-neutral-300 hover:bg-neutral-700" : "text-stone-600 dark:text-neutral-300 hover:bg-stone-100 dark:hover:bg-neutral-700"}`}
         >
           <svg className="w-3 h-3 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
             <rect x="9" y="9" width="13" height="13" rx="2" /><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
           </svg>
           نسخ
         </button>
-        <div className={`w-px h-4 ${dark ? "bg-neutral-700" : "bg-stone-200"}`} />
+        <div className={`w-px h-4 ${dark ? "bg-neutral-700" : "bg-stone-200 dark:bg-neutral-700"}`} />
         <button
           onMouseDown={(e) => e.preventDefault()}
           onClick={openShare}
-          className={`flex items-center gap-1.5 text-[11px] font-medium px-2.5 py-1.5 rounded-full transition-colors ${dark ? "text-neutral-300 hover:bg-neutral-700" : "text-stone-600 hover:bg-stone-100"}`}
+          className={`flex items-center gap-1.5 text-[11px] font-medium px-2.5 py-1.5 rounded-full transition-colors ${dark ? "text-neutral-300 hover:bg-neutral-700" : "text-stone-600 dark:text-neutral-300 hover:bg-stone-100 dark:hover:bg-neutral-700"}`}
         >
           <svg className="w-3 h-3 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
             <circle cx="18" cy="5" r="3" /><circle cx="6" cy="12" r="3" /><circle cx="18" cy="19" r="3" />
@@ -197,10 +221,10 @@ export function TranscriptPanel({ segments, currentTime, col, onSeek, variant = 
   return (
     <>
       <div className={`rounded-xl border shadow-sm overflow-hidden h-full flex flex-col ${
-        dark ? "bg-neutral-900 border-neutral-800" : "bg-white border-stone-100"
+        dark ? "bg-neutral-900 border-neutral-800" : "bg-white dark:bg-neutral-900 border-stone-100 dark:border-neutral-800"
       }`}>
         {/* Header */}
-        <div className={`px-4 py-2.5 border-b flex items-center gap-2 shrink-0 ${dark ? "border-neutral-800" : "border-stone-100"}`}>
+        <div className={`px-4 py-2.5 border-b flex items-center gap-2 shrink-0 ${dark ? "border-neutral-800" : "border-stone-100 dark:border-neutral-800"}`}>
           {dark && (
             <>
               <svg className="w-3.5 h-3.5 shrink-0 text-neutral-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
@@ -211,7 +235,7 @@ export function TranscriptPanel({ segments, currentTime, col, onSeek, variant = 
           )}
           {!dark && <span className="flex-1" />}
           <div className="relative">
-            <svg className={`absolute right-2 top-1/2 -translate-y-1/2 w-3 h-3 pointer-events-none ${dark ? "text-neutral-600" : "text-stone-300"}`} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5}>
+            <svg className={`absolute right-2 top-1/2 -translate-y-1/2 w-3 h-3 pointer-events-none ${dark ? "text-neutral-600" : "text-stone-300 dark:text-neutral-600"}`} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5}>
               <circle cx="11" cy="11" r="8" /><path d="m21 21-4.35-4.35" />
             </svg>
             <input
@@ -219,15 +243,15 @@ export function TranscriptPanel({ segments, currentTime, col, onSeek, variant = 
               placeholder="بحث..." dir="rtl"
               className={`text-xs rounded-lg border pr-6 pl-2 py-1 w-32 focus:outline-none focus:ring-1 placeholder:opacity-40 ${
                 dark ? "bg-neutral-800 border-neutral-700 text-neutral-200 focus:ring-neutral-600"
-                     : "bg-stone-50 border-stone-200 text-stone-700 focus:ring-stone-300"
+                     : "bg-stone-50 dark:bg-neutral-800 border-stone-200 dark:border-neutral-700 text-stone-700 dark:text-neutral-200 focus:ring-stone-300 dark:focus:ring-neutral-600"
               }`}
             />
           </div>
         </div>
 
         {/* Body */}
-        <div ref={containerRef} className={`overflow-y-auto px-4 py-3 flex-1 ${dark ? "[&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-track]:bg-neutral-900 [&::-webkit-scrollbar-thumb]:bg-neutral-600 [&::-webkit-scrollbar-thumb]:rounded-full" : ""}`}>
-          <p ref={paraRef} onMouseUp={handleMouseUp} className={`text-sm leading-loose ${dark ? "text-neutral-300" : "text-stone-600"}`} dir="rtl">
+        <div ref={containerRef} className={`overflow-y-auto px-4 py-3 flex-1 [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-thumb]:rounded-full ${dark ? "[&::-webkit-scrollbar-track]:bg-neutral-900 [&::-webkit-scrollbar-thumb]:bg-neutral-600" : "[&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-stone-200 dark:[&::-webkit-scrollbar-track]:bg-neutral-900 dark:[&::-webkit-scrollbar-thumb]:bg-neutral-600"}`}>
+          <p ref={paraRef} onMouseUp={handleMouseUp} className={`text-sm leading-loose ${dark ? "text-neutral-300" : "text-stone-600 dark:text-neutral-300"}`} dir="rtl">
             {segments.map((seg, idx) => {
               const isActive = idx === activeIdx;
               const isMatch = idx === firstMatchIdx;
@@ -245,7 +269,7 @@ export function TranscriptPanel({ segments, currentTime, col, onSeek, variant = 
                     onClick={() => { userScrolledRef.current = false; onSeek?.(seg.start); }}
                     className={`font-mono text-[10px] tabular-nums rounded px-1 py-0.5 mx-1 transition-colors align-middle leading-none ${
                       dark ? "bg-neutral-700 hover:bg-neutral-600 text-neutral-400"
-                           : "bg-stone-100 hover:bg-stone-200 text-stone-400"
+                           : "bg-stone-100 dark:bg-neutral-700 hover:bg-stone-200 dark:hover:bg-neutral-600 text-stone-400 dark:text-neutral-400"
                     }`}
                     style={{ direction: "ltr" }}
                   >

@@ -25,6 +25,14 @@ AUTH_GOOGLE_SECRET=
 AUTH_SECRET=          # NextAuth secret (generate with: openssl rand -base64 32)
 TURSO_DATABASE_URL=
 TURSO_AUTH_TOKEN=
+YOUTUBE_API_KEY=      # Only needed when running playlist sync scripts
+```
+
+**Playlist sync scripts** (run once, commit output — scholars are frozen/no longer uploading):
+```bash
+node scripts/sync-scholar-playlists.mjs  # Fetches all playlists per scholar → data/scholar-playlists.json
+node scripts/sync-playlist-items.mjs     # Fetches video IDs for each playlist → data/playlists/{id}.json
+node scripts/recategorize-playlists.mjs  # Re-assigns category labels on existing playlist data
 ```
 
 ## Architecture
@@ -77,13 +85,22 @@ Next.js 16 app (App Router, React 19) that serves as a browsable index for Islam
 
 **Admin gating:** Both audio and transcript upload APIs check `session.user.email === "azizktata77@gmail.com"` directly (no DB role).
 
+**YouTube Playlists:**
+- `data/scholar-playlists.json` — map of canonical scholar name → `ScholarPlaylist[]` (playlistId, title, thumbnail, videoCount, category). Populated by `sync-scholar-playlists.mjs`.
+- `data/playlists/{playlistId}.json` — per-playlist video list `{ videoId, title, position }[]`. Populated by `sync-playlist-items.mjs`.
+- `data/playlist-ids.json` — flat array of all playlist IDs that have a corresponding file in `data/playlists/` (used to distinguish internal vs. external YouTube links).
+- `components/ScholarPlaylistsSection.tsx` — grid of playlist cards grouped by category, shown on the scholar profile page.
+- `components/ScholarProfileTabs.tsx` — tabs component on `/scholars/[name]` switching between the course list and the playlists section.
+- `/playlist/[playlistId]` — static page that renders a playlist using `CoursePlayer`. Sorts by leading lesson number in titles when ≥60% of videos carry one; otherwise sorts by `position`.
+
 **Routing:**
 - `/` — home page (level list)
 - `/level/[levelIdx]` — subjects in a level
 - `/level/[levelIdx]/[subjectIdx]` — courses in a subject
 - `/level/[levelIdx]/[subjectIdx]/[courseIdx]` — lesson list; `?lesson=N` selects active lesson
 - `/scholars` — scholar index page
-- `/scholars/[name]` — courses taught by a specific scholar
+- `/scholars/[name]` — courses taught by a specific scholar (tabs: courses + YouTube playlists)
+- `/playlist/[playlistId]` — YouTube playlist player (statically generated from `data/playlists/`)
 - `/search` — fuzzy search across subjects, courses, and lessons
 - `/about` — about page
 

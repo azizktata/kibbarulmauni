@@ -79,9 +79,14 @@ interface Props {
   levelTitle: string;
   siblings?: { title: string; files: unknown[] }[];
   subjectTitle?: string;
+  /** When set, overrides the levelIdx:subjectIdx:courseIdx prefix for all progress keys (watched, localStorage, DB). Use for non-curriculum content like YouTube playlists. */
+  keyPrefix?: string;
 }
 
-export function CoursePlayer({ lessons, col, levelIdx, subjectIdx, courseIdx, courseTitle, levelTitle, siblings, subjectTitle }: Props) {
+export function CoursePlayer({ lessons, col, levelIdx, subjectIdx, courseIdx, courseTitle, levelTitle, siblings, subjectTitle, keyPrefix }: Props) {
+  // Key helpers — use keyPrefix when provided (e.g. for playlist pages)
+  const baseKey = keyPrefix ?? `${levelIdx}:${subjectIdx}:${courseIdx}`;
+  const lsBase = keyPrefix ? keyPrefix.replace(/:/g, "_") : `${levelIdx}_${subjectIdx}_${courseIdx}`;
   const searchParams = useSearchParams();
   const initialLesson = Math.min(Number(searchParams.get("lesson") ?? 0) || 0, lessons.length - 1);
 
@@ -126,10 +131,10 @@ export function CoursePlayer({ lessons, col, levelIdx, subjectIdx, courseIdx, co
   // If the selected lesson is unwatched (e.g. explicit deep-link), leave it as-is.
   useEffect(() => {
     if (!isLoaded) return;
-    const currentKey = `${levelIdx}:${subjectIdx}:${courseIdx}:${selected}`;
+    const currentKey = `${baseKey}:${selected}`;
     if (!watchedKeys.has(currentKey)) return;
     const firstUnwatched = lessons.findIndex(
-      (_, i) => !watchedKeys.has(`${levelIdx}:${subjectIdx}:${courseIdx}:${i}`)
+      (_, i) => !watchedKeys.has(`${baseKey}:${i}`)
     );
     if (firstUnwatched >= 0) setSelected(firstUnwatched);
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -154,7 +159,7 @@ export function CoursePlayer({ lessons, col, levelIdx, subjectIdx, courseIdx, co
 
   function savePositionToDb(pos: number) {
     if (!isLoggedInRef.current || pos <= 5) return;
-    const key = `${levelIdx}:${subjectIdx}:${courseIdx}:${selectedRef.current}`;
+    const key = `${baseKey}:${selectedRef.current}`;
     fetch("/api/recently-visited", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -172,7 +177,7 @@ export function CoursePlayer({ lessons, col, levelIdx, subjectIdx, courseIdx, co
       // save position every 5 seconds (localStorage) and every 30s (DB)
       if (t - lastSaveRef.current >= 5) {
         lastSaveRef.current = t;
-        localStorage.setItem(`playback_${levelIdx}_${subjectIdx}_${courseIdx}_${selectedRef.current}`, String(Math.floor(t)));
+        localStorage.setItem(`playback_${lsBase}_${selectedRef.current}`, String(Math.floor(t)));
         if (t - lastDbSaveRef.current >= 30) {
           lastDbSaveRef.current = t;
           savePositionToDb(t);
@@ -181,10 +186,10 @@ export function CoursePlayer({ lessons, col, levelIdx, subjectIdx, courseIdx, co
       // mark watched at 90 %
       const dur = p.getDuration();
       if (dur > 0 && t / dur >= 0.9 && isLoggedInRef.current) {
-        const key = `${levelIdx}:${subjectIdx}:${courseIdx}:${selectedRef.current}`;
+        const key = `${baseKey}:${selectedRef.current}`;
         if (!isWatchedRef.current(key)) {
           toggleWatchedRef.current(key);
-          localStorage.removeItem(`playback_${levelIdx}_${subjectIdx}_${courseIdx}_${selectedRef.current}`);
+          localStorage.removeItem(`playback_${lsBase}_${selectedRef.current}`);
           fetch("/api/recently-visited", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ lessonKey: key, position: 0 }) }).catch(() => {});
         }
       }
@@ -203,7 +208,7 @@ export function CoursePlayer({ lessons, col, levelIdx, subjectIdx, courseIdx, co
         }
         if (e.data === 0) {         // ended
           if (isLoggedInRef.current) {
-            const key = `${levelIdx}:${subjectIdx}:${courseIdx}:${selectedRef.current}`;
+            const key = `${baseKey}:${selectedRef.current}`;
             if (!isWatchedRef.current(key)) toggleWatchedRef.current(key);
           }
           // Start countdown to next lesson
@@ -239,7 +244,7 @@ export function CoursePlayer({ lessons, col, levelIdx, subjectIdx, courseIdx, co
     lastSaveRef.current = 0;
     lastDbSaveRef.current = 0;
 
-    const savedPos = Number(localStorage.getItem(`playback_${levelIdx}_${subjectIdx}_${courseIdx}_${selectedRef.current}`) ?? 0);
+    const savedPos = Number(localStorage.getItem(`playback_${lsBase}_${selectedRef.current}`) ?? 0);
 
     loadYTApi().then(() => {
       if (destroyed || !mainDivRef.current) return;
@@ -250,7 +255,7 @@ export function CoursePlayer({ lessons, col, levelIdx, subjectIdx, courseIdx, co
           onStateChange: makeStateHandler(() => mainPlayerRef.current),
           onReady: () => {
             if (!isLoggedInRef.current) return;
-            const lessonKeyAtLoad = `${levelIdx}:${subjectIdx}:${courseIdx}:${selectedRef.current}`;
+            const lessonKeyAtLoad = `${baseKey}:${selectedRef.current}`;
             fetch("/api/recently-visited")
               .then((r) => r.json())
               .then(({ entries }: { entries: { key: string; position: number }[] }) => {
@@ -258,7 +263,7 @@ export function CoursePlayer({ lessons, col, levelIdx, subjectIdx, courseIdx, co
                 const dbPos = entry?.position ?? 0;
                 if (dbPos > savedPos && dbPos > 5) {
                   mainPlayerRef.current?.seekTo(dbPos, true);
-                  localStorage.setItem(`playback_${levelIdx}_${subjectIdx}_${courseIdx}_${selectedRef.current}`, String(dbPos));
+                  localStorage.setItem(`playback_${lsBase}_${selectedRef.current}`, String(dbPos));
                 }
               })
               .catch(() => {});
@@ -308,7 +313,7 @@ export function CoursePlayer({ lessons, col, levelIdx, subjectIdx, courseIdx, co
 
   // ── Track recently watched ────────────────────────────────────────────────────
   useEffect(() => {
-    saveWatched({ levelIdx, subjectIdx, courseIdx, lessonIdx: selected, courseTitle, lessonTitle: lessons[selected].title, levelTitle }, isLoggedInRef.current);
+    if (!keyPrefix) saveWatched({ levelIdx, subjectIdx, courseIdx, lessonIdx: selected, courseTitle, lessonTitle: lessons[selected].title, levelTitle }, isLoggedInRef.current);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [courseIdx]);
 
@@ -341,7 +346,7 @@ export function CoursePlayer({ lessons, col, levelIdx, subjectIdx, courseIdx, co
 
     if (!ytId) { loadFile(); return; }
 
-    fetch(`/api/transcript?v=${ytId}`)
+    fetch(`/api/transcript?v=${ytId}`, { cache: "no-cache" })
       .then((r) => r.json())
       .then(({ segments }: { segments: TranscriptSegment[] }) => {
         if (segments.length > 0) setTranscript(segments);
@@ -355,17 +360,17 @@ export function CoursePlayer({ lessons, col, levelIdx, subjectIdx, courseIdx, co
   const watchedCount = useMemo(() => {
     let count = 0;
     for (let i = 0; i < lessons.length; i++) {
-      if (watchedKeys.has(`${levelIdx}:${subjectIdx}:${courseIdx}:${i}`)) count++;
+      if (watchedKeys.has(`${baseKey}:${i}`)) count++;
     }
     return count;
-  }, [watchedKeys, lessons.length, levelIdx, subjectIdx, courseIdx]);
+  }, [watchedKeys, lessons.length, baseKey]);
 
   const progressPct = lessons.length > 0 ? Math.round((watchedCount / lessons.length) * 100) : 0;
 
   // ── Actions ──────────────────────────────────────────────────────────────────
   function goNext() {
     if (isLoggedIn) {
-      const key = `${levelIdx}:${subjectIdx}:${courseIdx}:${selected}`;
+      const key = `${baseKey}:${selected}`;
       if (!isWatched(key)) toggleWatched(key);
     }
     setSelected((s) => Math.min(s + 1, lessons.length - 1));
@@ -389,7 +394,7 @@ export function CoursePlayer({ lessons, col, levelIdx, subjectIdx, courseIdx, co
 
   // ── Notes context (must be before ambientOverlay JSX) ────────────────────────
   const { createNote: createNoteCtx, openNote, isLoggedIn: notesLoggedIn, getNotesByLesson, folders, createFolder, notes: allNotes } = useNotes();
-  const currentLessonKey = `${levelIdx}:${subjectIdx}:${courseIdx}:${selected}`;
+  const currentLessonKey = `${baseKey}:${selected}`;
   const lessonNotes = getNotesByLesson(currentLessonKey);
   const topicFolder = folders.find((f) => f.name === courseTitle && !f.parentId);
   const lessonNoteCount = topicFolder
@@ -475,7 +480,7 @@ export function CoursePlayer({ lessons, col, levelIdx, subjectIdx, courseIdx, co
         {ambientNotesOpen && notesLoggedIn && (
           <div className="flex-1 overflow-hidden border-t border-neutral-800 min-h-0">
             <AmbientNotePanel
-              lessonKey={`${levelIdx}:${subjectIdx}:${courseIdx}:${selected}`}
+              lessonKey={`${baseKey}:${selected}`}
               lessonTitle={lesson.title}
               courseTitle={courseTitle}
               col={col}
@@ -486,40 +491,52 @@ export function CoursePlayer({ lessons, col, levelIdx, subjectIdx, courseIdx, co
         )}
       </div>
       ) : (
-      <div className="flex flex-1 overflow-hidden" dir="ltr">
-        <div className="flex-1 min-w-0 overflow-hidden">
-          <ResizablePanelGroup className="h-full">
-            <ResizablePanel defaultSize={ambientTranscriptOpen ? 58 : 100} minSize={30}>
-              <div dir="rtl" className="flex items-center justify-center p-6 h-full">
-                <div className="aspect-video w-full rounded-2xl overflow-hidden bg-black" style={{ maxHeight: "calc(100vh - 110px)" }}>
-                  {ytId ? <div ref={ambientDivRef} className="w-full h-full" /> : noVideo}
-                </div>
+      <div className="flex-1 overflow-hidden" dir="ltr">
+        <ResizablePanelGroup className="h-full">
+          <ResizablePanel
+            defaultSize={ambientTranscriptOpen ? (ambientNotesOpen ? 52 : 60) : (ambientNotesOpen ? 65 : 100)}
+            minSize={30}
+          >
+           <div className="flex items-center justify-center p-6 h-full min-w-0">
+              <div className="aspect-video w-full rounded-2xl overflow-hidden bg-black" style={{ maxHeight: "calc(100vh - 110px)" }}>
+                {ytId ? <div ref={ambientDivRef} className="w-full h-full" /> : noVideo}
               </div>
-            </ResizablePanel>
-            {ambientTranscriptOpen && transcript.length > 0 && (
-              <>
-                <ResizableHandle className="bg-neutral-800 hover:bg-neutral-600 transition-colors" />
-                <ResizablePanel defaultSize={42} minSize={15} maxSize={65}>
-                  <div dir="rtl" className="h-full overflow-hidden">
+            </div>
+          </ResizablePanel>
+          {ambientTranscriptOpen && (
+            <>
+              <ResizableHandle withHandle className="bg-neutral-800 hover:bg-neutral-600 transition-colors" />
+              <ResizablePanel defaultSize={ambientNotesOpen ? 28 : 40} minSize={15}>
+                <div className="h-full flex flex-col min-w-0 overflow-hidden">
+                  {transcript.length > 0 ? (
                     <TranscriptPanel segments={transcript} currentTime={currentTime} col={col} onSeek={seekTo} variant="dark" lessonTitle={lesson.title} youtubeUrl={lesson.youtube ?? undefined} />
-                  </div>
-                </ResizablePanel>
-              </>
-            )}
-          </ResizablePanelGroup>
-        </div>
-        {ambientNotesOpen && (
-          <div dir="rtl" className="w-80 shrink-0 border-l border-neutral-800 overflow-hidden bg-neutral-900">
-            <AmbientNotePanel
-              lessonKey={`${levelIdx}:${subjectIdx}:${courseIdx}:${selected}`}
-              lessonTitle={lesson.title}
-              courseTitle={courseTitle}
-              col={col}
-              currentTime={currentTime}
-              onSeek={seekTo}
-            />
-          </div>
-        )}
+                  ) : (
+                    <div className="flex items-center justify-center h-full">
+                      <span className="text-neutral-600 text-xs">جارٍ تحميل النص…</span>
+                    </div>
+                  )}
+                </div>
+              </ResizablePanel>
+            </>
+          )}
+          {ambientNotesOpen && notesLoggedIn && (
+            <>
+              <ResizableHandle withHandle className="bg-neutral-800 hover:bg-neutral-600 transition-colors" />
+              <ResizablePanel defaultSize={20} minSize={15}>
+               <div className="h-full flex flex-col min-w-0 overflow-hidden bg-neutral-900">
+                  <AmbientNotePanel
+                    lessonKey={`${baseKey}:${selected}`}
+                    lessonTitle={lesson.title}
+                    courseTitle={courseTitle}
+                    col={col}
+                    currentTime={currentTime}
+                    onSeek={seekTo}
+                  />
+                </div>
+              </ResizablePanel>
+            </>
+          )}
+        </ResizablePanelGroup>
       </div>
       )}
     </div>
@@ -548,6 +565,30 @@ export function CoursePlayer({ lessons, col, levelIdx, subjectIdx, courseIdx, co
         {/* ── Playlist + siblings (right column in RTL) ── */}
         <div className="flex flex-col gap-5 self-start">
 
+          {/* Transcript (collapsible, above playlist) */}
+          {transcript.length > 0 && (
+            <div>
+              <button onClick={() => setTranscriptOpen((v) => !v)}
+                className="w-full flex items-center justify-between gap-2 bg-white dark:bg-white/[0.04] border border-stone-100 dark:border-white/[0.08] rounded-xl px-4 py-2.5 shadow-sm dark:shadow-none hover:bg-stone-50 dark:hover:bg-white/[0.08] transition-colors">
+                <div className="flex items-center gap-2">
+                  <svg className="w-3.5 h-3.5 text-stone-400 dark:text-white/35" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
+                    <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+                  </svg>
+                  <span className="text-xs font-semibold text-stone-500 dark:text-white/35">النص</span>
+                </div>
+                <svg className={`w-3.5 h-3.5 text-stone-400 dark:text-white/35 transition-transform ${transcriptOpen ? "rotate-180" : ""}`}
+                  viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5}>
+                  <path d="m6 9 6 6 6-6" />
+                </svg>
+              </button>
+              {transcriptOpen && (
+                <div className="mt-1.5" style={{ height: "260px" }}>
+                  <TranscriptPanel segments={transcript} currentTime={currentTime} col={col} onSeek={seekTo} lessonTitle={lesson.title} youtubeUrl={lesson.youtube ?? undefined} />
+                </div>
+              )}
+            </div>
+          )}
+
           {/* Playlist */}
           <div className="bg-white dark:bg-white/[0.04] rounded-sm border border-stone-100 dark:border-white/[0.08] shadow-sm dark:shadow-none overflow-hidden flex flex-col">
             <div className={`px-4 py-3 ${col.bg} text-white shrink-0`}>
@@ -571,17 +612,17 @@ export function CoursePlayer({ lessons, col, levelIdx, subjectIdx, courseIdx, co
                 } />
               </div>
             )}
-            <div className="divide-y divide-stone-50 dark:divide-white/[0.04] overflow-y-auto" style={{ maxHeight: "min(60vh, 520px)" }}>
+            <div className="divide-y divide-stone-50 dark:divide-white/[0.04] overflow-y-auto [&::-webkit-scrollbar]:w-1 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-stone-200 [&::-webkit-scrollbar-thumb]:rounded-full dark:[&::-webkit-scrollbar-thumb]:bg-white/10" style={{ maxHeight: "min(60vh, 520px)" }}>
               {lessons.map((l, idx) => {
                 const isActive = idx === selected;
-                const lKey = `${levelIdx}:${subjectIdx}:${courseIdx}:${idx}`;
+                const lKey = `${baseKey}:${idx}`;
                 return (
                   <button key={idx} onClick={() => setSelected(idx)}
-                    className={`w-full text-right px-3.5 py-3 flex items-start gap-2.5 border-r-2 transition-colors ${isActive ? `${col.light} ${col.activeBorder}` : "border-r-transparent hover:bg-stone-50 dark:hover:bg-white/[0.04]"}`}>
+                    className={`w-full text-right px-3.5 py-3 flex items-start gap-2.5 border-r-2 transition-colors ${isActive ? `${col.light} dark:bg-white/[0.08] ${col.activeBorder}` : "border-r-transparent hover:bg-stone-50 dark:hover:bg-white/[0.04]"}`}>
                     <div className={`shrink-0 w-6 h-6 rounded-md text-[11px] font-bold flex items-center justify-center mt-0.5 ${isActive ? `${col.bg} text-white` : "bg-stone-100 dark:bg-white/10 text-stone-400 dark:text-white/40"}`}>
                       {toAr(idx)}
                     </div>
-                    <p className={`flex-1 text-xs leading-relaxed text-right ${isActive ? `${col.text} font-semibold` : "text-stone-600 dark:text-white/50"}`}>
+                    <p className={`flex-1 text-xs leading-relaxed text-right ${isActive ? `${col.text} dark:text-white font-semibold` : "text-stone-600 dark:text-white/50"}`}>
                       {stripLeadingNumber(l.title)}
                     </p>
                     <WatchButton lessonKey={lKey} col={col} />
@@ -666,31 +707,7 @@ export function CoursePlayer({ lessons, col, levelIdx, subjectIdx, courseIdx, co
             )}
           </div>
 
-          {/* 2. Transcript (collapsible) */}
-          {transcript.length > 0 && (
-            <div>
-              <button onClick={() => setTranscriptOpen((v) => !v)}
-                className="w-full flex items-center justify-between gap-2 bg-white dark:bg-white/[0.04] border border-stone-100 dark:border-white/[0.08] rounded-xl px-4 py-2.5 shadow-sm dark:shadow-none hover:bg-stone-50 dark:hover:bg-white/[0.08] transition-colors">
-                <div className="flex items-center gap-2">
-                  <svg className="w-3.5 h-3.5 text-stone-400 dark:text-white/35" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
-                    <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
-                  </svg>
-                  <span className="text-xs font-semibold text-stone-500 dark:text-white/35">النص</span>
-                </div>
-                <svg className={`w-3.5 h-3.5 text-stone-400 dark:text-white/35 transition-transform ${transcriptOpen ? "rotate-180" : ""}`}
-                  viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5}>
-                  <path d="m6 9 6 6 6-6" />
-                </svg>
-              </button>
-              {transcriptOpen && (
-                <div className="mt-1.5" style={{ height: "260px" }}>
-                  <TranscriptPanel segments={transcript} currentTime={currentTime} col={col} onSeek={seekTo} lessonTitle={lesson.title} youtubeUrl={lesson.youtube ?? undefined} />
-                </div>
-              )}
-            </div>
-          )}
-
-          {/* 3. Prev / Next */}
+          {/* 2. Prev / Next */}
           <div className="flex justify-between gap-3">
             <button onClick={goNext} disabled={selected === lessons.length - 1}
               className="flex-1 flex items-center justify-center gap-2 bg-white dark:bg-white/[0.04] border border-stone-100 dark:border-white/[0.08] rounded-xl py-2.5 text-xs font-medium text-stone-500 dark:text-white/40 hover:bg-stone-50 dark:hover:bg-white/[0.08] hover:text-stone-700 dark:hover:text-white/70 disabled:opacity-30 disabled:cursor-not-allowed transition-colors shadow-sm dark:shadow-none">

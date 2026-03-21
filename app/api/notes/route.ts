@@ -28,7 +28,7 @@ export async function POST(req: NextRequest) {
     noteType?: string;
   };
 
-  if (body.lessonKey && !/^\d+:\d+:\d+:\d+$/.test(body.lessonKey))
+  if (body.lessonKey && !/^\d+:\d+:\d+:\d+$/.test(body.lessonKey) && !/^playlist:[A-Za-z0-9_-]+:\d+$/.test(body.lessonKey))
     return NextResponse.json({ error: "invalid lessonKey" }, { status: 400 });
 
   if (body.noteType && !VALID_TYPES.has(body.noteType))

@@ -13,7 +13,7 @@ export async function POST(req: NextRequest) {
     watched: boolean;
   };
 
-  if (!/^\d+:\d+:\d+:\d+$/.test(lessonKey)) {
+  if (!/^\d+:\d+:\d+:\d+$/.test(lessonKey) && !/^playlist:[A-Za-z0-9_-]+:\d+$/.test(lessonKey)) {
     return NextResponse.json({ error: "invalid key" }, { status: 400 });
   }
 
