@@ -5,7 +5,16 @@ import Image from "next/image";
 import { useSession } from "next-auth/react";
 import { useRecentlyWatched } from "@/lib/useRecentlyWatched";
 import { getCourse } from "@/lib/data";
+import scholarPlaylistsData from "@/data/scholar-playlists.json";
+import type { ScholarPlaylist } from "@/components/ScholarPlaylistsSection";
 
+const allPlaylists = scholarPlaylistsData as Record<string, ScholarPlaylist[]>;
+const playlistThumbnails: Record<string, string> = {};
+for (const playlists of Object.values(allPlaylists)) {
+  for (const p of playlists) {
+    if (p.thumbnail) playlistThumbnails[p.playlistId] = p.thumbnail;
+  }
+}
 
 function extractYoutubeId(url: string): string | null {
   const m = url.match(/[?&]v=([a-zA-Z0-9_-]{11})/);
@@ -31,7 +40,6 @@ export function RecentlyWatched() {
   // Show nothing if not yet hydrated or no entries and logged in
   if (status === "loading") return null;
 
-  const isLoggedIn = status === "authenticated";
   const visible = entries.slice(0, 3);
 
   // Logged out: show a sign-in nudge (only if they have entries to show value)
@@ -70,11 +78,16 @@ export function RecentlyWatched() {
 
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
           {visible.map((entry, i) => {
-            const thumbUrl = getCourseThumbnail(entry.levelIdx, entry.subjectIdx, entry.courseIdx);
+            const thumbUrl = entry.playlistId
+              ? (playlistThumbnails[entry.playlistId] ?? null)
+              : getCourseThumbnail(entry.levelIdx, entry.subjectIdx, entry.courseIdx);
+            const href = entry.playlistId
+              ? `/playlist/${entry.playlistId}?lesson=${entry.lessonIdx}`
+              : `/level/${entry.levelIdx}/${entry.subjectIdx}/${entry.courseIdx}?lesson=${entry.lessonIdx}`;
             return (
               <Link
                 key={i}
-                href={`/level/${entry.levelIdx}/${entry.subjectIdx}/${entry.courseIdx}?lesson=${entry.lessonIdx}`}
+                href={href}
                 className="group bg-white dark:bg-white/[0.04] rounded-xl border border-stone-100 dark:border-white/[0.08] shadow-sm dark:shadow-none overflow-hidden hover:shadow-md hover:-translate-y-0.5 hover:border-gold/30 transition-all duration-200 flex flex-col"
               >
                 {/* Thumbnail */}

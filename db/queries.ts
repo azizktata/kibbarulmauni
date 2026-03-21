@@ -1,6 +1,6 @@
 import { db } from "./index";
 import { users, watchedLessons, recentlyVisited, noteFolders, notes } from "./schema";
-import { eq, and, desc, isNull, or, like } from "drizzle-orm";
+import { eq, and, desc, or, like } from "drizzle-orm";
 
 export async function upsertUser(email: string, name: string | null): Promise<string> {
   const id = crypto.randomUUID();
@@ -79,6 +79,19 @@ export async function upsertRecentlyVisited(userId: string, lessonKey: string, p
       target: [recentlyVisited.userId, recentlyVisited.lessonKey],
       set,
     });
+
+  // Keep only the 3 most recent entries — delete anything older
+  const all = await db
+    .select({ lessonKey: recentlyVisited.lessonKey })
+    .from(recentlyVisited)
+    .where(eq(recentlyVisited.userId, userId))
+    .orderBy(desc(recentlyVisited.visitedAt));
+  const toDelete = all.slice(3).map((r) => r.lessonKey);
+  for (const key of toDelete) {
+    await db.delete(recentlyVisited).where(
+      and(eq(recentlyVisited.userId, userId), eq(recentlyVisited.lessonKey, key))
+    );
+  }
 }
 
 export async function getRecentlyVisited(userId: string): Promise<{ key: string; position: number }[]> {
@@ -87,7 +100,7 @@ export async function getRecentlyVisited(userId: string): Promise<{ key: string;
     .from(recentlyVisited)
     .where(eq(recentlyVisited.userId, userId))
     .orderBy(desc(recentlyVisited.visitedAt))
-    .limit(6);
+    .limit(3);
   return rows.map((r) => ({ key: r.lessonKey, position: r.playbackPosition ?? 0 }));
 }
 

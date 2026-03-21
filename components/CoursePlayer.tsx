@@ -315,10 +315,24 @@ export function CoursePlayer({ lessons, col, levelIdx, subjectIdx, courseIdx, co
   }, [ambientMode, ytId]);
 
   // ── Track recently watched ────────────────────────────────────────────────────
+  // Curriculum: save once on mount (courseIdx never changes within the page)
   useEffect(() => {
-    if (!keyPrefix) saveWatched({ levelIdx, subjectIdx, courseIdx, lessonIdx: selected, courseTitle, lessonTitle: lessons[selected].title, levelTitle }, isLoggedInRef.current);
+    if (keyPrefix) return;
+    saveWatched({ levelIdx, subjectIdx, courseIdx, lessonIdx: selected, courseTitle, lessonTitle: lessons[selected].title, levelTitle }, isLoggedInRef.current);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [courseIdx]);
+
+  // Playlists: save on every lesson change
+  useEffect(() => {
+    if (!keyPrefix) return;
+    const playlistId = keyPrefix.startsWith("playlist:") ? keyPrefix.slice("playlist:".length) : undefined;
+    saveWatched(
+      { levelIdx: 0, subjectIdx: 0, courseIdx: 0, lessonIdx: selected, courseTitle, lessonTitle: lessons[selected].title, levelTitle, playlistId },
+      isLoggedInRef.current,
+      keyPrefix,
+    );
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selected]);
 
   // ── Fetch transcript ─────────────────────────────────────────────────────────
   const transcriptFilename = `${levelIdx}-${subjectIdx}-${courseIdx}-${selected}.txt`;
