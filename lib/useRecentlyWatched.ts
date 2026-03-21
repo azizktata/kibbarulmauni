@@ -76,9 +76,16 @@ export function useRecentlyWatched() {
       fetch("/api/recently-visited")
         .then((r) => r.json())
         .then(({ keys }: { keys: string[] }) => {
+          const seen = new Set<string>();
           const parsed = keys
             .map((k, i) => keyToEntry(k, Date.now() - i))
-            .filter((e): e is WatchedEntry => e !== null);
+            .filter((e): e is WatchedEntry => {
+              if (!e) return false;
+              const courseKey = `${e.levelIdx}:${e.subjectIdx}:${e.courseIdx}`;
+              if (seen.has(courseKey)) return false;
+              seen.add(courseKey);
+              return true;
+            });
           setEntries(parsed);
         })
         .catch(() => setEntries(lsRead()));
