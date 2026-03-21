@@ -1,6 +1,5 @@
 "use client"
 
-import * as React from "react"
 import * as ResizablePrimitive from "react-resizable-panels"
 
 import { cn } from "@/lib/utils"
@@ -21,13 +20,9 @@ function ResizablePanelGroup({
   )
 }
 
-const ResizablePanel = React.forwardRef<
-  ResizablePrimitive.ImperativePanelHandle,
-  ResizablePrimitive.PanelProps
->(({ ...props }, ref) => (
-  <ResizablePrimitive.Panel ref={ref} data-slot="resizable-panel" {...props} />
-))
-ResizablePanel.displayName = "ResizablePanel"
+function ResizablePanel({ ...props }: ResizablePrimitive.PanelProps) {
+  return <ResizablePrimitive.Panel data-slot="resizable-panel" {...props} />
+}
 
 function ResizableHandle({
   withHandle,

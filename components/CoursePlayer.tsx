@@ -100,6 +100,7 @@ export function CoursePlayer({ lessons, col, levelIdx, subjectIdx, courseIdx, co
   const [ambientMode, setAmbientMode] = useState(false);
   const [ambientTranscriptOpen, setAmbientTranscriptOpen] = useState(true);
   const [ambientNotesOpen, setAmbientNotesOpen] = useState(false);
+  const [transcriptLoading, setTranscriptLoading] = useState(false);
   const [mounted, setMounted] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
   const [countdown, setCountdown] = useState<number | null>(null);
@@ -334,6 +335,7 @@ export function CoursePlayer({ lessons, col, levelIdx, subjectIdx, courseIdx, co
   useEffect(() => {
     setCurrentTime(0);
     setTranscript([]);
+    setTranscriptLoading(true);
 
     const loadFile = () => {
       fetch(`/api/transcript?file=${transcriptFilename}`)
@@ -341,7 +343,8 @@ export function CoursePlayer({ lessons, col, levelIdx, subjectIdx, courseIdx, co
         .then(({ segments }: { segments: TranscriptSegment[] }) => {
           if (segments.length > 0) setTranscript(segments);
         })
-        .catch(() => {});
+        .catch(() => {})
+        .finally(() => setTranscriptLoading(false));
     };
 
     if (!ytId) { loadFile(); return; }
@@ -349,7 +352,7 @@ export function CoursePlayer({ lessons, col, levelIdx, subjectIdx, courseIdx, co
     fetch(`/api/transcript?v=${ytId}`, { cache: "no-cache" })
       .then((r) => r.json())
       .then(({ segments }: { segments: TranscriptSegment[] }) => {
-        if (segments.length > 0) setTranscript(segments);
+        if (segments.length > 0) { setTranscript(segments); setTranscriptLoading(false); }
         else loadFile();
       })
       .catch(loadFile);
@@ -494,8 +497,8 @@ export function CoursePlayer({ lessons, col, levelIdx, subjectIdx, courseIdx, co
       <div className="flex-1 overflow-hidden" dir="ltr">
         <ResizablePanelGroup className="h-full">
           <ResizablePanel
-            defaultSize={ambientTranscriptOpen ? (ambientNotesOpen ? 52 : 60) : (ambientNotesOpen ? 65 : 100)}
-            minSize={30}
+            defaultSize={ambientTranscriptOpen ? (ambientNotesOpen ? "52%" : "60%") : (ambientNotesOpen ? "65%" : "100%")}
+            minSize="30%"
           >
            <div className="flex items-center justify-center p-6 h-full min-w-0">
               <div className="aspect-video w-full rounded-2xl overflow-hidden bg-black" style={{ maxHeight: "calc(100vh - 110px)" }}>
@@ -503,10 +506,10 @@ export function CoursePlayer({ lessons, col, levelIdx, subjectIdx, courseIdx, co
               </div>
             </div>
           </ResizablePanel>
-          {ambientTranscriptOpen && (
+          {ambientTranscriptOpen && (transcript.length > 0 || transcriptLoading) && (
             <>
               <ResizableHandle withHandle className="bg-neutral-800 hover:bg-neutral-600 transition-colors" />
-              <ResizablePanel defaultSize={ambientNotesOpen ? 28 : 40} minSize={15}>
+              <ResizablePanel defaultSize={ambientNotesOpen ? "28%" : "40%"} minSize="15%">
                 <div className="h-full flex flex-col min-w-0 overflow-hidden">
                   {transcript.length > 0 ? (
                     <TranscriptPanel segments={transcript} currentTime={currentTime} col={col} onSeek={seekTo} variant="dark" lessonTitle={lesson.title} youtubeUrl={lesson.youtube ?? undefined} />
@@ -522,7 +525,7 @@ export function CoursePlayer({ lessons, col, levelIdx, subjectIdx, courseIdx, co
           {ambientNotesOpen && notesLoggedIn && (
             <>
               <ResizableHandle withHandle className="bg-neutral-800 hover:bg-neutral-600 transition-colors" />
-              <ResizablePanel defaultSize={20} minSize={15}>
+              <ResizablePanel defaultSize="20%" minSize="15%">
                <div className="h-full flex flex-col min-w-0 overflow-hidden bg-neutral-900">
                   <AmbientNotePanel
                     lessonKey={`${baseKey}:${selected}`}
