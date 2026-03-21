@@ -35,13 +35,13 @@ export function Navbar() {
   return (
     <>
       <nav className="bg-primary text-white h-12 flex items-center px-4 md:px-6 sticky top-0 z-50 shadow-md">
-        <div className="max-w-5xl w-full mx-auto flex items-center justify-between gap-4">
+        <div className="max-w-7xl w-full mx-auto px-4 flex items-center">
           <Link href="/" className="shrink-0 hover:opacity-80 transition-opacity">
             <Image src="/logo.png" height={32} width={120} alt="جامعة كبار العلماء" className="object-contain" />
           </Link>
 
-          {/* Desktop nav */}
-          <div className="hidden md:flex items-center gap-1">
+          {/* Desktop nav links — spaced from logo */}
+          <div className="hidden md:flex items-center gap-1 ms-8">
             {NAV_LINKS.map(({ href, label }) => (
               <Link
                 key={href}
@@ -75,7 +75,12 @@ export function Navbar() {
                 )}
               </button>
             )}
+          </div>
 
+          <div className="flex-1" />
+
+          {/* Desktop: theme + login — far left */}
+          <div className="hidden md:flex items-center gap-1">
             <ThemeToggle />
             <UserButton />
           </div>

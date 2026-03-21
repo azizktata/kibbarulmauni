@@ -33,13 +33,13 @@ export default async function LevelPage({
         style={{ backgroundImage: "url('/islamic-geometri-3.jfif')" }}
       /> */}
       {/* Header */}
-      <header className="relative text-white px-6 py-10 overflow-hidden">
+      <header className="relative text-white overflow-hidden">
         <div
           className="absolute inset-0  bg-center"
           style={{ backgroundImage: "url('/islamic-geometric-4.jfif')"}}
         />
         <div className={`absolute inset-0 bg-gradient-to-b ${c.gradient} opacity-70`} />
-        <div className="relative max-w-5xl mx-auto">
+        <div className="relative max-w-7xl mx-auto px-4 py-10">
           <nav className="flex items-center gap-2 text-white/60 text-xs mb-5">
             <Link href="/" className="hover:text-white transition-colors">الرئيسية</Link>
             <span className="text-gold">›</span>
@@ -52,7 +52,7 @@ export default async function LevelPage({
 
 
       {/* Subjects grid */}
-      <main className="max-w-5xl mx-auto px-4 py-10">
+      <main className="max-w-7xl mx-auto px-4 py-10">
         <LevelSubjectsGrid levelIdx={idx} subjects={level.subjects} />
       </main>
     </div>

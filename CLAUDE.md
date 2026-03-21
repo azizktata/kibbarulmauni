@@ -44,12 +44,13 @@ Next.js 16 app (App Router, React 19) that serves as a browsable index for Islam
 
 **Auth & progress tracking:**
 - `auth.ts` — NextAuth v5 with Google provider (JWT strategy). Upserts users into the DB on sign-in. Requires `AUTH_GOOGLE_ID`, `AUTH_GOOGLE_SECRET` env vars.
-- `db/schema.ts` — Drizzle schema: `users`, `watched_lessons`, `note_folders`, and `notes` tables. Lesson keys use `"levelIdx:subjectIdx:courseIdx:lessonIdx"` format.
+- `db/schema.ts` — Drizzle schema: `users`, `watched_lessons`, `recently_visited`, `note_folders`, and `notes` tables. Lesson keys use `"levelIdx:subjectIdx:courseIdx:lessonIdx"` format. `recently_visited` stores per-user lesson visits with optional `playbackPosition` (seconds) for cross-device resume.
 - `db/index.ts` — Drizzle client via `@libsql/client` (Turso). Requires `TURSO_DATABASE_URL`, `TURSO_AUTH_TOKEN` env vars.
-- `db/queries.ts` — all DB query functions (user upsert, watched lessons, profile, notes, folders) called from API routes.
+- `db/queries.ts` — all DB query functions (user upsert, watched lessons, profile, notes, folders, recently visited) called from API routes.
 - `lib/watchedContext.tsx` — `WatchedProvider` / `useWatched` context. Fetches keys from `/api/progress`, posts toggles to `/api/watch`, uses `useOptimistic` for instant UI feedback.
 - `lib/progress.ts` — pure functions (`courseProgress`, `subjectProgress`, `levelProgress`) that compute % watched from a `Set<string>` of watched keys.
-- `lib/useRecentlyWatched.ts` — localStorage hook (`useRecentlyWatched`) + `saveWatched()` for the "recently watched" section on the home page (max 6 entries, keyed by course).
+- `lib/useRecentlyWatched.ts` — `useRecentlyWatched()` hook + `saveWatched()` for the "recently watched" section on the home page (max 6 entries). For logged-in users, syncs to DB via `/api/recently-visited`; falls back to localStorage for guests.
+- `/api/recently-visited` — GET returns recent lesson entries (with `playbackPosition`); POST upserts a visit with optional playback position.
 - `/api/profile` — GET/PATCH for user profile fields (`name`, `age`) stored in `db/queries.ts`.
 
 **Transcripts:**

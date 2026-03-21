@@ -41,7 +41,7 @@ export default function AboutPage() {
         />
         <div className="absolute inset-0 bg-gradient-to-b from-primary/40 via-primary/70 to-primary/95" />
 
-        <div className="relative max-w-4xl mx-auto px-6 py-20 text-center">
+        <div className="relative max-w-7xl mx-auto px-4 py-20 text-center">
           {/* <p className="text-gold/70 text-xs tracking-[0.25em] mb-8 font-medium uppercase">
             مشروع الدعوة الإلكترونية
           </p> */}
@@ -92,8 +92,8 @@ export default function AboutPage() {
       </header>
 
       {/* ── FEATURE ROW 1 — light ────────────────────────────── */}
-      <section className="bg-[#F6F5F1] py-24 px-6">
-        <div className="max-w-5xl mx-auto grid md:grid-cols-2 gap-16 items-center">
+      <section className="bg-[#F6F5F1] py-24">
+        <div className="max-w-7xl mx-auto px-4 grid md:grid-cols-2 gap-16 items-center">
           <div className="rounded-2xl overflow-hidden shadow-xl order-2 md:order-1">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src="/mosque-art-2.jfif" alt="فن إسلامي" className="w-full h-80 object-cover" />
@@ -125,13 +125,13 @@ export default function AboutPage() {
       </section>
 
       {/* ── FEATURE ROW 2 — dark ────────────────────────────── */}
-      <section className="relative bg-primary-dark/50 py-24 px-6 overflow-hidden">
+      <section className="relative bg-primary-dark/50 py-24 overflow-hidden">
         {/* eslint-disable-next-line @next/next/no-img-element */}
         {/* <img src="téléchargement (8).jfif" alt="" aria-hidden className="absolute inset-0 w-full h-full object-contain select-none pointer-events-none" /> */}
               <div className="absolute inset-0 bg-center " style={{ backgroundImage: "url('/téléchargement (8).jfif')" }} />
 
         <div className="absolute inset-0 bg-primary/75" />
-        <div className="relative z-10 max-w-5xl mx-auto grid md:grid-cols-2 gap-16 items-center">
+        <div className="relative z-10 max-w-7xl mx-auto px-4 grid md:grid-cols-2 gap-16 items-center">
           <div>
             <p className="text-gold/70 text-xs tracking-[0.2em] mb-3 font-medium">العلماء</p>
             <h2
@@ -163,8 +163,8 @@ export default function AboutPage() {
       </section>
 
       {/* ── LEVELS GRID ──────────────────────────────────────── */}
-      <section className="bg-white py-20 px-4">
-        <div className="max-w-5xl mx-auto">
+      <section className="bg-white py-20">
+        <div className="max-w-7xl mx-auto px-4">
           <div className="flex items-center gap-3 mb-10">
             <div className="h-px flex-1 bg-[#CAC9C3]/40" />
             <span className="text-xs font-semibold text-[#CAC9C3] tracking-widest">المستويات الدراسية</span>
@@ -206,8 +206,8 @@ export default function AboutPage() {
       </section>
 
       {/* ── SCHOLARS ─────────────────────────────────────────── */}
-      <section className="bg-white py-24 px-6">
-        <div className="max-w-5xl mx-auto">
+      <section className="bg-white py-24">
+        <div className="max-w-7xl mx-auto px-4">
           <h2
             className="text-3xl md:text-4xl font-bold text-primary mb-12 text-center leading-snug"
             style={{ fontFamily: "var(--font-amiri)" }}

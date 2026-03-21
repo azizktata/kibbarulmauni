@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useMemo } from "react";
 import { useWatched } from "@/lib/watchedContext";
-import { levelProgress } from "@/lib/progress";
+import { levelProgress, levelStats } from "@/lib/progress";
 import type { Level } from "@/lib/data";
 import { LEVEL_COLORS, ARABIC_DIGITS } from "@/lib/constants";
 import { ProgressRing } from "./ProgressRing";
@@ -18,6 +18,11 @@ export function HomeLevelsGrid({ levels, glass = false }: Props) {
 
   const progresses = useMemo(
     () => levels.map((level, idx) => levelProgress(idx, level, watchedKeys)),
+    [levels, watchedKeys]
+  );
+
+  const stats = useMemo(
+    () => levels.map((level, idx) => levelStats(idx, level, watchedKeys)),
     [levels, watchedKeys]
   );
 
@@ -43,7 +48,7 @@ export function HomeLevelsGrid({ levels, glass = false }: Props) {
               </div>
 
               <h3
-                className="font-bold text-base text-primary leading-snug"
+                className="font-bold text-base md:text-3xl text-primary leading-snug"
                 style={{ fontFamily: "var(--font-amiri)" }}
               >
                 {level.title}
@@ -65,6 +70,11 @@ export function HomeLevelsGrid({ levels, glass = false }: Props) {
     <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
       {levels.map((level, idx) => {
         const pct = progresses[idx];
+        const s = stats[idx];
+        const watchedHours = Math.floor(s.watchedSeconds / 3600);
+        const watchedMins = Math.floor((s.watchedSeconds % 3600) / 60);
+        const hasProgress = isLoaded && s.watchedCount > 0;
+
         return (
           <Link
             key={idx}
@@ -77,10 +87,6 @@ export function HomeLevelsGrid({ levels, glass = false }: Props) {
                 style={{ backgroundImage: "url('/islamic-geometric-4.jfif')" }}
               />
               <div className="absolute inset-0 bg-primary/70 group-hover:bg-primary/60 transition-colors duration-300" />
-
-              {/* gold border lines */}
-              {/* <div className="absolute top-0 inset-x-0 h-px bg-gold/60" />
-              <div className="absolute bottom-0 inset-x-0 h-px bg-gold/30" /> */}
 
               {/* Circular progress ring + content */}
               <div className="relative z-10 flex items-center justify-center">
@@ -110,6 +116,31 @@ export function HomeLevelsGrid({ levels, glass = false }: Props) {
                   </h3>
                 </div>
               </div>
+
+              {/* Hover stats overlay */}
+              {hasProgress && (
+                <div className="absolute inset-x-0 bottom-0 z-20 translate-y-full group-hover:translate-y-0 transition-transform duration-300 bg-black/60 backdrop-blur-sm px-4 py-3 flex items-center justify-around text-white">
+                  <div className="flex flex-col items-center gap-0.5">
+                    <span className="text-xs text-white/50">الدروس</span>
+                    <span className="text-sm font-semibold tabular-nums">
+                      {s.watchedCount}
+                      <span className="text-white/40 font-normal text-xs"> / {s.totalCount}</span>
+                    </span>
+                  </div>
+                  <div className="w-px h-8 bg-white/20" />
+                  <div className="flex flex-col items-center gap-0.5">
+                    <span className="text-xs text-white/50">المشاهد</span>
+                    <span className="text-sm font-semibold tabular-nums">
+                      {watchedHours > 0 ? `${watchedHours}س ${watchedMins}د` : `${watchedMins} دقيقة`}
+                    </span>
+                  </div>
+                  <div className="w-px h-8 bg-white/20" />
+                  <div className="flex flex-col items-center gap-0.5">
+                    <span className="text-xs text-white/50">الإتمام</span>
+                    <span className="text-sm font-semibold text-gold">{pct}٪</span>
+                  </div>
+                </div>
+              )}
             </div>
           </Link>
         );

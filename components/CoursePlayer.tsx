@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef, useMemo, useCallback } from "react";
 import { createPortal } from "react-dom";
 import { useSearchParams } from "next/navigation";
+import Link from "next/link";
 import type { Lesson, TranscriptSegment } from "@/lib/data";
 import type { LevelColor } from "@/lib/constants";
 import { saveWatched } from "@/lib/useRecentlyWatched";
@@ -58,6 +59,9 @@ function loadYTApi(): Promise<void> {
 function toAr(n: number): string {
   return (n + 1).toString().replace(/\d/g, (d) => "٠١٢٣٤٥٦٧٨٩"[Number(d)]);
 }
+function stripLeadingNumber(title: string): string {
+  return title.replace(/^\d+\s*[-–]\s*/, "");
+}
 function lessonWord(n: number) {
   if (n === 2) return "درسان";
   if (n >= 3 && n <= 10) return "دروس";
@@ -73,9 +77,11 @@ interface Props {
   courseIdx: number;
   courseTitle: string;
   levelTitle: string;
+  siblings?: { title: string; files: unknown[] }[];
+  subjectTitle?: string;
 }
 
-export function CoursePlayer({ lessons, col, levelIdx, subjectIdx, courseIdx, courseTitle, levelTitle }: Props) {
+export function CoursePlayer({ lessons, col, levelIdx, subjectIdx, courseIdx, courseTitle, levelTitle, siblings, subjectTitle }: Props) {
   const searchParams = useSearchParams();
   const initialLesson = Math.min(Number(searchParams.get("lesson") ?? 0) || 0, lessons.length - 1);
 
@@ -172,9 +178,9 @@ export function CoursePlayer({ lessons, col, levelIdx, subjectIdx, courseIdx, co
           savePositionToDb(t);
         }
       }
-      // mark watched at 80 %
+      // mark watched at 90 %
       const dur = p.getDuration();
-      if (dur > 0 && t / dur >= 0.8 && isLoggedInRef.current) {
+      if (dur > 0 && t / dur >= 0.9 && isLoggedInRef.current) {
         const key = `${levelIdx}:${subjectIdx}:${courseIdx}:${selectedRef.current}`;
         if (!isWatchedRef.current(key)) {
           toggleWatchedRef.current(key);
@@ -536,44 +542,92 @@ export function CoursePlayer({ lessons, col, levelIdx, subjectIdx, courseIdx, co
 
   return (
     <>
-      {/* Shared grid — desktop 3-col, mobile stacked */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
+      {/* Shared grid — desktop: fixed playlist col + fluid video; mobile stacked */}
+      <div className="grid grid-cols-1 lg:grid-cols-[360px_1fr] gap-5">
 
-        {/* ── Video panel ── */}
-        <div className="lg:col-span-2 flex flex-col gap-3">
+        {/* ── Playlist + siblings (right column in RTL) ── */}
+        <div className="flex flex-col gap-5 self-start">
 
-          {/* 1. Lesson title */}
-          {/* <div className="bg-white dark:bg-white/[0.04] rounded-xl border border-stone-100 dark:border-white/[0.08] shadow-sm dark:shadow-none px-4 py-3.5 flex items-start justify-between gap-3">
+          {/* Playlist */}
+          <div className="bg-white dark:bg-white/[0.04] rounded-sm border border-stone-100 dark:border-white/[0.08] shadow-sm dark:shadow-none overflow-hidden flex flex-col">
+            <div className={`px-4 py-3 ${col.bg} text-white shrink-0`}>
+              <p className="text-sm font-semibold">قائمة الدروس</p>
+              <p className="text-white/70 text-xs mt-0.5">{lessons.length} {lessonWord(lessons.length)}</p>
+            </div>
+            {isLoaded && isLoggedIn && (
+              <div className="px-4 py-2 border-b border-stone-100 dark:border-white/[0.06] flex items-center gap-2.5">
+                <div className="flex-1 h-1.5 bg-stone-100 dark:bg-white/10 rounded-full overflow-hidden">
+                  <div className={`h-full ${col.bg} rounded-full transition-all duration-500`} style={{ width: `${progressPct}%` }} />
+                </div>
+                <span className={`text-[11px] font-semibold ${col.text} shrink-0`}>{watchedCount}/{lessons.length}</span>
+              </div>
+            )}
+            {isLoaded && !isLoggedIn && (
+              <div className="px-4 py-2 border-b border-stone-100 dark:border-white/[0.06]">
+                <SignInDialog trigger={
+                  <button className="text-[11px] text-stone-400 hover:text-emerald-600 transition-colors underline underline-offset-2">
+                    سجّل دخولك لتتبع تقدمك
+                  </button>
+                } />
+              </div>
+            )}
+            <div className="divide-y divide-stone-50 dark:divide-white/[0.04] overflow-y-auto" style={{ maxHeight: "min(60vh, 520px)" }}>
+              {lessons.map((l, idx) => {
+                const isActive = idx === selected;
+                const lKey = `${levelIdx}:${subjectIdx}:${courseIdx}:${idx}`;
+                return (
+                  <button key={idx} onClick={() => setSelected(idx)}
+                    className={`w-full text-right px-3.5 py-3 flex items-start gap-2.5 border-r-2 transition-colors ${isActive ? `${col.light} ${col.activeBorder}` : "border-r-transparent hover:bg-stone-50 dark:hover:bg-white/[0.04]"}`}>
+                    <div className={`shrink-0 w-6 h-6 rounded-md text-[11px] font-bold flex items-center justify-center mt-0.5 ${isActive ? `${col.bg} text-white` : "bg-stone-100 dark:bg-white/10 text-stone-400 dark:text-white/40"}`}>
+                      {toAr(idx)}
+                    </div>
+                    <p className={`flex-1 text-xs leading-relaxed text-right ${isActive ? `${col.text} font-semibold` : "text-stone-600 dark:text-white/50"}`}>
+                      {stripLeadingNumber(l.title)}
+                    </p>
+                    <WatchButton lessonKey={lKey} col={col} />
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Other courses in the same subject */}
+          {siblings && siblings.length > 1 && (
             <div>
-              <p className="font-semibold text-stone-800 dark:text-white/80 text-sm leading-snug">{lesson.title}</p>
-              <p className={`text-xs mt-1 ${col.text}`}>الدرس {toAr(selected)} من {toAr(lessons.length - 1)}</p>
+              <p className="text-xs font-semibold text-stone-400 dark:text-white/30 tracking-widest mb-3">
+                مقررات أخرى في {subjectTitle}
+              </p>
+              <div className="flex flex-col gap-1.5">
+                {siblings.map((sib, idx) => {
+                  const isActive = idx === courseIdx;
+                  return (
+                    <Link
+                      key={idx}
+                      href={`/level/${levelIdx}/${subjectIdx}/${idx}`}
+                      className={`flex items-center gap-3 px-4 py-3 rounded-xl border text-sm font-medium transition-all ${
+                        isActive
+                          ? `${col.light} ${col.border} ${col.text}`
+                          : "bg-white dark:bg-white/[0.04] border-stone-100 dark:border-white/[0.08] text-stone-600 dark:text-white/50 hover:border-stone-200 dark:hover:border-white/[0.15] hover:shadow-sm dark:hover:bg-white/[0.08]"
+                      }`}
+                    >
+                      <span className={`w-5 h-5 rounded-md text-[11px] font-bold flex items-center justify-center shrink-0 ${isActive ? `${col.bg} text-white` : "bg-stone-100 dark:bg-white/10 text-stone-400 dark:text-white/40"}`}>
+                        {idx + 1}
+                      </span>
+                      <span className="flex-1 truncate">{stripLeadingNumber(sib.title)}</span>
+                      <span className="text-xs opacity-60">{sib.files.length} {lessonWord(sib.files.length)}</span>
+                    </Link>
+                  );
+                })}
+              </div>
             </div>
-            <div className="flex items-center gap-2 shrink-0">
-              {audioExists && (
-                <a href={`/api/audio?file=${audioFilename}&name=${encodeURIComponent(lesson.title + ".mp3")}`} download
-                  className="flex items-center gap-1.5 text-xs text-stone-400 dark:text-white/35 hover:text-emerald-600 transition-colors py-1">
-                  <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
-                    <path d="M9 18V5l12-2v13" />
-                    <circle cx="6" cy="18" r="3" />
-                    <circle cx="18" cy="16" r="3" />
-                  </svg>
-                  تحميل الصوت
-                </a>
-              )}
-              {lesson.youtube && (
-                <a href={lesson.youtube} target="_blank" rel="noopener noreferrer"
-                  className="flex items-center gap-1.5 text-xs text-stone-400 dark:text-white/35 hover:text-red-500 transition-colors py-1">
-                  <svg className="w-4 h-4" viewBox="0 0 20 14" fill="currentColor">
-                    <path d="M19.6 2.2C19.4 1.4 18.8.8 18 .6 16.4.2 10 .2 10 .2S3.6.2 2 .6C1.2.8.6 1.4.4 2.2 0 3.8 0 7 0 7s0 3.2.4 4.8c.2.8.8 1.4 1.6 1.6C3.6 13.8 10 13.8 10 13.8s6.4 0 8-.4c.8-.2 1.4-.8 1.6-1.6.4-1.6.4-4.8.4-4.8s0-3.2-.4-4.8zM8 10V4l5.3 3L8 10z" />
-                  </svg>
-                  يوتيوب
-                </a>
-              )}
-            </div>
-          </div> */}
+          )}
+        </div>
 
-          {/* 2. Video */}
-          <div className="group relative aspect-video bg-stone-900 rounded-none lg:rounded-2xl overflow-hidden shadow-lg lg:ring-1 ring-black/5 max-lg:-mx-4">
+        {/* ── Video panel (left column in RTL) ── */}
+        <div className="flex flex-col gap-3">
+
+          {/* 1. Video */}
+          <div className="group relative aspect-video bg-stone-900 rounded-none lg:rounded-xl overflow-hidden shadow-lg lg:ring-1 ring-black/5 max-lg:-mx-4">
             {ytId ? <div ref={mainDivRef} className="w-full h-full" /> : noVideo}
             {ytId && (
               <button onClick={() => { ambientStartAtRef.current = Math.floor(currentTime); setAmbientMode(true); }}
@@ -612,7 +666,7 @@ export function CoursePlayer({ lessons, col, levelIdx, subjectIdx, courseIdx, co
             )}
           </div>
 
-          {/* 3. Transcript (collapsible) */}
+          {/* 2. Transcript (collapsible) */}
           {transcript.length > 0 && (
             <div>
               <button onClick={() => setTranscriptOpen((v) => !v)}
@@ -636,63 +690,18 @@ export function CoursePlayer({ lessons, col, levelIdx, subjectIdx, courseIdx, co
             </div>
           )}
 
-          {/* 4. Prev / Next */}
+          {/* 3. Prev / Next */}
           <div className="flex justify-between gap-3">
             <button onClick={goNext} disabled={selected === lessons.length - 1}
               className="flex-1 flex items-center justify-center gap-2 bg-white dark:bg-white/[0.04] border border-stone-100 dark:border-white/[0.08] rounded-xl py-2.5 text-xs font-medium text-stone-500 dark:text-white/40 hover:bg-stone-50 dark:hover:bg-white/[0.08] hover:text-stone-700 dark:hover:text-white/70 disabled:opacity-30 disabled:cursor-not-allowed transition-colors shadow-sm dark:shadow-none">
-                           <svg className="w-4 h-4" viewBox="0 0 16 16" fill="currentColor"><path d="M10.5 8L6 4l-1 1L8.5 8 5 11l1 1 4.5-4z" /></svg>
-
+              <svg className="w-4 h-4" viewBox="0 0 16 16" fill="currentColor"><path d="M10.5 8L6 4l-1 1L8.5 8 5 11l1 1 4.5-4z" /></svg>
               الدرس التالي
             </button>
             <button onClick={() => setSelected((s) => Math.max(s - 1, 0))} disabled={selected === 0}
               className="flex-1 flex items-center justify-center gap-2 bg-white dark:bg-white/[0.04] border border-stone-100 dark:border-white/[0.08] rounded-xl py-2.5 text-xs font-medium text-stone-500 dark:text-white/40 hover:bg-stone-50 dark:hover:bg-white/[0.08] hover:text-stone-700 dark:hover:text-white/70 disabled:opacity-30 disabled:cursor-not-allowed transition-colors shadow-sm dark:shadow-none">
               الدرس السابق
               <svg className="w-4 h-4 rotate-180" viewBox="0 0 16 16" fill="currentColor"><path d="M10.5 8L6 4l-1 1L8.5 8 5 11l1 1 4.5-4z" /></svg>
-
             </button>
-          </div>
-        </div>
-
-        {/* ── Playlist ── */}
-        <div className="bg-white dark:bg-white/[0.04] rounded-2xl border border-stone-100 dark:border-white/[0.08] shadow-sm dark:shadow-none overflow-hidden flex flex-col self-start">
-          <div className={`px-4 py-3 ${col.bg} text-white shrink-0`}>
-            <p className="text-sm font-semibold">قائمة الدروس</p>
-            <p className="text-white/70 text-xs mt-0.5">{lessons.length} {lessonWord(lessons.length)}</p>
-          </div>
-          {isLoaded && isLoggedIn && (
-            <div className="px-4 py-2 border-b border-stone-100 dark:border-white/[0.06] flex items-center gap-2.5">
-              <div className="flex-1 h-1.5 bg-stone-100 dark:bg-white/10 rounded-full overflow-hidden">
-                <div className={`h-full ${col.bg} rounded-full transition-all duration-500`} style={{ width: `${progressPct}%` }} />
-              </div>
-              <span className={`text-[11px] font-semibold ${col.text} shrink-0`}>{watchedCount}/{lessons.length}</span>
-            </div>
-          )}
-          {isLoaded && !isLoggedIn && (
-            <div className="px-4 py-2 border-b border-stone-100 dark:border-white/[0.06]">
-              <SignInDialog trigger={
-                <button className="text-[11px] text-stone-400 hover:text-emerald-600 transition-colors underline underline-offset-2">
-                  سجّل دخولك لتتبع تقدمك
-                </button>
-              } />
-            </div>
-          )}
-          <div className="divide-y divide-stone-50 dark:divide-white/[0.04] overflow-y-auto" style={{ maxHeight: "min(60vh, 520px)" }}>
-            {lessons.map((l, idx) => {
-              const isActive = idx === selected;
-              const lKey = `${levelIdx}:${subjectIdx}:${courseIdx}:${idx}`;
-              return (
-                <button key={idx} onClick={() => setSelected(idx)}
-                  className={`w-full text-right px-3.5 py-3 flex items-start gap-2.5 border-r-2 transition-colors ${isActive ? `${col.light} ${col.activeBorder}` : "border-r-transparent hover:bg-stone-50 dark:hover:bg-white/[0.04]"}`}>
-                  <div className={`shrink-0 w-6 h-6 rounded-md text-[11px] font-bold flex items-center justify-center mt-0.5 ${isActive ? `${col.bg} text-white` : "bg-stone-100 dark:bg-white/10 text-stone-400 dark:text-white/40"}`}>
-                    {toAr(idx)}
-                  </div>
-                  <p className={`flex-1 text-xs leading-relaxed text-right ${isActive ? `${col.text} font-semibold` : "text-stone-600 dark:text-white/50"}`}>
-                    {l.title}
-                  </p>
-                  <WatchButton lessonKey={lKey} col={col} />
-                </button>
-              );
-            })}
           </div>
         </div>
       </div>

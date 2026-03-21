@@ -1,5 +1,14 @@
 import { university } from "@/lib/data";
-import { canonicalize, shortName } from "@/lib/scholarAliases";
+import { canonicalize } from "@/lib/scholarAliases";
+import durationsJson from "@/data/durations.json";
+
+const durations = durationsJson as Record<string, number>;
+
+function extractVideoId(url: string | null | undefined): string | null {
+  if (!url) return null;
+  const m = url.match(/[?&]v=([a-zA-Z0-9_-]{11})/);
+  return m ? m[1] : null;
+}
 
 export type ScholarCourse = {
   levelIdx: number;
@@ -15,6 +24,7 @@ export type Scholar = {
   name: string;
   courses: ScholarCourse[];
   totalLessons: number;
+  totalSeconds: number;
 };
 
 function extractScholarNames(lessonTitle: string): string[] {
@@ -69,7 +79,7 @@ export function buildScholarsIndex(): Scholar[] {
           const key = canonicalize(full);
           if (key === null) continue; // not a real scholar
           if (!map.has(key)) {
-            map.set(key, { name: key, courses: [], totalLessons: 0 });
+            map.set(key, { name: key, courses: [], totalLessons: 0, totalSeconds: 0 });
           }
           const scholar = map.get(key)!;
           // Avoid duplicate course entries
@@ -79,6 +89,10 @@ export function buildScholarsIndex(): Scholar[] {
           if (!alreadyAdded) {
             scholar.courses.push(entry);
             scholar.totalLessons += entry.lessonCount;
+            for (const file of course.files) {
+              const id = extractVideoId(file.youtube);
+              if (id) scholar.totalSeconds += durations[id] ?? 0;
+            }
           }
         }
       }

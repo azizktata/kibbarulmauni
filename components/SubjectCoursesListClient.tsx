@@ -7,6 +7,20 @@ import { useWatched } from "@/lib/watchedContext";
 import { courseProgress } from "@/lib/progress";
 import type { Course } from "@/lib/data";
 import { extractScholars } from "@/lib/data";
+import durationsJson from "@/data/durations.json";
+
+const durations = durationsJson as Record<string, number>;
+
+function courseTotalSeconds(course: Course): number {
+  let total = 0;
+  for (const lesson of course.files) {
+    if (lesson.youtube) {
+      const m = lesson.youtube.match(/[?&]v=([a-zA-Z0-9_-]{11})/);
+      if (m) total += durations[m[1]] ?? 0;
+    }
+  }
+  return total;
+}
 
 function lessonWord(n: number) {
   if (n === 2) return "درسان";
@@ -60,6 +74,9 @@ export function SubjectCoursesListClient({ lIdx, sIdx, courses }: Props) {
       {courses.map((course, cIdx) => {
         const scholars = extractScholars(course);
         const pct = progresses[cIdx];
+        const totalSecs = courseTotalSeconds(course);
+        const totalHours = totalSecs >= 3600 ? Math.round(totalSecs / 3600) : 0;
+        const totalMins = totalSecs > 0 && totalHours === 0 ? Math.round(totalSecs / 60) : 0;
         const youtubeId = getFirstYoutubeId(course);
         const thumbUrl = youtubeId
           ? `https://img.youtube.com/vi/${youtubeId}/mqdefault.jpg`
@@ -122,6 +139,15 @@ export function SubjectCoursesListClient({ lIdx, sIdx, courses }: Props) {
                 <p className="text-xs text-stone-400 dark:text-white/35 truncate">
                   {scholars.map((s) => `الشيخ ${s}`).join("  ·  ")}
                 </p>
+              )}
+              {(totalHours > 0 || totalMins > 0) && (
+                <div className="flex items-center gap-1 text-[11px] text-stone-400 dark:text-white/30">
+                  <svg className="w-3 h-3 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
+                    <circle cx="12" cy="12" r="10" />
+                    <path d="M12 6v6l4 2" />
+                  </svg>
+                  <span>{totalHours > 0 ? `${totalHours} ساعة` : `${totalMins} دقيقة`}</span>
+                </div>
               )}
               {isLoaded && pct > 0 && (
                 <p className="text-[11px] font-medium mt-auto pt-1 text-gold">
