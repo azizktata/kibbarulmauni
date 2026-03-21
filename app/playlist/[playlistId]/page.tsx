@@ -79,9 +79,34 @@ export default async function PlaylistPage({
 
   return (
     <div className="relative min-h-screen">
-      <main className="max-w-7xl mx-auto px-4 pt-4 pb-8 lg:py-6 flex flex-col gap-4">
-        {/* Breadcrumb */}
-        <nav className="flex items-center gap-1.5 pr-1 text-stone-400 dark:text-white/40 text-xs flex-wrap">
+      {/* Mobile decorative header */}
+      <header className="relative text-white overflow-hidden lg:hidden">
+        <div className="absolute inset-0 bg-center" style={{ backgroundImage: "url('/islamic-geometric-4.jfif')" }} />
+        <div className={`absolute inset-0 bg-gradient-to-b ${col.gradient} opacity-70`} />
+        <div className="relative max-w-7xl mx-auto px-4 py-6">
+          <nav className="flex items-center gap-1.5 text-white/60 text-xs mb-4 flex-wrap">
+            <Link href="/" className="hover:text-white transition-colors">الرئيسية</Link>
+            <span className="text-gold">›</span>
+            <Link href="/scholars" className="hover:text-white transition-colors">المشايخ</Link>
+            {scholarName && (
+              <>
+                <span className="text-gold">›</span>
+                <Link href={`/scholars/${encodeURIComponent(scholarName)}`} className="hover:text-white transition-colors">
+                  الشيخ {scholarName}
+                </Link>
+              </>
+            )}
+            <span className="text-gold">›</span>
+            <span className="text-white font-medium line-clamp-1">{playlistTitle}</span>
+          </nav>
+          {/* <h1 className="text-xl font-bold">{playlistTitle}</h1>
+          {category && <p className="text-white/60 text-xs mt-1">{category}</p>} */}
+        </div>
+      </header>
+
+      <main className="max-w-7xl mx-auto px-4 pb-8 lg:py-6 flex flex-col gap-4">
+        {/* Desktop breadcrumb */}
+        <nav className="hidden lg:flex items-center gap-1.5 pr-1 text-stone-400 dark:text-white/40 text-xs flex-wrap">
           <Link href="/" className="hover:text-stone-700 dark:hover:text-white/70 transition-colors">الرئيسية</Link>
           <span className="text-gold">›</span>
           <Link href="/scholars" className="hover:text-stone-700 dark:hover:text-white/70 transition-colors">المشايخ</Link>
@@ -101,7 +126,7 @@ export default async function PlaylistPage({
         </nav>
 
         {category && (
-          <span className="self-start text-[11px] font-medium px-2.5 py-1 rounded-full bg-primary/10 text-primary dark:bg-white/[0.08] dark:text-white/50">
+          <span className="self-start text-[11px] font-medium px-2.5 py-1 rounded-full bg-primary/10 text-primary dark:bg-white/[0.08] dark:text-white/50 hidden lg:inline-flex">
             {category}
           </span>
         )}

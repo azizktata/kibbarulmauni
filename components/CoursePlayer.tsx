@@ -566,7 +566,7 @@ export function CoursePlayer({ lessons, col, levelIdx, subjectIdx, courseIdx, co
       <div className="grid grid-cols-1 lg:grid-cols-[360px_1fr] gap-5">
 
         {/* ── Playlist + siblings (right column in RTL) ── */}
-        <div className="flex flex-col gap-5 self-start">
+        <div className="flex flex-col gap-5 self-start order-2 lg:order-none">
 
           {/* Transcript (collapsible, above playlist) */}
           {transcript.length > 0 && (
@@ -668,7 +668,7 @@ export function CoursePlayer({ lessons, col, levelIdx, subjectIdx, courseIdx, co
         </div>
 
         {/* ── Video panel (left column in RTL) ── */}
-        <div className="flex flex-col gap-3">
+        <div className="flex flex-col gap-3 order-1 lg:order-none">
 
           {/* 1. Video */}
           <div className="group relative aspect-video bg-stone-900 rounded-none lg:rounded-xl overflow-hidden shadow-lg lg:ring-1 ring-black/5 max-lg:-mx-4">
