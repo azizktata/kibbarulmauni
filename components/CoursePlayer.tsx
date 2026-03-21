@@ -245,7 +245,9 @@ export function CoursePlayer({ lessons, col, levelIdx, subjectIdx, courseIdx, co
     lastSaveRef.current = 0;
     lastDbSaveRef.current = 0;
 
-    const savedPos = Number(localStorage.getItem(`playback_${lsBase}_${selectedRef.current}`) ?? 0);
+    const lessonKey = `${baseKey}:${selectedRef.current}`;
+    const alreadyWatched = isWatchedRef.current(lessonKey);
+    const savedPos = alreadyWatched ? 0 : Number(localStorage.getItem(`playback_${lsBase}_${selectedRef.current}`) ?? 0);
 
     loadYTApi().then(() => {
       if (destroyed || !mainDivRef.current) return;
@@ -256,11 +258,11 @@ export function CoursePlayer({ lessons, col, levelIdx, subjectIdx, courseIdx, co
           onStateChange: makeStateHandler(() => mainPlayerRef.current),
           onReady: () => {
             if (!isLoggedInRef.current) return;
-            const lessonKeyAtLoad = `${baseKey}:${selectedRef.current}`;
+            if (isWatchedRef.current(lessonKey)) return; // already watched — don't restore position
             fetch("/api/recently-visited")
               .then((r) => r.json())
               .then(({ entries }: { entries: { key: string; position: number }[] }) => {
-                const entry = entries?.find((e) => e.key === lessonKeyAtLoad);
+                const entry = entries?.find((e) => e.key === lessonKey);
                 const dbPos = entry?.position ?? 0;
                 if (dbPos > savedPos && dbPos > 5) {
                   mainPlayerRef.current?.seekTo(dbPos, true);
