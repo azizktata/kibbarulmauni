@@ -5,7 +5,6 @@ import type { TranscriptSegment } from "@/lib/data";
 
 export function useTranscriptLoader(
   selected: number,
-  ytId: string | null,
   transcriptFilename: string | null,
   transcriptVersion: number
 ): { transcript: TranscriptSegment[]; transcriptLoading: boolean } {
@@ -17,32 +16,20 @@ export function useTranscriptLoader(
     const { signal } = controller;
 
     setTranscript([]);
+
+    if (!transcriptFilename) return () => controller.abort();
+
     setTranscriptLoading(true);
-
-    const loadFile = () => {
-      if (!transcriptFilename) { if (!signal.aborted) setTranscriptLoading(false); return; }
-      fetch(`/api/transcript?file=${transcriptFilename}`, { signal })
-        .then((r) => r.json())
-        .then(({ segments }: { segments: TranscriptSegment[] }) => {
-          if (!signal.aborted && segments.length > 0) setTranscript(segments);
-        })
-        .catch((err) => { if (err?.name === "AbortError") return; })
-        .finally(() => { if (!signal.aborted) setTranscriptLoading(false); });
-    };
-
-    if (!ytId) { loadFile(); return () => controller.abort(); }
-
-    fetch(`/api/transcript?v=${ytId}`, { cache: "no-cache", signal })
+    fetch(`/api/transcript?file=${transcriptFilename}`, { signal })
       .then((r) => r.json())
       .then(({ segments }: { segments: TranscriptSegment[] }) => {
-        if (signal.aborted) return;
-        if (segments.length > 0) { setTranscript(segments); setTranscriptLoading(false); }
-        else loadFile();
+        if (!signal.aborted && segments.length > 0) setTranscript(segments);
       })
-      .catch((err) => { if (err?.name !== "AbortError") loadFile(); });
+      .catch((err) => { if (err?.name === "AbortError") return; })
+      .finally(() => { if (!signal.aborted) setTranscriptLoading(false); });
 
     return () => controller.abort();
-  }, [selected, ytId, transcriptFilename, transcriptVersion]);
+  }, [selected, transcriptFilename, transcriptVersion]);
 
   return { transcript, transcriptLoading };
 }

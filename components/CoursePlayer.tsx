@@ -327,15 +327,10 @@ export function CoursePlayer({ lessons, col, levelIdx, subjectIdx, courseIdx, co
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selected]);
 
-  // For admin upload button: always use computed name for backward compat
   const transcriptUploadFilename = `${levelIdx}-${subjectIdx}-${courseIdx}-${selected}.txt`;
-  // For loading: if lesson has a YouTube video, only use explicit transcriptFile (never auto-computed)
-  // This prevents stale/wrong files from being served when YouTube captions fail in prod
-  const transcriptFilename = ytId
-    ? (lessons[selected]?.transcriptFile ?? null)
-    : (lessons[selected]?.transcriptFile ?? transcriptUploadFilename);
+  const transcriptFilename = lessons[selected]?.transcriptFile ?? transcriptUploadFilename;
 
-  const { transcript, transcriptLoading } = useTranscriptLoader(selected, ytId, transcriptFilename, transcriptVersion);
+  const { transcript, transcriptLoading } = useTranscriptLoader(selected, transcriptFilename, transcriptVersion);
 
   // ── Reset time on lesson change ───────────────────────────────────────────────
   useEffect(() => {
