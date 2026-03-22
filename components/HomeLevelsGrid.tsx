@@ -1,12 +1,141 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo } from "react";
+import { memo, useMemo } from "react";
 import { useWatched } from "@/lib/watchedContext";
 import { levelProgress, levelStats } from "@/lib/progress";
 import type { Level } from "@/lib/data";
-import { LEVEL_COLORS, ARABIC_DIGITS } from "@/lib/constants";
+import { LEVEL_COLORS, ARABIC_DIGITS, JOURNEY_GRADIENTS } from "@/lib/constants";
 import { ProgressRing } from "./ProgressRing";
+
+type LevelColor = (typeof LEVEL_COLORS)[number];
+
+interface LevelCardProps {
+  level: Level;
+  idx: number;
+  pct: number;
+  isLoaded: boolean;
+  col: LevelColor;
+  glass: boolean;
+  watchedCount: number;
+  totalCount: number;
+  watchedSeconds: number;
+}
+
+const LevelCard = memo(function LevelCard({ level, idx, pct, isLoaded, col, glass, watchedCount, totalCount, watchedSeconds }: LevelCardProps) {
+  if (glass) {
+    return (
+      <Link
+        href={`/level/${idx}`}
+        className="group relative rounded-2xl border border-primary/10 overflow-hidden bg-primary/[0.03] hover:bg-primary/[0.07] hover:-translate-y-1.5 hover:border-primary/25 hover:shadow-lg transition-all duration-200 flex flex-col items-center justify-center py-10 px-4 text-center"
+      >
+        <div className={`absolute top-0 inset-x-0 h-1 bg-gradient-to-l ${col.gradient}`} />
+        <div
+          className={`text-6xl font-bold mb-4 ${col.text} group-hover:scale-110 transition-transform duration-200`}
+          style={{ fontFamily: "var(--font-amiri)" }}
+        >
+          {ARABIC_DIGITS[idx]}
+        </div>
+        <h3 className="font-bold text-base md:text-3xl text-primary leading-snug" style={{ fontFamily: "var(--font-amiri)" }}>
+          {level.title}
+        </h3>
+        {isLoaded && pct > 0 && (
+          <div className="mt-3">
+            <ProgressRing pct={pct} size={28} stroke={3} color={col.ring} />
+          </div>
+        )}
+      </Link>
+    );
+  }
+
+  const watchedHours = Math.floor(watchedSeconds / 3600);
+  const watchedMins = Math.floor((watchedSeconds % 3600) / 60);
+  const hasProgress = isLoaded && watchedCount > 0;
+
+  return (
+    <Link
+      href={`/level/${idx}`}
+      className="group relative overflow-hidden block transition-all duration-300"
+      style={{ background: JOURNEY_GRADIENTS[idx] }}
+    >
+      {/* Subtle SVG geometric pattern */}
+      <svg
+        className="absolute inset-0 w-full h-full opacity-[.055] group-hover:opacity-[.09] transition-opacity duration-300 pointer-events-none"
+        xmlns="http://www.w3.org/2000/svg"
+      >
+        <defs>
+          <pattern id={`geo-${idx}`} x="0" y="0" width="40" height="40" patternUnits="userSpaceOnUse">
+            {/* Diamond grid */}
+            <path d="M20 0 L40 20 L20 40 L0 20 Z" fill="none" stroke="#F0BC53" strokeWidth="0.6" />
+            {/* Inner small diamond */}
+            <path d="M20 8 L32 20 L20 32 L8 20 Z" fill="none" stroke="#F0BC53" strokeWidth="0.4" />
+            {/* Center dot */}
+            <circle cx="20" cy="20" r="1.2" fill="#F0BC53" />
+          </pattern>
+        </defs>
+        <rect width="100%" height="100%" fill={`url(#geo-${idx})`} />
+      </svg>
+
+      {/* Arrow hint */}
+      <span className="absolute top-5 left-4 text-[16px] transition-colors duration-200 text-white/0 group-hover:text-gold/70">
+        ↗
+      </span>
+
+      <div className="flex flex-col h-[260px] px-5 pb-5 pt-10">
+        {/* Centered ring + numeral */}
+        <div className="flex-1 flex items-center justify-center relative">
+          {isLoaded && pct > 0 && (
+            <div className="absolute">
+              <ProgressRing pct={pct} size={120} stroke={3} color="stroke-gold" trackColor="stroke-white/10" />
+            </div>
+          )}
+          <span
+            className="text-5xl font-bold leading-none text-white/40 select-none pointer-events-none"
+            style={{ fontFamily: "var(--font-amiri)" }}
+            aria-hidden
+          >
+            {ARABIC_DIGITS[idx]}
+          </span>
+        </div>
+
+        {/* Title + meta at bottom */}
+        <span
+          className="text-base font-bold text-white/40 group-hover:text-white/85 transition-colors duration-200 block truncate"
+          style={{ fontFamily: "var(--font-amiri)" }}
+        >
+          {level.title}
+        </span>
+        <div className="text-[9px] text-white/0 group-hover:text-white/30 transition-colors duration-300 mt-1 tracking-[.06em]">
+          {level.subjects.length} مادة · {totalCount} درس
+        </div>
+      </div>
+
+      {/* Analytics panel — slides up on hover when progress exists */}
+      {hasProgress && (
+        <div className="absolute inset-x-0 bottom-0 z-20 translate-y-full group-hover:translate-y-0 transition-transform duration-300 bg-black/55 backdrop-blur-sm px-4 py-3 flex items-center justify-around text-white">
+          <div className="flex flex-col items-center gap-0.5">
+            <span className="text-[10px] text-white/50">الدروس</span>
+            <span className="text-sm font-semibold tabular-nums">
+              {watchedCount}<span className="text-white/40 font-normal text-xs"> / {totalCount}</span>
+            </span>
+          </div>
+          <div className="w-px h-8 bg-white/20" />
+          <div className="flex flex-col items-center gap-0.5">
+            <span className="text-[10px] text-white/50">المشاهد</span>
+            <span className="text-sm font-semibold tabular-nums">
+              {watchedHours > 0 ? `${watchedHours}س ${watchedMins}د` : `${watchedMins} دقيقة`}
+            </span>
+          </div>
+          <div className="w-px h-8 bg-white/20" />
+          <div className="flex flex-col items-center gap-0.5">
+            <span className="text-[10px] text-white/50">الإتمام</span>
+            <span className="text-sm font-semibold text-gold">{pct}٪</span>
+          </div>
+        </div>
+      )}
+    </Link>
+  );
+});
 
 interface Props {
   levels: Level[];
@@ -26,123 +155,27 @@ export function HomeLevelsGrid({ levels, glass = false }: Props) {
     [levels, watchedKeys]
   );
 
-  if (glass) {
-    return (
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-5">
-        {levels.map((level, idx) => {
-          const c = LEVEL_COLORS[idx];
-          const pct = progresses[idx];
-          return (
-            <Link
-              key={idx}
-              href={`/level/${idx}`}
-              className="group relative rounded-2xl border border-primary/10 overflow-hidden bg-primary/[0.03] hover:bg-primary/[0.07] hover:-translate-y-1.5 hover:border-primary/25 hover:shadow-lg transition-all duration-200 flex flex-col items-center justify-center py-10 px-4 text-center"
-            >
-              <div className={`absolute top-0 inset-x-0 h-1 bg-gradient-to-l ${c.gradient}`} />
-
-              <div
-                className={`text-6xl font-bold mb-4 ${c.text} group-hover:scale-110 transition-transform duration-200`}
-                style={{ fontFamily: "var(--font-amiri)" }}
-              >
-                {ARABIC_DIGITS[idx]}
-              </div>
-
-              <h3
-                className="font-bold text-base md:text-3xl text-primary leading-snug"
-                style={{ fontFamily: "var(--font-amiri)" }}
-              >
-                {level.title}
-              </h3>
-
-              {isLoaded && pct > 0 && (
-                <div className="mt-3">
-                  <ProgressRing pct={pct} size={28} stroke={3} color={c.ring} />
-                </div>
-              )}
-            </Link>
-          );
-        })}
-      </div>
-    );
-  }
+  const gridClass = glass
+    ? "grid grid-cols-2 md:grid-cols-4 gap-5"
+    : "grid grid-cols-2 md:grid-cols-4 gap-px";
 
   return (
-    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+    <div className={gridClass} style={glass ? undefined : { background: "rgba(240,188,83,.12)" }}>
       {levels.map((level, idx) => {
-        const pct = progresses[idx];
         const s = stats[idx];
-        const watchedHours = Math.floor(s.watchedSeconds / 3600);
-        const watchedMins = Math.floor((s.watchedSeconds % 3600) / 60);
-        const hasProgress = isLoaded && s.watchedCount > 0;
-
         return (
-          <Link
+          <LevelCard
             key={idx}
-            href={`/level/${idx}`}
-            className="group rounded-lg overflow-hidden hover:shadow-xl hover:-translate-y-1.5 transition-all duration-200"
-          >
-            <div className="relative w-full h-52 overflow-hidden flex items-center justify-center">
-              <div
-                className="absolute inset-0 bg-cover bg-center scale-105 group-hover:scale-110 transition-transform duration-500"
-                style={{ backgroundImage: "url('/islamic-geometric-4.jfif')" }}
-              />
-              <div className="absolute inset-0 bg-primary/70 group-hover:bg-primary/60 transition-colors duration-300" />
-
-              {/* Circular progress ring + content */}
-              <div className="relative z-10 flex items-center justify-center">
-                {isLoaded && pct > 0 && (
-                  <div className="absolute">
-                    <ProgressRing
-                      pct={pct}
-                      size={148}
-                      stroke={3}
-                      color="stroke-gold"
-                      trackColor="stroke-white/15"
-                    />
-                  </div>
-                )}
-                <div className="flex flex-col items-center gap-1 px-10 text-center">
-                  <span
-                    className="text-gold text-5xl font-bold leading-none drop-shadow-md"
-                    style={{ fontFamily: "var(--font-aref-ruqaa)" }}
-                  >
-                    {ARABIC_DIGITS[idx]}
-                  </span>
-                  <h3
-                    className="text-white text-base font-semibold leading-snug mt-1 line-clamp-2"
-                    style={{ fontFamily: "var(--font-aref-ruqaa)" }}
-                  >
-                    {level.title}
-                  </h3>
-                </div>
-              </div>
-
-              {/* Hover stats overlay */}
-              {hasProgress && (
-                <div className="absolute inset-x-0 bottom-0 z-20 translate-y-full group-hover:translate-y-0 transition-transform duration-300 bg-black/60 backdrop-blur-sm px-4 py-3 flex items-center justify-around text-white">
-                  <div className="flex flex-col items-center gap-0.5">
-                    <span className="text-xs text-white/50">الدروس</span>
-                    <span className="text-sm font-semibold tabular-nums">
-                      {s.watchedCount}
-                      <span className="text-white/40 font-normal text-xs"> / {s.totalCount}</span>
-                    </span>
-                  </div>
-                  <div className="w-px h-8 bg-white/20" />
-                  <div className="flex flex-col items-center gap-0.5">
-                    <span className="text-xs text-white/50">المشاهد</span>
-                    <span className="text-sm font-semibold tabular-nums">
-                      {watchedHours > 0 ? `${watchedHours}س ${watchedMins}د` : `${watchedMins} دقيقة`}
-                    </span>
-                  </div>
-                  <div className="w-px h-8 bg-white/20" />
-                  <div className="flex flex-col items-center gap-0.5">
-                    <span className="text-xs text-white/50">الإتمام</span>
-                    <span className="text-sm font-semibold text-gold">{pct}٪</span>
-                  </div>
-                </div>
-              )}
-            </div>
-          </Link>
+            level={level}
+            idx={idx}
+            pct={progresses[idx]}
+            isLoaded={isLoaded}
+            col={LEVEL_COLORS[idx]}
+            glass={glass}
+            watchedCount={s.watchedCount}
+            totalCount={s.totalCount}
+            watchedSeconds={s.watchedSeconds}
+          />
         );
       })}
     </div>

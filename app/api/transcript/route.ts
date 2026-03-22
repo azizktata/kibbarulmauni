@@ -3,8 +3,9 @@ import { readFileSync, writeFileSync } from "fs";
 import { resolve } from "path";
 import type { TranscriptSegment } from "@/lib/data";
 import { auth } from "@/auth";
+import { apiError } from "@/lib/apiError";
 
-const ADMIN_EMAIL = "azizktata77@gmail.com";
+const ADMIN_EMAIL = process.env.ADMIN_EMAIL ?? "";
 
 // ── YouTube captions via Android InnerTube API ────────────────────────────────
 // Uses the Android client context which returns caption track URLs accessible server-side.
@@ -111,16 +112,24 @@ function parseRawTranscript(raw: string): TranscriptSegment[] {
 
 export async function POST(req: NextRequest) {
   const session = await auth();
-  if (session?.user?.email !== ADMIN_EMAIL)
+  if (!ADMIN_EMAIL || session?.user?.email !== ADMIN_EMAIL)
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 
+  const MAX_TRANSCRIPT_BYTES = 500 * 1024; // 500 KB
   const { file, content } = (await req.json()) as { file: string; content: string };
   if (!/^[\w\-]+\.txt$/.test(file))
     return NextResponse.json({ error: "Invalid file" }, { status: 400 });
 
-  const filePath = resolve(process.cwd(), "data/transcripts", file);
-  writeFileSync(filePath, content, "utf8");
-  return NextResponse.json({ ok: true });
+  if (typeof content !== "string" || Buffer.byteLength(content, "utf8") > MAX_TRANSCRIPT_BYTES)
+    return NextResponse.json({ error: "Content too large" }, { status: 413 });
+
+  try {
+    const filePath = resolve(process.cwd(), "data/transcripts", file);
+    writeFileSync(filePath, content, "utf8");
+    return NextResponse.json({ ok: true });
+  } catch (err) {
+    return apiError("transcript POST", err);
+  }
 }
 
 // ── GET handler ────────────────────────────────────────────────────────────────

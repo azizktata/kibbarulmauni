@@ -6,6 +6,7 @@ import {
   useEffect,
   useState,
   useCallback,
+  useRef,
   type ReactNode,
 } from "react";
 
@@ -89,6 +90,9 @@ export function NotesProvider({
   const [activeLessonKey, setActiveLessonKey] = useState<string | null>(null);
   const [activeFolderId, setActiveFolderId] = useState<string | null>(null);
 
+  // Per-note abort controllers to cancel in-flight PATCH on rapid updates
+  const patchAbortRefs = useRef<Map<string, AbortController>>(new Map());
+
   const fetchAll = useCallback(async () => {
     try {
       const data = await fetch("/api/notes").then((r) => r.json()) as {
@@ -97,8 +101,8 @@ export function NotesProvider({
       };
       setNotes(data.notes ?? []);
       setFolders(data.folders ?? []);
-    } catch {
-      // silently ignore fetch errors
+    } catch (err) {
+      console.error("[notesContext] fetchAll failed:", err);
     }
   }, []);
 
@@ -163,8 +167,9 @@ export function NotesProvider({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(fields),
       });
+      if (!res.ok) throw new Error("createNote failed");
       const { id } = await res.json() as { id: string };
-      // Optimistic add
+      // Add to state only after server confirms with a real ID
       const now = Date.now();
       const optimistic: NoteSummary = {
         id,
@@ -186,25 +191,56 @@ export function NotesProvider({
 
   const updateNoteMeta = useCallback(
     async (id: string, fields: UpdateNoteFields): Promise<void> => {
-      // Optimistic update
-      setNotes((prev) =>
-        prev.map((n) => (n.id === id ? { ...n, ...fields, updatedAt: Date.now() } : n))
-      );
-      await fetch(`/api/notes/${id}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(fields),
+      // Abort any in-flight PATCH for this note
+      patchAbortRefs.current.get(id)?.abort();
+      const controller = new AbortController();
+      patchAbortRefs.current.set(id, controller);
+
+      // Snapshot before optimistic update for rollback
+      let snapshot: NoteSummary[] = [];
+      setNotes((prev) => {
+        snapshot = prev;
+        return prev.map((n) => (n.id === id ? { ...n, ...fields, updatedAt: Date.now() } : n));
       });
+
+      try {
+        const res = await fetch(`/api/notes/${id}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(fields),
+          signal: controller.signal,
+        });
+        if (!res.ok) throw new Error("updateNoteMeta failed");
+      } catch (err) {
+        if (err instanceof Error && err.name === "AbortError") return;
+        // Rollback on failure
+        setNotes(snapshot);
+        console.error("[notesContext] updateNoteMeta failed:", err);
+      } finally {
+        patchAbortRefs.current.delete(id);
+      }
     },
     []
   );
 
   const deleteNote = useCallback(async (id: string): Promise<void> => {
-    // Optimistic remove
+    // Snapshot for rollback
+    const prevNotes = notes;
+    const prevOpenNoteId = openNoteId;
+
     setNotes((prev) => prev.filter((n) => n.id !== id));
     if (openNoteId === id) setOpenNoteId(null);
-    await fetch(`/api/notes/${id}`, { method: "DELETE" });
-  }, [openNoteId]);
+
+    try {
+      const res = await fetch(`/api/notes/${id}`, { method: "DELETE" });
+      if (!res.ok) throw new Error("deleteNote failed");
+    } catch (err) {
+      // Rollback on failure
+      setNotes(prevNotes);
+      setOpenNoteId(prevOpenNoteId);
+      console.error("[notesContext] deleteNote failed:", err);
+    }
+  }, [notes, openNoteId]);
 
   const createFolder = useCallback(
     async (name: string, parentId: string | null = null): Promise<string> => {
@@ -213,6 +249,7 @@ export function NotesProvider({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ name, parentId }),
       });
+      if (!res.ok) throw new Error("createFolder failed");
       const { id } = await res.json() as { id: string };
       const now = Date.now();
       setFolders((prev) => [
@@ -226,22 +263,44 @@ export function NotesProvider({
 
   const updateFolder = useCallback(
     async (id: string, fields: { name?: string; parentId?: string | null; sortOrder?: number }): Promise<void> => {
-      setFolders((prev) => prev.map((f) => (f.id === id ? { ...f, ...fields } : f)));
-      await fetch(`/api/notes/folders/${id}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(fields),
+      let snapshot: NoteFolder[] = [];
+      setFolders((prev) => {
+        snapshot = prev;
+        return prev.map((f) => (f.id === id ? { ...f, ...fields } : f));
       });
+
+      try {
+        const res = await fetch(`/api/notes/folders/${id}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(fields),
+        });
+        if (!res.ok) throw new Error("updateFolder failed");
+      } catch (err) {
+        setFolders(snapshot);
+        console.error("[notesContext] updateFolder failed:", err);
+      }
     },
     []
   );
 
   const deleteFolder = useCallback(async (id: string): Promise<void> => {
+    const prevFolders = folders;
+    const prevNotes = notes;
+
     setFolders((prev) => prev.filter((f) => f.id !== id));
     // Orphan notes to root optimistically
     setNotes((prev) => prev.map((n) => (n.folderId === id ? { ...n, folderId: null } : n)));
-    await fetch(`/api/notes/folders/${id}`, { method: "DELETE" });
-  }, []);
+
+    try {
+      const res = await fetch(`/api/notes/folders/${id}`, { method: "DELETE" });
+      if (!res.ok) throw new Error("deleteFolder failed");
+    } catch (err) {
+      setFolders(prevFolders);
+      setNotes(prevNotes);
+      console.error("[notesContext] deleteFolder failed:", err);
+    }
+  }, [folders, notes]);
 
   const getNotesByFolder = useCallback(
     (folderId: string | null) => notes.filter((n) => n.folderId === folderId),

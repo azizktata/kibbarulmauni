@@ -59,11 +59,13 @@ export function buildScholarsIndex(): Scholar[] {
 
         if (fullNames.size === 0) continue;
 
-        // Deduplicate: drop any name that is a suffix of a longer name
-        const nameArr = [...fullNames];
-        const unique = nameArr.filter(
-          (n) => !nameArr.some((o) => o !== n && o.endsWith(n))
-        );
+        // Deduplicate: drop any name that is a suffix of a longer name (O(n log n))
+        const nameArr = [...fullNames].sort((a, b) => b.length - a.length);
+        const kept: string[] = [];
+        for (const n of nameArr) {
+          if (!kept.some((k) => k.endsWith(n))) kept.push(n);
+        }
+        const unique = kept;
 
         const entry: ScholarCourse = {
           levelIdx: lIdx,

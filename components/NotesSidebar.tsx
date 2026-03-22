@@ -5,6 +5,7 @@ import { ChevronDownIcon, ChevronLeftIcon, FolderIcon, FolderOpenIcon, PlusIcon,
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Collapsible, CollapsibleTrigger, CollapsibleContent } from "@/components/ui/collapsible";
 import { useNotes, type NoteFolder, type NoteSummary } from "@/lib/notesContext";
+import { NotesSidebarContext, useNotesSidebar } from "@/lib/notesSidebarContext";
 import { cn } from "@/lib/utils";
 
 // ── Helpers ────────────────────────────────────────────────────────────────────
@@ -108,36 +109,26 @@ function NoteRow({
 function FolderNode({
   folder,
   depth,
-  allFolders,
-  allNotes,
-  onNoteOpen,
-  onNoteDelete,
-  onCreateNote,
-  onDeleteFolder,
-  onRenameFolder,
-  onNestFolder,
-  onMoveNote,
-  onReorderNote,
-  onReorderFolder,
-  searchQuery,
   defaultOpen = true,
 }: {
   folder: NoteFolder;
   depth: number;
-  allFolders: NoteFolder[];
-  allNotes: NoteSummary[];
-  onNoteOpen: (id: string) => void;
-  onNoteDelete: (id: string) => void;
-  onCreateNote: (folderId: string) => void;
-  onDeleteFolder: (id: string) => void;
-  onRenameFolder: (id: string, name: string) => void;
-  onNestFolder: (draggedId: string, parentId: string) => void;
-  onMoveNote: (noteId: string, folderId: string | null) => void;
-  onReorderNote: (draggedId: string, targetId: string, position: "before" | "after") => void;
-  onReorderFolder: (draggedId: string, targetId: string, position: "before" | "after") => void;
-  searchQuery: string;
   defaultOpen?: boolean;
 }) {
+  const {
+    allFolders,
+    allNotes,
+    searchQuery,
+    onNoteOpen,
+    onNoteDelete,
+    onCreateNote,
+    onDeleteFolder,
+    onRenameFolder,
+    onNestFolder,
+    onMoveNote,
+    onReorderNote,
+    onReorderFolder,
+  } = useNotesSidebar();
   const [open, setOpen] = useState(defaultOpen);
   const [hovered, setHovered] = useState(false);
   const [editing, setEditing] = useState(false);
@@ -293,18 +284,6 @@ function FolderNode({
             key={child.id}
             folder={child}
             depth={depth + 1}
-            allFolders={allFolders}
-            allNotes={allNotes}
-            onNoteOpen={onNoteOpen}
-            onNoteDelete={onNoteDelete}
-            onCreateNote={onCreateNote}
-            onDeleteFolder={onDeleteFolder}
-            onRenameFolder={onRenameFolder}
-            onNestFolder={onNestFolder}
-            onMoveNote={onMoveNote}
-            onReorderNote={onReorderNote}
-            onReorderFolder={onReorderFolder}
-            searchQuery={searchQuery}
           />
         ))}
         {filteredNotes.map((note) => (
@@ -373,9 +352,12 @@ export function NotesSidebar() {
   const [searchResults, setSearchResults] = useState<SearchResult[] | null>(null);
   const [searchLoading, setSearchLoading] = useState(false);
   const searchTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const searchAbortRef = useRef<AbortController | null>(null);
 
   useEffect(() => {
     if (searchTimerRef.current) clearTimeout(searchTimerRef.current);
+    searchAbortRef.current?.abort();
+
     if (!search.trim()) {
       setSearchResults(null);
       setSearchLoading(false);
@@ -383,15 +365,22 @@ export function NotesSidebar() {
     }
     setSearchLoading(true);
     searchTimerRef.current = setTimeout(async () => {
+      const controller = new AbortController();
+      searchAbortRef.current = controller;
       try {
-        const res = await fetch(`/api/notes/search?q=${encodeURIComponent(search.trim())}`);
+        const res = await fetch(`/api/notes/search?q=${encodeURIComponent(search.trim())}`, { signal: controller.signal });
         const { results } = await res.json() as { results: SearchResult[] };
         setSearchResults(results);
+      } catch (err) {
+        if (err instanceof Error && err.name === "AbortError") return;
       } finally {
-        setSearchLoading(false);
+        if (!controller.signal.aborted) setSearchLoading(false);
       }
     }, 350);
-    return () => { if (searchTimerRef.current) clearTimeout(searchTimerRef.current); };
+    return () => {
+      if (searchTimerRef.current) clearTimeout(searchTimerRef.current);
+      searchAbortRef.current?.abort();
+    };
   }, [search]);
 
   const rootNotes = getNotesByFolder(null);
@@ -509,7 +498,25 @@ export function NotesSidebar() {
   // Determine if we're in lesson-context mode
   const isLessonMode = !isSearching && !!activeLessonKey;
 
+  const sidebarCtx = {
+    allFolders: folders,
+    allNotes: notes,
+    searchQuery: search,
+    onNoteOpen: (id: string) => { setSidebarOpen(false); openNote(id); },
+    onNoteDelete: deleteNote,
+    onCreateNote: handleCreateNote,
+    onDeleteFolder: deleteFolder,
+    onRenameFolder: (id: string, name: string) => updateFolder(id, { name }),
+    onNestFolder: (id: string, parentId: string) => {
+      if (!isDescendant(folders, parentId, id)) updateFolder(id, { parentId });
+    },
+    onMoveNote: (noteId: string, folderId: string | null) => updateNoteMeta(noteId, { folderId }),
+    onReorderNote: handleReorderNote,
+    onReorderFolder: handleReorderFolder,
+  };
+
   return (
+    <NotesSidebarContext.Provider value={sidebarCtx}>
     <Sheet open={sidebarOpen} onOpenChange={setSidebarOpen}>
       <SheetContent
         side="right"
@@ -602,20 +609,6 @@ export function NotesSidebar() {
                 <FolderNode
                   folder={activeFolder}
                   depth={0}
-                  allFolders={folders}
-                  allNotes={notes}
-                  onNoteOpen={(id) => { setSidebarOpen(false); openNote(id); }}
-                  onNoteDelete={deleteNote}
-                  onCreateNote={handleCreateNote}
-                  onDeleteFolder={deleteFolder}
-                  onRenameFolder={(id, name) => updateFolder(id, { name })}
-                  onNestFolder={(id, parentId) => {
-                    if (!isDescendant(folders, parentId, id)) updateFolder(id, { parentId });
-                  }}
-                  onMoveNote={(noteId, folderId) => updateNoteMeta(noteId, { folderId })}
-                  onReorderNote={handleReorderNote}
-                  onReorderFolder={handleReorderFolder}
-                  searchQuery=""
                   defaultOpen={true}
                 />
               ) : (
@@ -736,20 +729,6 @@ export function NotesSidebar() {
                       key={folder.id}
                       folder={folder}
                       depth={0}
-                      allFolders={folders}
-                      allNotes={notes}
-                      onNoteOpen={(id) => { setSidebarOpen(false); openNote(id); }}
-                      onNoteDelete={deleteNote}
-                      onCreateNote={handleCreateNote}
-                      onDeleteFolder={deleteFolder}
-                      onRenameFolder={(id, name) => updateFolder(id, { name })}
-                      onNestFolder={(id, parentId) => {
-                        if (!isDescendant(folders, parentId, id)) updateFolder(id, { parentId });
-                      }}
-                      onMoveNote={(noteId, folderId) => updateNoteMeta(noteId, { folderId })}
-                      onReorderNote={handleReorderNote}
-                      onReorderFolder={handleReorderFolder}
-                      searchQuery={search}
                     />
                   ))}
 
@@ -822,5 +801,6 @@ export function NotesSidebar() {
         </div>
       </SheetContent>
     </Sheet>
+    </NotesSidebarContext.Provider>
   );
 }

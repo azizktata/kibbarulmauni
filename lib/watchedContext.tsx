@@ -4,6 +4,7 @@ import {
   createContext,
   useContext,
   useEffect,
+  useRef,
   useState,
   useCallback,
   useOptimistic,
@@ -44,14 +45,18 @@ export function WatchedProvider({
   );
   const [, startTransition] = useTransition();
 
+  // Stable ref so toggleWatched doesn't need optimisticKeys in its dep array
+  const optimisticKeysRef = useRef(optimisticKeys);
+  useEffect(() => { optimisticKeysRef.current = optimisticKeys; }, [optimisticKeys]);
+
   const fetchKeys = useCallback(async () => {
     try {
       const data = (await fetch("/api/progress").then((r) => r.json())) as {
         keys: string[];
       };
       setServerKeys(new Set(data.keys));
-    } catch {
-      // silently ignore fetch errors
+    } catch (err) {
+      console.error("[watchedContext] fetchKeys failed:", err);
     }
   }, []);
 
@@ -66,7 +71,7 @@ export function WatchedProvider({
   const toggleWatched = useCallback(
     (key: string) => {
       if (!isLoggedIn) return;
-      const willBeWatched = !optimisticKeys.has(key);
+      const willBeWatched = !optimisticKeysRef.current.has(key);
       startTransition(async () => {
         applyOptimistic({ key, watched: willBeWatched });
         await fetch("/api/watch", {
@@ -77,7 +82,7 @@ export function WatchedProvider({
         await fetchKeys();
       });
     },
-    [isLoggedIn, optimisticKeys, applyOptimistic, fetchKeys]
+    [isLoggedIn, applyOptimistic, fetchKeys]
   );
 
   const isWatched = useCallback(

@@ -96,6 +96,7 @@ export function NoteEditor() {
   const onDragEnd = () => { dragRef.current = null; };
 
   if (!openNoteId || !mounted) return null;
+  if (!note) return null;
 
   // ── Shared title bar content ───────────────────────────────────────────────
   const titleBar = (isMobileMode: boolean) => (

@@ -30,14 +30,24 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
   callbacks: {
     async signIn({ user }) {
       if (user.email) {
-        await upsertUser(user.email, user.name ?? null);
+        try {
+          await upsertUser(user.email, user.name ?? null);
+        } catch (err) {
+          console.error("[auth signIn] upsertUser failed:", err);
+          // Allow sign-in to proceed even if DB write fails
+        }
       }
       return true;
     },
     async jwt({ token, trigger }) {
       if ((trigger === "signIn" || !token.userId) && token.email) {
-        const dbUser = await getUserByEmail(token.email);
-        token.userId = dbUser?.id;
+        try {
+          const dbUser = await getUserByEmail(token.email);
+          token.userId = dbUser?.id;
+        } catch (err) {
+          console.error("[auth jwt] getUserByEmail failed:", err);
+          // Leave token.userId undefined; API routes will treat user as unauthenticated
+        }
       }
       return token;
     },

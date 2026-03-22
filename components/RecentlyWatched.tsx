@@ -5,6 +5,7 @@ import Image from "next/image";
 import { useSession } from "next-auth/react";
 import { useRecentlyWatched } from "@/lib/useRecentlyWatched";
 import { getCourse } from "@/lib/data";
+import { JOURNEY_GRADIENTS } from "@/lib/constants";
 import scholarPlaylistsData from "@/data/scholar-playlists.json";
 import type { ScholarPlaylist } from "@/components/ScholarPlaylistsSection";
 
@@ -37,94 +38,83 @@ export function RecentlyWatched() {
   const { status } = useSession();
   const entries = useRecentlyWatched();
 
-  // Show nothing if not yet hydrated or no entries and logged in
   if (status === "loading") return null;
-
   const visible = entries.slice(0, 3);
-
-  // Logged out: show a sign-in nudge (only if they have entries to show value)
-  // if (!isLoggedIn) {
-  //   return (
-  //     <section className="bg-stone-50 dark:bg-white/5 border-b border-stone-100 dark:border-white/[0.06] py-4 px-4">
-  //       <div className="max-w-5xl mx-auto flex items-center justify-between gap-4">
-  //         <p className="text-xs text-stone-400 dark:text-white/30">
-  //           سجّل دخولك لتتبّع تقدّمك وحفظ سجل المشاهدة
-  //         </p>
-  //         <SignInDialog
-  //           trigger={
-  //             <button className="text-xs font-medium text-emerald-700 dark:text-emerald-400 hover:underline shrink-0">
-  //               دخول
-  //             </button>
-  //           }
-  //         />
-  //       </div>
-  //     </section>
-  //   );
-  // }
-
-  // Logged in but no entries yet
   if (visible.length === 0) return null;
 
   return (
-    <section className="bg-stone-50 dark:bg-white/5 border-b border-stone-100 dark:border-white/[0.06] py-5 px-4">
-      <div className="max-w-5xl mx-auto">
-        <div className="flex items-center gap-3 mb-4">
-          <div className="h-px flex-1 bg-stone-200 dark:bg-white/10" />
-          <span className="text-[11px] font-semibold text-stone-400 dark:text-white/30 tracking-widest">
-            شاهدت مؤخراً
-          </span>
-          <div className="h-px flex-1 bg-stone-200 dark:bg-white/10" />
-        </div>
+    <div className="px-4 pt-6 pb-0 max-w-7xl mx-auto">
+      {/* Label */}
+      <p className="text-[10px] text-[#C9973A] dark:text-gold/60 tracking-[.22em] font-bold mb-3">
+        شاهدت مؤخراً
+      </p>
 
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-          {visible.map((entry, i) => {
-            const thumbUrl = entry.playlistId
-              ? (playlistThumbnails[entry.playlistId] ?? null)
-              : getCourseThumbnail(entry.levelIdx, entry.subjectIdx, entry.courseIdx);
-            const href = entry.playlistId
-              ? `/playlist/${entry.playlistId}?lesson=${entry.lessonIdx}`
-              : `/level/${entry.levelIdx}/${entry.subjectIdx}/${entry.courseIdx}?lesson=${entry.lessonIdx}`;
-            return (
-              <Link
-                key={i}
-                href={href}
-                className="group bg-white dark:bg-white/[0.04] rounded-xl border border-stone-100 dark:border-white/[0.08] shadow-sm dark:shadow-none overflow-hidden hover:shadow-md hover:-translate-y-0.5 hover:border-gold/30 transition-all duration-200 flex flex-col"
+      {/* Cards — flex row so no empty cells when < 3 entries */}
+      <div className="flex flex-col md:flex-row border border-[#DEDAD0] dark:border-white/[.08]">
+        {visible.map((entry, i) => {
+          const thumbUrl = entry.playlistId
+            ? (playlistThumbnails[entry.playlistId] ?? null)
+            : getCourseThumbnail(entry.levelIdx, entry.subjectIdx, entry.courseIdx);
+          const href = entry.playlistId
+            ? `/playlist/${entry.playlistId}?lesson=${entry.lessonIdx}`
+            : `/level/${entry.levelIdx}/${entry.subjectIdx}/${entry.courseIdx}?lesson=${entry.lessonIdx}`;
+          const levelGrad = !entry.playlistId
+            ? (JOURNEY_GRADIENTS[entry.levelIdx] ?? JOURNEY_GRADIENTS[0])
+            : JOURNEY_GRADIENTS[0];
+
+          return (
+            <Link
+              key={i}
+              href={href}
+              className={`group flex flex-1 items-center gap-4 px-4 py-3 bg-[#F6F5F1] dark:bg-[#082e27]  dark:hover:bg-[#0d3a30] hover:shadow-[inset_3px_0_0_#F0BC53] transition-all duration-200${i > 0 ? " border-t md:border-t-0 md:border-r border-[#DEDAD0] dark:border-white/[.06]" : ""}`}
+            >
+              {/* Thumbnail with level gradient as fallback bg */}
+              <div
+                className="relative shrink-0 overflow-hidden"
+                style={{ width: 88, height: 50, background: levelGrad }}
               >
-                {/* Thumbnail */}
-                <div className="relative w-full h-24 bg-stone-100 dark:bg-white/[0.06] overflow-hidden">
-                  {thumbUrl ? (
-                    <Image
-                      src={thumbUrl}
-                      alt={entry.courseTitle}
-                      fill
-                      className="object-cover group-hover:scale-105 transition-transform duration-300"
-                      sizes="(max-width: 640px) 100vw, 33vw"
-                    />
-                  ) : (
-                    <div className="absolute inset-0 bg-cover bg-center" style={{ backgroundImage: "url('/islamic-geometri-2.jfif')" }}>
-                      <div className="absolute inset-0 bg-primary/65 flex items-center justify-center">
-                        <svg className="w-7 h-7 text-gold/70" viewBox="0 0 24 24" fill="currentColor">
-                          <path d="M8 5v14l11-7z" />
-                        </svg>
-                      </div>
-                    </div>
-                  )}
+                {thumbUrl ? (
+                  <Image
+                    src={thumbUrl}
+                    alt={entry.courseTitle}
+                    fill
+                    className="object-cover group-hover:scale-105 transition-transform duration-300"
+                    sizes="88px"
+                  />
+                ) : (
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <svg className="w-4 h-4 text-gold/50" viewBox="0 0 24 24" fill="currentColor">
+                      <path d="M8 5v14l11-7z" />
+                    </svg>
+                  </div>
+                )}
+                <div className="absolute inset-0 bg-black/15 opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex items-center justify-center">
+                  <svg className="w-4 h-4 text-white/80" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M8 5v14l11-7z" />
+                  </svg>
                 </div>
+              </div>
 
-                {/* Info */}
-                <div className="px-3 py-2 flex flex-col gap-0.5">
-                  <p className="font-semibold text-stone-800 dark:text-white/80 text-xs leading-snug line-clamp-1">
-                    {entry.courseTitle}
-                  </p>
-                  <p className="text-[10px] text-stone-400 dark:text-white/35 truncate">
-                    {entry.levelTitle}
-                  </p>
-                </div>
-              </Link>
-            );
-          })}
-        </div>
+              {/* Info */}
+              <div className="flex-1 min-w-0">
+                <p
+                  className="text-sm font-bold text-[#0F2822] dark:text-cream/80 leading-snug line-clamp-1"
+                
+                >
+                  {entry.courseTitle}
+                </p>
+                <p className="text-[10px] text-[#C9973A]/70 dark:text-gold/45 mt-0.5 truncate tracking-[.04em]">
+                  {entry.levelTitle}
+                </p>
+              </div>
+
+              <span className="shrink-0 text-[10px] text-[#C9973A]/50 dark:text-gold/35 group-hover:text-[#C9973A] dark:group-hover:text-gold font-bold tracking-[.06em] transition-colors duration-200">
+                استمر ←
+              </span>
+            </Link>
+          );
+        })}
       </div>
-    </section>
+    </div>
   );
 }

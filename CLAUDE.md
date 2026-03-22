@@ -26,6 +26,7 @@ AUTH_SECRET=          # NextAuth secret (generate with: openssl rand -base64 32)
 TURSO_DATABASE_URL=
 TURSO_AUTH_TOKEN=
 YOUTUBE_API_KEY=      # Only needed when running playlist sync scripts
+ADMIN_EMAIL=          # Email address allowed to upload audio/transcripts
 ```
 
 **Playlist sync scripts** (run once, commit output — scholars are frozen/no longer uploading):
@@ -57,9 +58,14 @@ Next.js 16 app (App Router, React 19) that serves as a browsable index for Islam
 - `db/queries.ts` — all DB query functions (user upsert, watched lessons, profile, notes, folders, recently visited) called from API routes.
 - `lib/watchedContext.tsx` — `WatchedProvider` / `useWatched` context. Fetches keys from `/api/progress`, posts toggles to `/api/watch`, uses `useOptimistic` for instant UI feedback.
 - `lib/progress.ts` — pure functions (`courseProgress`, `subjectProgress`, `levelProgress`) that compute % watched from a `Set<string>` of watched keys.
-- `lib/useRecentlyWatched.ts` — `useRecentlyWatched()` hook + `saveWatched()` for the "recently watched" section on the home page (max 6 entries). For logged-in users, syncs to DB via `/api/recently-visited`; falls back to localStorage for guests.
+- `lib/useRecentlyWatched.ts` — `useRecentlyWatched()` hook + `saveWatched()` for the "recently watched" section on the home page (max 3 entries). Supports both curriculum lessons (key: `"levelIdx:subjectIdx:courseIdx:lessonIdx"`) and YouTube playlist entries (key: `"playlist:PLxxxx:lessonIdx"`). For logged-in users, syncs to DB via `/api/recently-visited`; falls back to localStorage for guests. Deduplicates per-course for curriculum and per-playlist for playlists.
 - `/api/recently-visited` — GET returns recent lesson entries (with `playbackPosition`); POST upserts a visit with optional playback position.
 - `/api/profile` — GET/PATCH for user profile fields (`name`, `age`) stored in `db/queries.ts`.
+
+**Lesson player:**
+- `components/CoursePlayer.tsx` — main lesson player component; handles YouTube embed, lesson navigation, playback position save/restore, and ambient (fullscreen) mode.
+- `components/AmbientPlayerOverlay.tsx` — fullscreen dark overlay rendered when ambient mode is active. Uses `react-resizable-panels` to show video + transcript + notes side-by-side on desktop; stacks vertically on mobile.
+- `lib/useTranscriptLoader.ts` — hook used by `CoursePlayer` to fetch transcript data. Tries YouTube captions first (`?v=`), falls back to static file (`?file=`); aborts on lesson change.
 
 **Transcripts:**
 - `data/transcripts/` — static `.txt` files named `{levelIdx}-{subjectIdx}-{courseIdx}-{lessonIdx}.txt`. Format: `(M:SS) text` segments.
@@ -76,6 +82,7 @@ Next.js 16 app (App Router, React 19) that serves as a browsable index for Islam
 **Notes:**
 - `db/schema.ts` — `note_folders` (hierarchical, `parentId` self-reference) and `notes` tables. Notes have `noteType` (`"concept"` | `"revision"`), optional `folderId` and `lessonKey`, and `isPinned`/`sortOrder` for ordering.
 - `lib/notesContext.tsx` — `NotesProvider` / `useNotes` context. Fetches all notes+folders from `/api/notes` on mount; all mutations are optimistic. Tracks `activeLessonKey` / `activeFolderId` for the sidebar's lesson-scoped view. `Ctrl+Shift+N` opens the sidebar globally.
+- `lib/notesSidebarContext.tsx` — `NotesSidebarContext` / `useNotesSidebar` — a narrower context used inside `NotesSidebar` to pass drag-and-drop and reorder callbacks without prop-drilling.
 - `/api/notes` — CRUD for notes (GET list, POST create, PATCH/DELETE by `[id]`).
 - `/api/notes/folders` — CRUD for folders (GET/POST, PATCH/DELETE by `[id]`).
 - `/api/notes/search` — full-text search across note titles/content.
@@ -84,6 +91,10 @@ Next.js 16 app (App Router, React 19) that serves as a browsable index for Islam
 - `components/AmbientNotePanel.tsx` — inline note panel shown within the lesson player.
 
 **Admin gating:** Both audio and transcript upload APIs check `session.user.email === "azizktata77@gmail.com"` directly (no DB role).
+
+**Utilities:**
+- `lib/apiError.ts` — `apiError(ctx, err)` logs and returns a uniform `{ error: "internal" }` 500 response; use in all API route catch blocks.
+- `lib/arabicUtils.ts` — `lessonWord(n)` returns the correct Arabic singular/dual/plural form of "lesson" (درس/درسان/دروس).
 
 **YouTube Playlists:**
 - `data/scholar-playlists.json` — map of canonical scholar name → `ScholarPlaylist[]` (playlistId, title, thumbnail, videoCount, category). Populated by `sync-scholar-playlists.mjs`.

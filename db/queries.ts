@@ -1,6 +1,6 @@
 import { db } from "./index";
 import { users, watchedLessons, recentlyVisited, noteFolders, notes } from "./schema";
-import { eq, and, desc, or, like } from "drizzle-orm";
+import { eq, and, desc, or, like, inArray } from "drizzle-orm";
 
 export async function upsertUser(email: string, name: string | null): Promise<string> {
   const id = crypto.randomUUID();
@@ -80,16 +80,16 @@ export async function upsertRecentlyVisited(userId: string, lessonKey: string, p
       set,
     });
 
-  // Keep only the 3 most recent entries — delete anything older
+  // Keep only the 3 most recent entries — batch-delete anything older
   const all = await db
     .select({ lessonKey: recentlyVisited.lessonKey })
     .from(recentlyVisited)
     .where(eq(recentlyVisited.userId, userId))
     .orderBy(desc(recentlyVisited.visitedAt));
   const toDelete = all.slice(3).map((r) => r.lessonKey);
-  for (const key of toDelete) {
+  if (toDelete.length > 0) {
     await db.delete(recentlyVisited).where(
-      and(eq(recentlyVisited.userId, userId), eq(recentlyVisited.lessonKey, key))
+      and(eq(recentlyVisited.userId, userId), inArray(recentlyVisited.lessonKey, toDelete))
     );
   }
 }
@@ -112,6 +112,15 @@ export async function getFolders(userId: string) {
     .from(noteFolders)
     .where(eq(noteFolders.userId, userId))
     .orderBy(noteFolders.sortOrder, noteFolders.createdAt);
+}
+
+export async function folderBelongsToUser(folderId: string, userId: string): Promise<boolean> {
+  const row = await db
+    .select({ id: noteFolders.id })
+    .from(noteFolders)
+    .where(and(eq(noteFolders.id, folderId), eq(noteFolders.userId, userId)))
+    .get();
+  return row !== undefined;
 }
 
 export async function createFolder(

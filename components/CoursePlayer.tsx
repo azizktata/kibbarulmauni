@@ -4,9 +4,10 @@ import { useState, useEffect, useRef, useMemo, useCallback } from "react";
 import { createPortal } from "react-dom";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
-import type { Lesson, TranscriptSegment } from "@/lib/data";
+import type { Lesson } from "@/lib/data";
 import type { LevelColor } from "@/lib/constants";
 import { saveWatched } from "@/lib/useRecentlyWatched";
+import { useTranscriptLoader } from "@/lib/useTranscriptLoader";
 import { useWatched } from "@/lib/watchedContext";
 import { NotebookPenIcon, PlusIcon, XIcon } from "lucide-react";
 import { WatchButton } from "./WatchButton";
@@ -14,9 +15,9 @@ import { SignInDialog } from "./SignInDialog";
 import { TranscriptPanel } from "./TranscriptPanel";
 import { TranscriptUploadButton } from "./TranscriptUploadButton";
 import { AudioUploadButton } from "./AudioUploadButton";
-import { AmbientNotePanel } from "./AmbientNotePanel";
-import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from "@/components/ui/resizable";
+import { AmbientPlayerOverlay } from "./AmbientPlayerOverlay";
 import { useNotes } from "@/lib/notesContext";
+import { lessonWord } from "@/lib/arabicUtils";
 
 // ── YouTube IFrame API types ───────────────────────────────────────────────────
 declare global {
@@ -62,11 +63,6 @@ function toAr(n: number): string {
 function stripLeadingNumber(title: string): string {
   return title.replace(/^\d+\s*[-–]\s*/, "");
 }
-function lessonWord(n: number) {
-  if (n === 2) return "درسان";
-  if (n >= 3 && n <= 10) return "دروس";
-  return "درس";
-}
 
 // ── Component ─────────────────────────────────────────────────────────────────
 interface Props {
@@ -92,7 +88,6 @@ export function CoursePlayer({ lessons, col, levelIdx, subjectIdx, courseIdx, co
 
   const [selected, setSelected] = useState(initialLesson);
   const [currentTime, setCurrentTime] = useState(0);
-  const [transcript, setTranscript] = useState<TranscriptSegment[]>([]);
   const [transcriptOpen, setTranscriptOpen] = useState(true);
   const [transcriptVersion, setTranscriptVersion] = useState(0);
   const [audioExists, setAudioExists] = useState(false);
@@ -100,7 +95,6 @@ export function CoursePlayer({ lessons, col, levelIdx, subjectIdx, courseIdx, co
   const [ambientMode, setAmbientMode] = useState(false);
   const [ambientTranscriptOpen, setAmbientTranscriptOpen] = useState(true);
   const [ambientNotesOpen, setAmbientNotesOpen] = useState(false);
-  const [transcriptLoading, setTranscriptLoading] = useState(false);
   const [mounted, setMounted] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
   const [countdown, setCountdown] = useState<number | null>(null);
@@ -334,12 +328,14 @@ export function CoursePlayer({ lessons, col, levelIdx, subjectIdx, courseIdx, co
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selected]);
 
-  // ── Fetch transcript ─────────────────────────────────────────────────────────
   const transcriptFilename = `${levelIdx}-${subjectIdx}-${courseIdx}-${selected}.txt`;
   const audioFilename = `${levelIdx}-${subjectIdx}-${courseIdx}-${selected}.mp3`;
 
-  // ── Check audio existence ─────────────────────────────────────────────────────
+  const { transcript, transcriptLoading } = useTranscriptLoader(selected, ytId, transcriptFilename, transcriptVersion);
+
+  // ── Reset time + check audio existence on lesson change ──────────────────────
   useEffect(() => {
+    setCurrentTime(0);
     setAudioExists(false);
     fetch(`/api/audio?file=${audioFilename}&check=1`)
       .then((r) => r.json())
@@ -347,33 +343,6 @@ export function CoursePlayer({ lessons, col, levelIdx, subjectIdx, courseIdx, co
       .catch(() => {});
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selected, audioVersion]);
-
-  useEffect(() => {
-    setCurrentTime(0);
-    setTranscript([]);
-    setTranscriptLoading(true);
-
-    const loadFile = () => {
-      fetch(`/api/transcript?file=${transcriptFilename}`)
-        .then((r) => r.json())
-        .then(({ segments }: { segments: TranscriptSegment[] }) => {
-          if (segments.length > 0) setTranscript(segments);
-        })
-        .catch(() => {})
-        .finally(() => setTranscriptLoading(false));
-    };
-
-    if (!ytId) { loadFile(); return; }
-
-    fetch(`/api/transcript?v=${ytId}`, { cache: "no-cache" })
-      .then((r) => r.json())
-      .then(({ segments }: { segments: TranscriptSegment[] }) => {
-        if (segments.length > 0) { setTranscript(segments); setTranscriptLoading(false); }
-        else loadFile();
-      })
-      .catch(loadFile);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selected, transcriptVersion]);
 
   // ── Course progress ───────────────────────────────────────────────────────────
   const watchedCount = useMemo(() => {
@@ -420,146 +389,6 @@ export function CoursePlayer({ lessons, col, levelIdx, subjectIdx, courseIdx, co
     ? allNotes.filter((n) => n.lessonKey === currentLessonKey || n.folderId === topicFolder.id).length
     : lessonNotes.length;
 
-  // ── Ambient overlay ───────────────────────────────────────────────────────────
-  const ambientOverlay = (
-    <div className="fixed inset-0 z-50 flex flex-col bg-neutral-950" dir="rtl">
-      {/* Top bar */}
-      <div className="shrink-0 flex items-center gap-1.5 px-3 lg:px-5 py-2.5 lg:py-3 border-b border-neutral-800">
-        <div className="flex-1 min-w-0">
-          <p className="text-sm font-semibold text-white truncate">{lesson.title}</p>
-          <p className={`text-xs mt-0.5 ${col.text} hidden lg:block`}>الدرس {toAr(selected)} من {toAr(lessons.length - 1)}</p>
-        </div>
-        <button onClick={() => { setCountdown(null); setSelected((s) => Math.max(s - 1, 0)); }} disabled={selected === 0}
-          className="flex items-center gap-1.5 text-xs text-neutral-400 hover:text-white disabled:opacity-25 transition-colors px-2 lg:px-2.5 py-1.5 rounded-lg hover:bg-neutral-800">
-                     <svg className="w-3.5 h-3.5 rotate-180" viewBox="0 0 16 16" fill="currentColor"><path d="M10.5 8L6 4l-1 1L8.5 8 5 11l1 1 4.5-4z" /></svg>
-
-          <span className="hidden lg:inline">السابق</span>
-        </button>
-        {countdown !== null ? (
-          <div className="flex items-center gap-1.5 px-2 lg:px-2.5 py-1.5">
-            <div className="relative w-5 h-5 shrink-0">
-              <svg className="w-5 h-5 -rotate-90" viewBox="0 0 20 20">
-                <circle cx="10" cy="10" r="8" fill="none" stroke="white" strokeOpacity="0.2" strokeWidth="2" />
-                <circle cx="10" cy="10" r="8" fill="none" stroke="white" strokeWidth="2"
-                  strokeDasharray={`${2 * Math.PI * 8}`}
-                  strokeDashoffset={`${2 * Math.PI * 8 * (1 - countdown / 5)}`}
-                  className="transition-all duration-1000 ease-linear"
-                />
-              </svg>
-              <span className="absolute inset-0 flex items-center justify-center text-white text-[9px] font-bold">{countdown}</span>
-            </div>
-            <span className="text-xs text-neutral-300 hidden lg:inline">التالي…</span>
-            <button onClick={() => setCountdown(null)} className="text-[11px] text-neutral-400 hover:text-white px-1.5 py-0.5 rounded bg-neutral-800 hover:bg-neutral-700 transition-colors">
-              إلغاء
-            </button>
-          </div>
-        ) : (
-          <button onClick={goNext} disabled={selected === lessons.length - 1}
-            className="flex items-center gap-1.5 text-xs text-neutral-400 hover:text-white disabled:opacity-25 transition-colors px-2 lg:px-2.5 py-1.5 rounded-lg hover:bg-neutral-800">
-            <span className="hidden lg:inline">التالي</span>
-             <svg className="w-3.5 h-3.5" viewBox="0 0 16 16" fill="currentColor"><path d="M10.5 8L6 4l-1 1L8.5 8 5 11l1 1 4.5-4z" /></svg>
-          </button>
-        )}
-        {transcript.length > 0 && (
-          <button onClick={() => setAmbientTranscriptOpen((v) => !v)}
-            className="flex items-center gap-1.5 text-xs text-neutral-400 hover:text-white transition-colors px-2 lg:px-2.5 py-1.5 rounded-lg hover:bg-neutral-800">
-            <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
-              <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
-            </svg>
-            <span className="hidden lg:inline">{ambientTranscriptOpen ? "إخفاء النص" : "إظهار النص"}</span>
-          </button>
-        )}
-        {notesLoggedIn && (
-          <button onClick={() => setAmbientNotesOpen((v) => !v)}
-            className={`flex items-center gap-1.5 text-xs transition-colors px-2 lg:px-2.5 py-1.5 rounded-lg hover:bg-neutral-800 ${ambientNotesOpen ? "text-white" : "text-neutral-400 hover:text-white"}`}>
-            <NotebookPenIcon className="w-3.5 h-3.5" />
-            <span className="hidden lg:inline">{ambientNotesOpen ? "إخفاء الملاحظات" : "الملاحظات"}</span>
-          </button>
-        )}
-        <button onClick={() => setAmbientMode(false)}
-          className="flex items-center justify-center w-7 h-7 rounded-lg text-neutral-400 hover:text-white hover:bg-neutral-800 transition-colors">
-          <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
-            <path d="M18 6 6 18M6 6l12 12" />
-          </svg>
-        </button>
-      </div>
-      {/* Body — mobile: column stack; desktop: resizable panels */}
-      {isMobile ? (
-      <div className="flex-1 flex flex-col overflow-hidden">
-        <div className="shrink-0 flex items-center justify-center p-2">
-          <div className="aspect-video w-full rounded-xl overflow-hidden bg-black">
-            {ytId ? <div ref={ambientDivRef} className="w-full h-full" /> : noVideo}
-          </div>
-        </div>
-        {ambientTranscriptOpen && transcript.length > 0 && (
-          <div className={ambientNotesOpen ? "h-40 overflow-hidden border-t border-neutral-800 min-h-0" : "flex-1 overflow-hidden border-t border-neutral-800 min-h-0"}>
-            <TranscriptPanel segments={transcript} currentTime={currentTime} col={col} onSeek={seekTo} variant="dark" lessonTitle={lesson.title} youtubeUrl={lesson.youtube ?? undefined} />
-          </div>
-        )}
-        {ambientNotesOpen && notesLoggedIn && (
-          <div className="flex-1 overflow-hidden border-t border-neutral-800 min-h-0">
-            <AmbientNotePanel
-              lessonKey={`${baseKey}:${selected}`}
-              lessonTitle={lesson.title}
-              courseTitle={courseTitle}
-              col={col}
-              currentTime={currentTime}
-              onSeek={seekTo}
-            />
-          </div>
-        )}
-      </div>
-      ) : (
-      <div className="flex-1 overflow-hidden" dir="ltr">
-        <ResizablePanelGroup className="h-full">
-          <ResizablePanel
-            defaultSize={ambientTranscriptOpen ? (ambientNotesOpen ? "52%" : "60%") : (ambientNotesOpen ? "65%" : "100%")}
-            minSize="30%"
-          >
-           <div className="flex items-center justify-center p-6 h-full min-w-0">
-              <div className="aspect-video w-full rounded-2xl overflow-hidden bg-black" style={{ maxHeight: "calc(100vh - 110px)" }}>
-                {ytId ? <div ref={ambientDivRef} className="w-full h-full" /> : noVideo}
-              </div>
-            </div>
-          </ResizablePanel>
-          {ambientTranscriptOpen && (transcript.length > 0 || transcriptLoading) && (
-            <>
-              <ResizableHandle withHandle className="bg-neutral-800 hover:bg-neutral-600 transition-colors" />
-              <ResizablePanel defaultSize={ambientNotesOpen ? "28%" : "40%"} minSize="15%">
-                <div className="h-full flex flex-col min-w-0 overflow-hidden">
-                  {transcript.length > 0 ? (
-                    <TranscriptPanel segments={transcript} currentTime={currentTime} col={col} onSeek={seekTo} variant="dark" lessonTitle={lesson.title} youtubeUrl={lesson.youtube ?? undefined} />
-                  ) : (
-                    <div className="flex items-center justify-center h-full">
-                      <span className="text-neutral-600 text-xs">جارٍ تحميل النص…</span>
-                    </div>
-                  )}
-                </div>
-              </ResizablePanel>
-            </>
-          )}
-          {ambientNotesOpen && notesLoggedIn && (
-            <>
-              <ResizableHandle withHandle className="bg-neutral-800 hover:bg-neutral-600 transition-colors" />
-              <ResizablePanel defaultSize="20%" minSize="15%">
-               <div className="h-full flex flex-col min-w-0 overflow-hidden bg-neutral-900">
-                  <AmbientNotePanel
-                    lessonKey={`${baseKey}:${selected}`}
-                    lessonTitle={lesson.title}
-                    courseTitle={courseTitle}
-                    col={col}
-                    currentTime={currentTime}
-                    onSeek={seekTo}
-                  />
-                </div>
-              </ResizablePanel>
-            </>
-          )}
-        </ResizablePanelGroup>
-      </div>
-      )}
-    </div>
-  );
 
   // ── Render ────────────────────────────────────────────────────────────────────
   const [pickerOpen, setPickerOpen] = useState(false);
@@ -806,7 +635,36 @@ export function CoursePlayer({ lessons, col, levelIdx, subjectIdx, courseIdx, co
         </>
       )}
 
-      {mounted && ambientMode && createPortal(ambientOverlay, document.body)}
+      {mounted && ambientMode && createPortal(
+        <AmbientPlayerOverlay
+          col={col}
+          lessonTitle={lesson.title}
+          lessonYoutubeUrl={lesson.youtube ?? undefined}
+          lessonKey={`${baseKey}:${selected}`}
+          courseTitle={courseTitle}
+          selected={selected}
+          lessonCount={lessons.length}
+          ytId={ytId}
+          transcript={transcript}
+          transcriptLoading={transcriptLoading}
+          currentTime={currentTime}
+          countdown={countdown}
+          isMobile={isMobile}
+          ambientTranscriptOpen={ambientTranscriptOpen}
+          ambientNotesOpen={ambientNotesOpen}
+          notesLoggedIn={notesLoggedIn}
+          playerDivRef={ambientDivRef}
+          noVideo={noVideo}
+          onSeek={seekTo}
+          onClose={() => setAmbientMode(false)}
+          onGoNext={goNext}
+          onGoPrev={() => { setCountdown(null); setSelected((s) => Math.max(s - 1, 0)); }}
+          onCancelCountdown={() => setCountdown(null)}
+          onToggleTranscript={() => setAmbientTranscriptOpen((v) => !v)}
+          onToggleNotes={() => setAmbientNotesOpen((v) => !v)}
+        />,
+        document.body
+      )}
       <TranscriptUploadButton
         filename={transcriptFilename}
         onSaved={() => setTranscriptVersion((v) => v + 1)}
