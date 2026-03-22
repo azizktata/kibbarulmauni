@@ -72,9 +72,15 @@ export async function GET(req: NextRequest) {
     const segments = parseRawTranscript(raw);
     return NextResponse.json(
       { segments },
-      { headers: { "Cache-Control": "private, max-age=86400" } }
+      { headers: {
+        "Cache-Control": "private, max-age=86400",
+        "Netlify-CDN-Cache-Control": "no-store",
+      }}
     );
   } catch {
-    return NextResponse.json({ segments: [] }, { status: 404 });
+    return NextResponse.json(
+      { segments: [] },
+      { status: 404, headers: { "Netlify-CDN-Cache-Control": "no-store" } }
+    );
   }
 }

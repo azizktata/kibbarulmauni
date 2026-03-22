@@ -1,3 +1,11 @@
 [build]
   publish = ".next"
   command = "npm run build"
+
+# Prevent Netlify Edge/Durable CDN from pooling API responses into a shared cache.
+# Without this, Netlify ignores query params (file=, v=) and serves the first cached
+# response for all subsequent /api/transcript requests regardless of params.
+[[headers]]
+  for = "/api/*"
+  [headers.values]
+    Netlify-CDN-Cache-Control = "no-store"
