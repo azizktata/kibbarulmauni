@@ -12,6 +12,7 @@ export type Lesson = {
   url: string;
   youtube: string | null;
   transcriptFile?: string; // filename in data/transcripts/, e.g. "0-2-2-0.txt"
+  book?: string; // external URL to the lesson's reference book
 };
 
 export type Course = {
@@ -74,7 +75,7 @@ export function extractScholars(course: Course): string[] {
   for (const file of course.files) {
     const m = file.title.match(/(?:الشيخ|للشيخ|للعلامة|العلامة)\s+(.+)$/);
     if (!m) continue;
-    fullNames.add(m[1].trim().replace(/[\s\-–—]+$/, "").trim());
+    fullNames.add(m[1].trim().replace(/\s*[-–—]\s*.*$/, "").trim());
   }
   // Drop any name that is a trailing word-suffix of a longer name in the set
   const names = [...fullNames];

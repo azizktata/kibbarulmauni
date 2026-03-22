@@ -99,9 +99,10 @@ function lsSave(entry: Omit<WatchedEntry, "timestamp">) {
 
 // ── Public API ────────────────────────────────────────────────────────────────
 
-export function useRecentlyWatched() {
+export function useRecentlyWatched(): { entries: WatchedEntry[]; loading: boolean } {
   const { status } = useSession();
   const [entries, setEntries] = useState<WatchedEntry[]>([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     if (status === "loading") return;
@@ -128,13 +129,15 @@ export function useRecentlyWatched() {
             });
           setEntries(parsed);
         })
-        .catch(() => setEntries(lsRead()));
+        .catch(() => setEntries(lsRead()))
+        .finally(() => setLoading(false));
     } else {
       setEntries(lsRead());
+      setLoading(false);
     }
   }, [status]);
 
-  return entries;
+  return { entries, loading };
 }
 
 export function saveWatched(

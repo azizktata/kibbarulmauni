@@ -23,7 +23,7 @@ export function useTranscriptLoader(
       fetch(`/api/transcript?file=${transcriptFilename}`, { signal })
         .then((r) => r.json())
         .then(({ segments }: { segments: TranscriptSegment[] }) => {
-          if (segments.length > 0) setTranscript(segments);
+          if (!signal.aborted && segments.length > 0) setTranscript(segments);
         })
         .catch((err) => { if (err?.name === "AbortError") return; })
         .finally(() => { if (!signal.aborted) setTranscriptLoading(false); });
@@ -34,14 +34,14 @@ export function useTranscriptLoader(
     fetch(`/api/transcript?v=${ytId}`, { cache: "no-cache", signal })
       .then((r) => r.json())
       .then(({ segments }: { segments: TranscriptSegment[] }) => {
+        if (signal.aborted) return;
         if (segments.length > 0) { setTranscript(segments); setTranscriptLoading(false); }
         else loadFile();
       })
       .catch((err) => { if (err?.name !== "AbortError") loadFile(); });
 
     return () => controller.abort();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selected, transcriptVersion]);
+  }, [selected, ytId, transcriptFilename, transcriptVersion]);
 
   return { transcript, transcriptLoading };
 }

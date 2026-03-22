@@ -1,7 +1,11 @@
 import { university } from "@/lib/data";
+import scholarPlaylistsData from "@/data/scholar-playlists.json";
+import type { ScholarPlaylist } from "@/components/ScholarPlaylistsSection";
+
+const allPlaylists = scholarPlaylistsData as Record<string, ScholarPlaylist[]>;
 
 export type SearchEntry = {
-  type: "subject" | "course" | "lesson";
+  type: "subject" | "course" | "lesson" | "playlist";
   title: string;
   levelIdx: number;
   subjectIdx: number;
@@ -11,6 +15,8 @@ export type SearchEntry = {
   subjectTitle: string;
   courseTitle: string;
   href: string;
+  playlistId?: string;
+  scholarName?: string;
 };
 
 function buildIndex(): SearchEntry[] {
@@ -64,6 +70,25 @@ function buildIndex(): SearchEntry[] {
           });
         }
       }
+    }
+  }
+
+  // YouTube playlists
+  for (const [scholarName, playlists] of Object.entries(allPlaylists)) {
+    for (const playlist of playlists) {
+      entries.push({
+        type: "playlist",
+        title: playlist.title,
+        playlistId: playlist.playlistId,
+        scholarName,
+        levelIdx: 0,
+        subjectIdx: 0,
+        courseIdx: 0,
+        levelTitle: "",
+        subjectTitle: "",
+        courseTitle: "",
+        href: `/playlist/${playlist.playlistId}`,
+      });
     }
   }
 

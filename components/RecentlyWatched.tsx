@@ -2,7 +2,6 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { useSession } from "next-auth/react";
 import { useRecentlyWatched } from "@/lib/useRecentlyWatched";
 import { getCourse } from "@/lib/data";
 import { JOURNEY_GRADIENTS } from "@/lib/constants";
@@ -34,11 +33,37 @@ function getCourseThumbnail(levelIdx: number, subjectIdx: number, courseIdx: num
   return null;
 }
 
-export function RecentlyWatched() {
-  const { status } = useSession();
-  const entries = useRecentlyWatched();
+function SkeletonCard({ border }: { border: boolean }) {
+  return (
+    <div className={`flex flex-1 items-center gap-4 px-4 py-3 bg-[#F6F5F1] dark:bg-[#082e27]${border ? " border-t md:border-t-0 md:border-r border-[#DEDAD0] dark:border-white/[.06]" : ""}`}>
+      <div className="shrink-0 rounded bg-stone-200 dark:bg-white/10 animate-pulse" style={{ width: 88, height: 50 }} />
+      <div className="flex-1 flex flex-col gap-1.5 min-w-0">
+        <div className="h-3 w-2/3 rounded bg-stone-200 dark:bg-white/10 animate-pulse" />
+        <div className="h-2 w-1/3 rounded bg-stone-200 dark:bg-white/10 animate-pulse" />
+      </div>
+      <div className="h-2 w-10 rounded bg-stone-200 dark:bg-white/10 animate-pulse shrink-0" />
+    </div>
+  );
+}
 
-  if (status === "loading") return null;
+export function RecentlyWatched() {
+  const { entries, loading } = useRecentlyWatched();
+
+  if (loading) {
+    return (
+      <div className="px-4 pt-6 pb-0 max-w-7xl mx-auto">
+        <p className="text-[10px] text-[#C9973A] dark:text-gold/60 tracking-[.22em] font-bold mb-3">
+          شاهدت مؤخراً
+        </p>
+        <div className="flex flex-col md:flex-row border border-[#DEDAD0] dark:border-white/[.08]">
+          <SkeletonCard border={false} />
+          <SkeletonCard border={true} />
+          <SkeletonCard border={true} />
+        </div>
+      </div>
+    );
+  }
+
   const visible = entries.slice(0, 3);
   if (visible.length === 0) return null;
 

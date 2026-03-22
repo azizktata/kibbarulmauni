@@ -92,6 +92,9 @@ Next.js 16 app (App Router, React 19) that serves as a browsable index for Islam
 
 **Admin gating:** Both audio and transcript upload APIs check `session.user.email === "azizktata77@gmail.com"` directly (no DB role).
 
+**Scholar links:**
+- `lib/scholarWebsites.ts` — `SCHOLAR_WEBSITES` and `SCHOLAR_YOUTUBE` maps canonical scholar names to their official website and YouTube channel URLs. **Only add URLs explicitly provided by the user — never guess or construct URLs.**
+
 **Utilities:**
 - `lib/apiError.ts` — `apiError(ctx, err)` logs and returns a uniform `{ error: "internal" }` 500 response; use in all API route catch blocks.
 - `lib/arabicUtils.ts` — `lessonWord(n)` returns the correct Arabic singular/dual/plural form of "lesson" (درس/درسان/دروس).
@@ -114,6 +117,7 @@ Next.js 16 app (App Router, React 19) that serves as a browsable index for Islam
 - `/playlist/[playlistId]` — YouTube playlist player (statically generated from `data/playlists/`)
 - `/search` — fuzzy search across subjects, courses, and lessons
 - `/about` — about page
+- `/3` — experimental alternate landing page (not linked from the main nav)
 
 **Key directories:**
 - `app/` — App Router pages and layouts. `globals.css` contains the full Tailwind v4 + shadcn design token setup (CSS variables for colors, radius, etc.)

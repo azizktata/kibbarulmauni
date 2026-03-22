@@ -14,7 +14,7 @@ import { WatchButton } from "./WatchButton";
 import { SignInDialog } from "./SignInDialog";
 import { TranscriptPanel } from "./TranscriptPanel";
 import { TranscriptUploadButton } from "./TranscriptUploadButton";
-import { AudioUploadButton } from "./AudioUploadButton";
+import { BookLinkButton } from "./BookLinkButton";
 import { AmbientPlayerOverlay } from "./AmbientPlayerOverlay";
 import { useNotes } from "@/lib/notesContext";
 import { lessonWord } from "@/lib/arabicUtils";
@@ -90,8 +90,7 @@ export function CoursePlayer({ lessons, col, levelIdx, subjectIdx, courseIdx, co
   const [currentTime, setCurrentTime] = useState(0);
   const [transcriptOpen, setTranscriptOpen] = useState(true);
   const [transcriptVersion, setTranscriptVersion] = useState(0);
-  const [audioExists, setAudioExists] = useState(false);
-  const [audioVersion, setAudioVersion] = useState(0);
+  const [bookUrl, setBookUrl] = useState(lessons[initialLesson]?.book ?? "");
   const [ambientMode, setAmbientMode] = useState(false);
   const [ambientTranscriptOpen, setAmbientTranscriptOpen] = useState(true);
   const [ambientNotesOpen, setAmbientNotesOpen] = useState(false);
@@ -329,20 +328,15 @@ export function CoursePlayer({ lessons, col, levelIdx, subjectIdx, courseIdx, co
   }, [selected]);
 
   const transcriptFilename = `${levelIdx}-${subjectIdx}-${courseIdx}-${selected}.txt`;
-  const audioFilename = `${levelIdx}-${subjectIdx}-${courseIdx}-${selected}.mp3`;
 
   const { transcript, transcriptLoading } = useTranscriptLoader(selected, ytId, transcriptFilename, transcriptVersion);
 
-  // ── Reset time + check audio existence on lesson change ──────────────────────
+  // ── Reset time on lesson change ───────────────────────────────────────────────
   useEffect(() => {
     setCurrentTime(0);
-    setAudioExists(false);
-    fetch(`/api/audio?file=${audioFilename}&check=1`)
-      .then((r) => r.json())
-      .then(({ exists }: { exists: boolean }) => setAudioExists(exists))
-      .catch(() => {});
+    setBookUrl(lessons[selected]?.book ?? "");
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selected, audioVersion]);
+  }, [selected]);
 
   // ── Course progress ───────────────────────────────────────────────────────────
   const watchedCount = useMemo(() => {
@@ -568,6 +562,22 @@ export function CoursePlayer({ lessons, col, levelIdx, subjectIdx, courseIdx, co
               <svg className="w-4 h-4 rotate-180" viewBox="0 0 16 16" fill="currentColor"><path d="M10.5 8L6 4l-1 1L8.5 8 5 11l1 1 4.5-4z" /></svg>
             </button>
           </div>
+
+          {/* 3. Book link */}
+          {bookUrl && (
+            <a
+              href={bookUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center justify-center gap-2 bg-white dark:bg-white/[0.04] border border-stone-100 dark:border-white/[0.08] rounded-xl py-2.5 text-xs font-medium text-stone-500 dark:text-white/40 hover:bg-stone-50 dark:hover:bg-white/[0.08] hover:text-stone-700 dark:hover:text-white/70 transition-colors shadow-sm dark:shadow-none"
+            >
+              <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
+                <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" />
+                <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" />
+              </svg>
+              الكتاب
+            </a>
+          )}
         </div>
       </div>
 
@@ -669,9 +679,10 @@ export function CoursePlayer({ lessons, col, levelIdx, subjectIdx, courseIdx, co
         filename={transcriptFilename}
         onSaved={() => setTranscriptVersion((v) => v + 1)}
       />
-      <AudioUploadButton
-        filename={audioFilename}
-        onSaved={() => setAudioVersion((v) => v + 1)}
+      <BookLinkButton
+        lessonKey={`${levelIdx}:${subjectIdx}:${courseIdx}:${selected}`}
+        currentBook={bookUrl}
+        onSaved={setBookUrl}
       />
     </>
   );

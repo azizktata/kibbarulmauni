@@ -8,7 +8,7 @@ import { searchIndex, type SearchEntry } from "@/lib/searchIndex";
 import { LEVEL_COLORS } from "@/lib/constants";
 
 const fuse = new Fuse(searchIndex, {
-  keys: ["title", "courseTitle", "subjectTitle"],
+  keys: ["title", "courseTitle", "subjectTitle", "scholarName"],
   threshold: 0.35,
   includeScore: true,
   minMatchCharLength: 2,
@@ -18,12 +18,14 @@ const TYPE_LABEL: Record<SearchEntry["type"], string> = {
   subject: "مادة",
   course: "مقرر",
   lesson: "درس",
+  playlist: "قائمة",
 };
 
 const TYPE_ICON: Record<SearchEntry["type"], string> = {
   subject: "📚",
   course: "📖",
   lesson: "🎧",
+  playlist: "🎬",
 };
 
 export function SearchClient() {
@@ -33,14 +35,15 @@ export function SearchClient() {
   const results = useMemo(() => {
     const q = query.trim();
     if (q.length < 2) return [];
-    return fuse.search(q, { limit: 40 }).map((r) => r.item);
+    return fuse.search(q, { limit: 60 }).map((r) => r.item);
   }, [query]);
 
   const grouped = useMemo(() => {
     const subjects = results.filter((r) => r.type === "subject");
-    const courses = results.filter((r) => r.type === "course");
     const lessons = results.filter((r) => r.type === "lesson");
-    return { subjects, courses, lessons };
+    const courses = results.filter((r) => r.type === "course");
+    const playlists = results.filter((r) => r.type === "playlist");
+    return { subjects, lessons, courses, playlists };
   }, [results]);
 
   return (
@@ -62,7 +65,7 @@ export function SearchClient() {
               type="text"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
-              placeholder="ابحث عن درس أو مقرر أو مادة…"
+              placeholder="ابحث عن درس أو مقرر أو مادة أو قائمة يوتيوب…"
               className="w-full bg-white/10 text-white placeholder-white/30 rounded-2xl pr-12 pl-4 py-4 text-sm outline-none focus:bg-white/15 transition-colors ring-1 ring-white/10 focus:ring-white/20"
             />
           </div>
@@ -81,7 +84,7 @@ export function SearchClient() {
               <circle cx="11" cy="11" r="8" />
               <path d="m21 21-4.35-4.35" />
             </svg>
-            <p className="text-sm">اكتب للبحث في المواد والمقررات والدروس</p>
+            <p className="text-sm">اكتب للبحث في المواد والمقررات والدروس وقوائم يوتيوب</p>
           </div>
         ) : results.length === 0 ? (
           <div className="text-center py-20 text-stone-400">
@@ -90,14 +93,17 @@ export function SearchClient() {
           </div>
         ) : (
           <>
-            {grouped.subjects.length > 0 && (
+              {grouped.courses.length > 0 && (
+                <ResultGroup title="مقررات" items={grouped.courses} />
+              )}
+            {/* {grouped.subjects.length > 0 && (
               <ResultGroup title="مواد" items={grouped.subjects} />
-            )}
-            {grouped.courses.length > 0 && (
-              <ResultGroup title="مقررات" items={grouped.courses} />
-            )}
+            )} */}
             {grouped.lessons.length > 0 && (
               <ResultGroup title="دروس" items={grouped.lessons} />
+            )}
+            {grouped.playlists.length > 0 && (
+              <ResultGroup title="قوائم يوتيوب" items={grouped.playlists} />
             )}
           </>
         )}
@@ -112,7 +118,8 @@ function ResultGroup({ title, items }: { title: string; items: SearchEntry[] }) 
       <p className="text-xs font-semibold text-stone-400 tracking-widest mb-3">{title}</p>
       <div className="flex flex-col gap-2">
         {items.map((item, i) => {
-          const c = LEVEL_COLORS[item.levelIdx];
+          const c = LEVEL_COLORS[item.levelIdx] ?? LEVEL_COLORS[0];
+          const isPlaylist = item.type === "playlist";
           return (
             <Link
               key={i}
@@ -121,15 +128,20 @@ function ResultGroup({ title, items }: { title: string; items: SearchEntry[] }) 
             >
               <span className="text-lg leading-none mt-0.5">{TYPE_ICON[item.type]}</span>
               <div className="flex-1 min-w-0">
-                <p className="font-semibold text-stone-800 text-sm leading-snug truncate">
+                <p className="font-semibold text-stone-800 text-sm leading-snug line-clamp-2">
                   {item.title}
                 </p>
                 <p className="text-xs text-stone-400 mt-1 truncate">
-                  {item.levelTitle} · {item.subjectTitle}
-                  {item.type === "lesson" && ` · ${item.courseTitle}`}
+                  {isPlaylist
+                    ? item.scholarName
+                    : <>
+                        {item.levelTitle} · {item.subjectTitle}
+                        {item.type === "lesson" && ` · ${item.courseTitle}`}
+                      </>
+                  }
                 </p>
               </div>
-              <span className={`shrink-0 text-[11px] font-medium px-2 py-0.5 rounded-full ${c.light} ${c.text}`}>
+              <span className={`shrink-0 text-[11px] font-medium px-2 py-0.5 rounded-full ${isPlaylist ? "bg-stone-100 text-stone-500" : `${c.light} ${c.text}`}`}>
                 {TYPE_LABEL[item.type]}
               </span>
             </Link>
