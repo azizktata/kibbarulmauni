@@ -81,31 +81,32 @@ const LevelCard = memo(function LevelCard({ level, idx, pct, isLoaded, col, glas
         ↗
       </span>
 
-      <div className="flex flex-col h-[260px] px-5 pb-5 pt-10">
-        {/* Centered ring + numeral */}
-        <div className="flex-1 flex items-center justify-center relative">
+      <div className="flex flex-col items-center justify-center h-[260px] px-5 text-center">
+        {/* Ring encircling both numeral and title */}
+        <div className="relative flex items-center justify-center" style={{ width: 160, height: 160 }}>
           {isLoaded && pct > 0 && (
-            <div className="absolute">
-              <ProgressRing pct={pct} size={120} stroke={3} color="stroke-gold" trackColor="stroke-white/10" />
+            <div className="absolute inset-0 flex items-center justify-center">
+              <ProgressRing pct={pct} size={160} stroke={3} color="stroke-gold" trackColor="stroke-white/10" />
             </div>
           )}
-          <span
-            className="text-5xl font-bold leading-none text-white/40 select-none pointer-events-none"
-            style={{ fontFamily: "var(--font-amiri)" }}
-            aria-hidden
-          >
-            {ARABIC_DIGITS[idx]}
-          </span>
+          <div className="flex flex-col items-center gap-1 px-6">
+            <span
+              className="text-5xl font-bold leading-none text-white/40 select-none pointer-events-none"
+              style={{ fontFamily: "var(--font-amiri)" }}
+              aria-hidden
+            >
+              {ARABIC_DIGITS[idx]}
+            </span>
+            <span
+              className="text-[13px] font-bold text-white/35 group-hover:text-white/80 transition-colors duration-200 line-clamp-2 leading-snug"
+              
+            >
+              {level.title}
+            </span>
+          </div>
         </div>
 
-        {/* Title + meta at bottom */}
-        <span
-          className="text-base font-bold text-white/40 group-hover:text-white/85 transition-colors duration-200 block truncate"
-          style={{ fontFamily: "var(--font-amiri)" }}
-        >
-          {level.title}
-        </span>
-        <div className="text-[9px] text-white/0 group-hover:text-white/30 transition-colors duration-300 mt-1 tracking-[.06em]">
+        <div className="text-[9px] text-white/0 group-hover:text-white/30 transition-colors duration-300 mt-2 tracking-[.06em]">
           {level.subjects.length} مادة · {totalCount} درس
         </div>
       </div>

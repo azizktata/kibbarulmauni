@@ -11,7 +11,7 @@ export default function HomePage() {
       {/* Hero */}
       <header className="relative bg-emerald-950 text-white overflow-hidden">
            <div className="absolute inset-0 bg-center" style={{ backgroundImage: "url('/islamic-geometric-4.jfif')" }} />
-        <div className={`absolute inset-0 bg-gradient-to-b from-emerald-900 to-emerald-900 opacity-50`} />
+        <div className={`absolute inset-0 bg-gradient-to-b from-emerald-900 to-emerald-900 opacity-30`} />
 
         <div className="relative max-w-7xl mx-auto px-4 py-10 md:py-12 text-center">
           {/* Top label */}
@@ -27,7 +27,7 @@ export default function HomePage() {
               alt="جامعة كبار العلماء"
               width={340}
               height={148}
-              className="object-contain w-48 sm:w-64 md:w-[280px] h-auto"
+              className="object-contain w-48 sm:w-64 md:w-[350px] h-auto"
               priority
             />
           </div>
@@ -85,11 +85,11 @@ export default function HomePage() {
           className="h-px w-full"
           style={{ background: "linear-gradient(to left,transparent,rgba(240,188,83,.15) 20%,rgba(240,188,83,.35) 50%,rgba(240,188,83,.15) 80%,transparent)" }}
         />
-        <div className="grid md:grid-cols-2">
-          <div className="px-8 py-6 flex items-center text-xs text-stone-400 dark:text-white/25 bg-stone-50 dark:bg-transparent">
+        <div className="max-w-7xl mx-auto px-8 py-5 flex items-center justify-between gap-6 bg-[#F6F5F1] dark:bg-transparent">
+          <p className="text-xs text-[#0F2822]/30 dark:text-white/25">
             مرجعية موثوقة في تلقي العلم الشرعي — منهج وفق كلية الشريعة بصوتيات مشايخ كبار العلماء الثقات.
-          </div>
-          <div className="px-8 py-6 flex items-center gap-5 border-t md:border-t-0 border-stone-100 dark:border-white/[.05] bg-[#F6F5F1] dark:bg-transparent">
+          </p>
+          <div className="flex items-center gap-5 shrink-0">
             <a
               href="https://www.kibbarulmauni.com"
               target="_blank"
