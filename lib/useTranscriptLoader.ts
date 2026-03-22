@@ -6,7 +6,7 @@ import type { TranscriptSegment } from "@/lib/data";
 export function useTranscriptLoader(
   selected: number,
   ytId: string | null,
-  transcriptFilename: string,
+  transcriptFilename: string | null,
   transcriptVersion: number
 ): { transcript: TranscriptSegment[]; transcriptLoading: boolean } {
   const [transcript, setTranscript] = useState<TranscriptSegment[]>([]);
@@ -20,6 +20,7 @@ export function useTranscriptLoader(
     setTranscriptLoading(true);
 
     const loadFile = () => {
+      if (!transcriptFilename) { if (!signal.aborted) setTranscriptLoading(false); return; }
       fetch(`/api/transcript?file=${transcriptFilename}`, { signal })
         .then((r) => r.json())
         .then(({ segments }: { segments: TranscriptSegment[] }) => {

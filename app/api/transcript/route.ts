@@ -21,7 +21,7 @@ function decodeEntities(s: string): string {
     .replace(/&#(\d+);/g, (_, d) => String.fromCodePoint(parseInt(d, 10)));
 }
 
-function parseTimedTextXml(xml: string, lang: string): TranscriptSegment[] {
+function parseTimedTextXml(xml: string): TranscriptSegment[] {
   // Try <p t="..." d="..."> format (timedtext format 3)
   const segs: TranscriptSegment[] = [];
   const pRe = /<p\s+t="(\d+)"\s+d="(\d+)"[^>]*>([\s\S]*?)<\/p>/g;
@@ -80,7 +80,7 @@ async function fetchYouTubeCaptions(videoId: string): Promise<TranscriptSegment[
   const xml = await capRes.text();
   if (!xml) return null;
 
-  const segs = parseTimedTextXml(xml, track.languageCode);
+  const segs = parseTimedTextXml(xml);
   return segs.length ? segs : null;
 }
 
@@ -166,7 +166,10 @@ export async function GET(req: NextRequest) {
   try {
     const segments = await fetchYouTubeCaptions(videoId) ?? [];
     // Only cache when we actually got segments; empty means captions unavailable or transient error
-    const cc = segments.length > 0 ? "public, max-age=86400" : "no-store";
+    // Use "private" so the browser caches per-user but Netlify Edge CDN does NOT cache.
+    // "public" caused Netlify to serve one video's captions for all videos because
+    // the netlify-vary header only keys on Next.js internal params, not our ?v= param.
+    const cc = segments.length > 0 ? "private, max-age=86400" : "no-store";
     return NextResponse.json({ segments }, { headers: { "Cache-Control": cc } });
   } catch {
     return NextResponse.json({ segments: [] }, { headers: { "Cache-Control": "no-store" } });

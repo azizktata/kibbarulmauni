@@ -327,7 +327,13 @@ export function CoursePlayer({ lessons, col, levelIdx, subjectIdx, courseIdx, co
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selected]);
 
-  const transcriptFilename = `${levelIdx}-${subjectIdx}-${courseIdx}-${selected}.txt`;
+  // For admin upload button: always use computed name for backward compat
+  const transcriptUploadFilename = `${levelIdx}-${subjectIdx}-${courseIdx}-${selected}.txt`;
+  // For loading: if lesson has a YouTube video, only use explicit transcriptFile (never auto-computed)
+  // This prevents stale/wrong files from being served when YouTube captions fail in prod
+  const transcriptFilename = ytId
+    ? (lessons[selected]?.transcriptFile ?? null)
+    : (lessons[selected]?.transcriptFile ?? transcriptUploadFilename);
 
   const { transcript, transcriptLoading } = useTranscriptLoader(selected, ytId, transcriptFilename, transcriptVersion);
 
@@ -676,7 +682,7 @@ export function CoursePlayer({ lessons, col, levelIdx, subjectIdx, courseIdx, co
         document.body
       )}
       <TranscriptUploadButton
-        filename={transcriptFilename}
+        filename={transcriptUploadFilename}
         onSaved={() => setTranscriptVersion((v) => v + 1)}
       />
       <BookLinkButton
