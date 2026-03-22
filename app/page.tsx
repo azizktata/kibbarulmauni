@@ -11,7 +11,7 @@ export default function HomePage() {
       {/* Hero */}
       <header className="relative bg-emerald-950 text-white overflow-hidden">
            <div className="absolute inset-0 bg-center" style={{ backgroundImage: "url('/islamic-geometric-4.jfif')" }} />
-        <div className={`absolute inset-0 bg-gradient-to-b from-emerald-900 to-emerald-800 opacity-60`} />
+        <div className={`absolute inset-0 bg-gradient-to-b from-emerald-900 to-emerald-900 opacity-50`} />
 
         <div className="relative max-w-7xl mx-auto px-4 py-10 md:py-12 text-center">
           {/* Top label */}
