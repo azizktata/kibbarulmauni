@@ -15,6 +15,9 @@ import { SignInDialog } from "./SignInDialog";
 import { TranscriptPanel } from "./TranscriptPanel";
 import { TranscriptUploadButton } from "./TranscriptUploadButton";
 import { BookLinkButton } from "./BookLinkButton";
+import { QuizPanel } from "./QuizPanel";
+import { QuizAdminButton } from "./QuizAdminButton";
+import type { QuizQuestion } from "@/app/api/quiz/route";
 import { AmbientPlayerOverlay } from "./AmbientPlayerOverlay";
 import { useNotes } from "@/lib/notesContext";
 import { lessonWord } from "@/lib/arabicUtils";
@@ -97,6 +100,10 @@ export function CoursePlayer({ lessons, col, levelIdx, subjectIdx, courseIdx, co
   const [mounted, setMounted] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
   const [countdown, setCountdown] = useState<number | null>(null);
+  const [quiz, setQuiz] = useState<QuizQuestion[]>([]);
+  const [quizVisible, setQuizVisible] = useState(false);
+  const quizRef = useRef<QuizQuestion[]>([]);
+  const quizShownRef = useRef(false);
   const autoplayNextRef = useRef(false);
   const ambientStartAtRef = useRef(0);
   const lastSaveRef = useRef(0);
@@ -177,8 +184,13 @@ export function CoursePlayer({ lessons, col, levelIdx, subjectIdx, courseIdx, co
           savePositionToDb(t);
         }
       }
-      // mark watched at 90 %
+      // show quiz at 85%
       const dur = p.getDuration();
+      if (dur > 0 && t / dur >= 0.85 && !quizShownRef.current && quizRef.current.length > 0) {
+        quizShownRef.current = true;
+        setQuizVisible(true);
+      }
+      // mark watched at 90 %
       if (dur > 0 && t / dur >= 0.9 && isLoggedInRef.current) {
         const key = `${baseKey}:${selectedRef.current}`;
         if (!isWatchedRef.current(key)) {
@@ -338,6 +350,24 @@ export function CoursePlayer({ lessons, col, levelIdx, subjectIdx, courseIdx, co
     setBookUrl(lessons[selected]?.book ?? "");
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selected]);
+
+  // ── Fetch quiz for current lesson ─────────────────────────────────────────────
+  useEffect(() => {
+    setQuiz([]);
+    setQuizVisible(false);
+    quizRef.current = [];
+    quizShownRef.current = false;
+    fetch(`/api/quiz?file=${levelIdx}-${subjectIdx}-${courseIdx}-${selected}`)
+      .then((r) => r.json())
+      .then(({ questions }: { questions: QuizQuestion[] }) => {
+        if (Array.isArray(questions) && questions.length > 0) {
+          setQuiz(questions);
+          quizRef.current = questions;
+        }
+      })
+      .catch(() => {});
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selected, levelIdx, subjectIdx, courseIdx]);
 
   // ── Course progress ───────────────────────────────────────────────────────────
   const watchedCount = useMemo(() => {
@@ -579,6 +609,11 @@ export function CoursePlayer({ lessons, col, levelIdx, subjectIdx, courseIdx, co
               الكتاب
             </a>
           )}
+
+          {/* 4. Quiz */}
+          {quiz.length > 0 && (
+            <QuizPanel questions={quiz} />
+          )}
         </div>
       </div>
 
@@ -684,6 +719,12 @@ export function CoursePlayer({ lessons, col, levelIdx, subjectIdx, courseIdx, co
         lessonKey={`${levelIdx}:${subjectIdx}:${courseIdx}:${selected}`}
         currentBook={bookUrl}
         onSaved={setBookUrl}
+      />
+      <QuizAdminButton
+        filename={`${levelIdx}-${subjectIdx}-${courseIdx}-${selected}`}
+        currentQuiz={quiz}
+        onSaved={(q) => { setQuiz(q); quizRef.current = q; }}
+        onDeleted={() => { setQuiz([]); quizRef.current = []; setQuizVisible(false); quizShownRef.current = false; }}
       />
     </>
   );
