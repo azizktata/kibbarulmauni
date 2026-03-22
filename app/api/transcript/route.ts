@@ -7,11 +7,32 @@ import { apiError } from "@/lib/apiError";
 
 const ADMIN_EMAIL = process.env.ADMIN_EMAIL ?? "";
 
-// ── YouTube captions via Android InnerTube API ────────────────────────────────
-// Uses the Android client context which returns caption track URLs accessible server-side.
+// ── YouTube captions via InnerTube API ───────────────────────────────────────
+// Tries multiple client contexts because cloud/serverless IPs (Netlify → AWS Lambda)
+// are often blocked by YouTube for certain client types.
 
-const YT_CLIENT_VERSION = "20.10.38";
-const YT_USER_AGENT = `com.google.android.youtube/${YT_CLIENT_VERSION} (Linux; U; Android 14)`;
+type CaptionTrack = { languageCode: string; kind?: string; baseUrl: string };
+
+const YT_CLIENTS = [
+  // TVHTML5 — least restricted from cloud IPs, no bot-detection challenges
+  {
+    clientName: "TVHTML5",
+    clientVersion: "7.20250317.19.00",
+    headers: { "Content-Type": "application/json", "User-Agent": "Mozilla/5.0 (SMART-TV; Linux; Tizen 6.0) AppleWebKit/538.1 (KHTML, like Gecko) Version/6.0 TV Safari/538.1" },
+  },
+  // WEB_EMBEDDED_PLAYER — embed context, often allowed from server IPs
+  {
+    clientName: "WEB_EMBEDDED_PLAYER",
+    clientVersion: "2.20250317.01.00",
+    headers: { "Content-Type": "application/json", "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36", "Origin": "https://www.youtube.com" },
+  },
+  // ANDROID — original, works on local dev but often blocked on cloud
+  {
+    clientName: "ANDROID",
+    clientVersion: "20.10.38",
+    headers: { "Content-Type": "application/json", "User-Agent": "com.google.android.youtube/20.10.38 (Linux; U; Android 14)" },
+  },
+] as const;
 
 function decodeEntities(s: string): string {
   return s
@@ -30,7 +51,6 @@ function parseTimedTextXml(xml: string): TranscriptSegment[] {
     const start = parseInt(m[1], 10);
     const dur = parseInt(m[2], 10);
     let text = "";
-    // Extract <s> segments if present
     const sRe = /<s[^>]*>([^<]*)<\/s>/g;
     let sm: RegExpExecArray | null;
     while ((sm = sRe.exec(m[3])) !== null) text += sm[1];
@@ -49,32 +69,37 @@ function parseTimedTextXml(xml: string): TranscriptSegment[] {
   return segs;
 }
 
-async function fetchYouTubeCaptions(videoId: string): Promise<TranscriptSegment[] | null> {
-  // Step 1: get caption tracks via Android InnerTube player API
-  const playerRes = await fetch("https://www.youtube.com/youtubei/v1/player?prettyPrint=false", {
+async function fetchTracksWithClient(videoId: string, client: typeof YT_CLIENTS[number]): Promise<CaptionTrack[]> {
+  const res = await fetch("https://www.youtube.com/youtubei/v1/player?prettyPrint=false", {
     method: "POST",
-    headers: { "Content-Type": "application/json", "User-Agent": YT_USER_AGENT },
+    headers: client.headers,
     body: JSON.stringify({
-      context: { client: { clientName: "ANDROID", clientVersion: YT_CLIENT_VERSION } },
+      context: { client: { clientName: client.clientName, clientVersion: client.clientVersion } },
       videoId,
     }),
   });
-  if (!playerRes.ok) return null;
-
-  const playerData = await playerRes.json() as {
-    captions?: { playerCaptionsTracklistRenderer?: { captionTracks?: { languageCode: string; kind?: string; baseUrl: string }[] } };
+  if (!res.ok) return [];
+  const data = await res.json() as {
+    captions?: { playerCaptionsTracklistRenderer?: { captionTracks?: CaptionTrack[] } };
   };
-  const tracks = playerData.captions?.playerCaptionsTracklistRenderer?.captionTracks ?? [];
+  return data.captions?.playerCaptionsTracklistRenderer?.captionTracks ?? [];
+}
+
+async function fetchYouTubeCaptions(videoId: string): Promise<TranscriptSegment[] | null> {
+  // Try each client in order until one returns caption tracks
+  let tracks: CaptionTrack[] = [];
+  for (const client of YT_CLIENTS) {
+    tracks = await fetchTracksWithClient(videoId, client).catch(() => []);
+    if (tracks.length) break;
+  }
   if (!tracks.length) return null;
 
-  // Step 2: pick best track (Arabic manual → Arabic ASR → English manual → English ASR)
+  // Pick best track: Arabic manual → Arabic ASR → English manual → English ASR → first
   const pick = (lang: string, asr: boolean) =>
     tracks.find((t) => t.languageCode === lang && (asr ? t.kind === "asr" : t.kind !== "asr")) ??
     (asr ? tracks.find((t) => t.languageCode === lang) : undefined);
-
   const track = pick("ar", false) ?? pick("ar", true) ?? pick("en", false) ?? pick("en", true) ?? tracks[0];
 
-  // Step 3: fetch the XML caption file
   const capRes = await fetch(track.baseUrl, { headers: { "User-Agent": "Mozilla/5.0" } });
   if (!capRes.ok) return null;
   const xml = await capRes.text();
