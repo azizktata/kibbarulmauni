@@ -72,7 +72,7 @@ export async function GET(req: NextRequest) {
     const segments = parseRawTranscript(raw);
     return NextResponse.json(
       { segments },
-      { headers: { "Cache-Control": "public, max-age=86400" } }
+      { headers: { "Cache-Control": "private, max-age=86400" } }
     );
   } catch {
     return NextResponse.json({ segments: [] }, { status: 404 });
