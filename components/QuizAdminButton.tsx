@@ -63,7 +63,7 @@ export function QuizAdminButton({ filename, currentQuiz, onSaved, onDeleted }: P
     setError("");
     for (const q of questions) {
       if (!q.text.trim()) { setError("أدخل نص كل سؤال"); return; }
-      if (q.options.some((o) => !o.trim())) { setError("أدخل جميع الخيارات"); return; }
+      // if (q.options.some((o) => !o.trim())) { setError("أدخل جميع الخيارات"); return; }
     }
     setSaving(true);
     try {

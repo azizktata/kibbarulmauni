@@ -59,7 +59,7 @@ export async function POST(req: NextRequest) {
 
   for (const q of questions) {
     if (!q.text?.trim()) return NextResponse.json({ error: "Question text required" }, { status: 400 });
-    if (!Array.isArray(q.options) || q.options.length < 2 || q.options.length > 6)
+    if (!Array.isArray(q.options) || q.options.length < 1 || q.options.length > 6)
       return NextResponse.json({ error: "Each question needs 2–6 options" }, { status: 400 });
     if (typeof q.correct !== "number" || q.correct < 0 || q.correct >= q.options.length)
       return NextResponse.json({ error: "Invalid correct index" }, { status: 400 });
