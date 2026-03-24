@@ -9,20 +9,33 @@ const ADMIN_EMAIL = process.env.ADMIN_EMAIL ?? "";
 
 // ── Raw file parser (M:SS) format ─────────────────────────────────────────────
 
+function parseTimestampToSeconds(raw: string): number {
+  const parts = raw.split(":").map(Number);
+  if (parts.length === 3) {
+    const [h, m, s] = parts;
+    return h * 3600 + m * 60 + s;
+  } else {
+    const [m, s] = parts;
+    return m * 60 + s;
+  }
+}
+
+// In your route file - parseRawTranscript
 function parseRawTranscript(raw: string): TranscriptSegment[] {
-  const regex = /\((\d+):(\d{2})\)\s*([\s\S]*?)(?=\(\d+:\d{2}\)|$)/g;
+  // H:MM:SS must come BEFORE M:SS in alternation to avoid partial match
+  const regex = /\((\d+:\d{2}:\d{2}|\d+:\d{2})\)\s*([\s\S]*?)(?=\(\d+:\d{2}:\d{2}\)|\(\d+:\d{2}\)|$)/g;
   const matches = [...raw.matchAll(regex)];
   const segments: TranscriptSegment[] = [];
 
   for (let i = 0; i < matches.length; i++) {
-    const [, min, sec, rawText] = matches[i];
-    const start = parseInt(min) * 60 + parseInt(sec);
+    const [, timestamp, rawText] = matches[i];
+    const start = parseTimestampToSeconds(timestamp);
     const text = rawText.trim().replace(/\s+/g, " ");
     if (!text) continue;
 
     const nextStart =
       i + 1 < matches.length
-        ? parseInt(matches[i + 1][1]) * 60 + parseInt(matches[i + 1][2])
+        ? parseTimestampToSeconds(matches[i + 1][1])
         : start + 5;
 
     segments.push({ start, dur: nextStart - start, text });
@@ -30,7 +43,6 @@ function parseRawTranscript(raw: string): TranscriptSegment[] {
 
   return segments;
 }
-
 // ── POST — admin upload ────────────────────────────────────────────────────────
 
 export async function POST(req: NextRequest) {
