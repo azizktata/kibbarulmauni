@@ -27,7 +27,7 @@ export default function HomePage() {
               alt="جامعة كبار العلماء"
               width={340}
               height={148}
-              className="object-contain w-48 sm:w-64 md:w-[350px] h-auto"
+              className="object-contain w-64 sm:w-84 md:w-[350px] lg:w-[400px] h-auto"
               priority
             />
           </div>
@@ -85,7 +85,7 @@ export default function HomePage() {
           className="h-px w-full"
           style={{ background: "linear-gradient(to left,transparent,rgba(240,188,83,.15) 20%,rgba(240,188,83,.35) 50%,rgba(240,188,83,.15) 80%,transparent)" }}
         />
-        <div className="max-w-7xl mx-auto px-8 py-5 flex items-center justify-between gap-6 bg-[#F6F5F1] dark:bg-transparent">
+        <div className="max-w-7xl mx-auto px-8 py-5 flex flex-col sm:flex-row items-center justify-between gap-6 bg-[#F6F5F1] dark:bg-transparent">
           <p className="text-xs text-[#0F2822]/30 dark:text-white/25">
             مرجعية موثوقة في تلقي العلم الشرعي — منهج وفق كلية الشريعة بصوتيات مشايخ كبار العلماء الثقات.
           </p>

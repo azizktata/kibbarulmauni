@@ -22,5 +22,15 @@ export const JOURNEY_GRADIENTS = [
   "linear-gradient(to top,#7A8B30,#B8962A)",
   "linear-gradient(to top,#B8962A,#F0BC53)",
 ] as const;
+export const GRADIENTS = [
+  "linear-gradient(to top,#082e27,#0d3a30)",
+  "linear-gradient(to top,#0d3a30,#133e33)",
+  "linear-gradient(to top,#133e33,#1a4a3c)",
+  "linear-gradient(to top,#1a4a3c,#245a48)",
+  "linear-gradient(to top,#245a48,#326b55)",
+  "linear-gradient(to top,#326b55,#7A8B30)",
+  // "linear-gradient(to top,#7A8B30,#B8962A)",
+  // "linear-gradient(to top,#B8962A,#F0BC53)",
+] as const;
 
 export const ARABIC_DIGITS = ["١","٢","٣","٤","٥","٦","٧","٨","٩","١٠","١١","١٢","١٣","١٤","١٥","١٦","١٧","١٨","١٩","٢٠"];

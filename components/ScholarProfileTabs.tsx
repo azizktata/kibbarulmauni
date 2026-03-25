@@ -161,7 +161,6 @@ export function ScholarProfileTabs({ courses, playlists, knownPlaylistIds = new 
                     <div className="flex items-start justify-between gap-2">
                       <h3
                         className="font-bold text-[#0F2822]/80 dark:text-white/80 text-sm leading-snug line-clamp-2 flex-1 group-hover:text-[#0F2822] dark:group-hover:text-white transition-colors duration-150"
-                        style={{ fontFamily: "var(--font-amiri)" }}
                       >
                         {course.courseTitle}
                       </h3>

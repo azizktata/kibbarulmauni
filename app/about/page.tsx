@@ -14,16 +14,28 @@ const HADITHS = [
     source: "رواه مسلم",
   },
   {
-    text: "«طَلَبُ الْعِلْمِ فَرِيضَةٌ عَلَى كُلِّ مُسْلِمٍ»",
-    source: "رواه ابن ماجه",
+    text: "«من يرد اللَّه به خيراً يفقهه في الدين»",
+    source: "مُتَّفَقٌ عَلَيهِ",
   },
   {
-    text: "«إِنَّ الْعُلَمَاءَ وَرَثَةُ الْأَنْبِيَاءِ — وَإِنَّمَا وَرَّثُوا الْعِلْمَ — فَمَنْ أَخَذَهُ أَخَذَ بِحَظٍّ وَافِرٍ»",
-    source: "رواه أبو داود والترمذي",
+    text: "« إنَّ اللهَ لا يقبضُ العلمَ انتزاعًا ينتزعُهُ منَ النَّاسِ ، ولَكن يقبضُ العلمَ بقبضِ العُلماءِ ، حتَّى إذا لم يترُك عالمًا اتَّخذَ النَّاسُ رؤوسًا جُهَّالًا ، فسُئلوا فأفتوا بغيرِ عِلمٍ فضلُّوا وأضلُّوا»",
+    source: "صحيح الترمذي ",
   },
   {
-    text: "«خَيْرُكُمْ مَنْ تَعَلَّمَ الْقُرْآنَ وَعَلَّمَهُ»",
-    source: "رواه البخاري",
+    text: "«من خرج في طلب العلم فهو في سبيل اللَّه حتى يرجع»",
+    source: "رَوَاهُ التِّرمِذِيُّ وَقَالَ حَدِيثٌ حَسَنٌ.",
+  },
+  {
+    text: "«وقل رب زدني علماً»",
+    source: "طه: 114",
+  },
+  {
+    text: "«يرفع اللَّه الذين آمنوا منكم والذين أوتوا العلم درجات»",
+    source: "المجادلة: 11",
+  },
+  {
+    text: "«قل هل يستوي الذين يعلمون والذين لا يعلمون»",
+    source: "الزمر: 9",
   },
 ];
 
@@ -310,7 +322,7 @@ export default function AboutPage() {
                 <a
                   href="https://www.youtube.com/watch?v=FSxwG1aceuw&t=2869s"
                   target="_blank" rel="noopener noreferrer"
-                  className="hidden md:flex items-center gap-1.5 px-4 py-2.5 text-gold/50 hover:text-gold hover:bg-gold/[.12] text-[11px] font-semibold tracking-[.08em] transition-all duration-200"
+                  className="flex items-center gap-1.5 px-4 py-2.5 text-gold/50 hover:text-gold hover:bg-gold/[.12] text-[11px] font-semibold tracking-[.08em] transition-all duration-200"
                 >
                   <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
                     <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>
@@ -340,14 +352,14 @@ export default function AboutPage() {
                 className="flex flex-col justify-center border-r-[3px] border-gold pr-6 mb-7 min-h-[72px] md:min-h-[110px]"
               >
                 <p
-                  className="text-lg md:text-xl text-[#2A2014] leading-[1.95] mb-1.5 break-words text-right w-full"
+                  className="text-lg md:text-2xl text-[#2A2014] leading-[1.95] mb-1.5 break-words text-right w-full"
                   style={{ fontFamily: "var(--font-amiri)" }}
                 >
                   {displayedText}
                   {isTyping && <span className="ab-cursor" />}
                 </p>
                 <cite
-                  className="not-italic text-[11px] text-[#C9973A] tracking-[.12em] block text-right w-full transition-opacity duration-[400ms]"
+                  className="not-italic text-md text-[#C9973A] tracking-[.12em] block text-right w-full transition-opacity duration-[400ms]"
                   style={{ opacity: sourceVisible ? 1 : 0 }}
                 >
                   {h.source}
@@ -432,7 +444,7 @@ export default function AboutPage() {
               { v: "٨",                 l: "مستوى دراسي",  d: "من المبتدئ إلى المتقدم" },
               { v: toAr(totalSubjects), l: "مادة علمية",   d: "عقيدة وفقه وحديث وتفسير وأصول ولغة" },
               { v: toAr(totalLessons),  l: "درس شرعي",     d: "تسجيلات أصيلة بجودة عالية" },
-              { v: "+٢٠",               l: "شيخاً وعالماً", d: "من كبار العلماء الثقات المعتمدين" },
+              { v: "١٨",               l: "شيخاً وعالماً", d: "من كبار العلماء الثقات المعتمدين" },
             ].map((s, i) => (
               <div
                 key={i}
@@ -538,7 +550,7 @@ export default function AboutPage() {
                         { v: "٨",                 l: "مستويات" },
                         { v: toAr(totalSubjects), l: "مادة" },
                         { v: toAr(totalLessons),  l: "درس" },
-                        { v: "+٢٠",               l: "شيخ" },
+                        { v: "مجاني",               l: "بالكامل" },
                       ].map((s, i) => (
                         <div key={i} className="bg-primary/60 px-5 py-6 text-center">
                           <div
@@ -568,7 +580,6 @@ export default function AboutPage() {
 
             {/* LEFT col — pull quote + body */}
             <div>
-              <p className="text-[10px] text-[#C9973A] tracking-[.22em] font-bold mb-3">روح المشروع</p>
 
               {/* Pull quote */}
               <div
@@ -612,7 +623,7 @@ export default function AboutPage() {
                 {[
                   "يجمع دروس ابن باز وابن عثيمين والألباني والفوزان وعشرين غيرهم",
                   "أكثر من مليار مشاهدة لهذه الدروس عبر المنصات الرقمية",
-                  "علم يبني على الكتاب والسنة — نظري وتطبيقي متوازن",
+     
                   "دروس ومحاضرات وشروح متون — تنوع في الأسلوب ووحدة في المنهج",
                 ].map((item, i) => (
                   <li key={i} className="flex gap-3 text-[13.5px] text-[#5A4E2A] leading-[1.85]">
@@ -623,12 +634,12 @@ export default function AboutPage() {
               </ul>
 
               {/* 2×2 highlights grid */}
-              <div
+              {/* <div
                 className="grid grid-cols-2 gap-px"
                 style={{ background: "#DEDAD0", border: "1px solid #DEDAD0" }}
               >
                 {[
-                  { v: "+٢٠",  l: "شيخاً معتمداً" },
+                  { v: "١٨",  l: "شيخاً معتمداً" },
                   { v: "+١٠٠٠", l: "ساعة تسجيل" },
                   { v: "١٤٣٥", l: "سنة التأسيس هـ" },
                   { v: "مجاني", l: "بالكامل" },
@@ -643,7 +654,7 @@ export default function AboutPage() {
                     <div className="text-[11px] text-[#8A7A5A] tracking-[.1em] font-semibold mt-1">{h.l}</div>
                   </div>
                 ))}
-              </div>
+              </div> */}
             </div>
           </div>
         </section>
@@ -651,7 +662,6 @@ export default function AboutPage() {
         {/* ── SCHOLARS GRID ──────────────────────────────────── */}
         <section style={{ background: "#F6F5F1", borderTop: "1px solid #DEDAD0" }} className="py-16 md:py-20 px-6 md:px-12">
           <div className="max-w-[1160px] mx-auto">
-            <p className="text-[10px] text-[#C9973A] tracking-[.22em] font-bold mb-3">علماء الجامعة</p>
             <h2
               className="text-[28px] md:text-[32px] font-bold text-[#0F2822] mb-10 leading-[1.4]"
               style={{ fontFamily: "var(--font-amiri)" }}

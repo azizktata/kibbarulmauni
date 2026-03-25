@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { scholarsIndex, type Scholar } from "@/lib/scholars";
-import { LEVEL_COLORS, JOURNEY_GRADIENTS } from "@/lib/constants";
+import { LEVEL_COLORS, JOURNEY_GRADIENTS, GRADIENTS } from "@/lib/constants";
 import { SCHOLAR_WEBSITES, SCHOLAR_YOUTUBE } from "@/lib/scholarWebsites";
 
 function prepareScholar(scholar: Scholar) {
@@ -14,7 +14,7 @@ function prepareScholar(scholar: Scholar) {
     ).values(),
   ].sort((a, b) => a.idx - b.idx);
   return {
-    gradient: JOURNEY_GRADIENTS[dominantLevel] ?? JOURNEY_GRADIENTS[0],
+    gradient: GRADIENTS[dominantLevel] ?? JOURNEY_GRADIENTS[0],
     uniqueLevels,
     websiteUrl: SCHOLAR_WEBSITES[scholar.name],
     youtubeUrl: SCHOLAR_YOUTUBE[scholar.name],
