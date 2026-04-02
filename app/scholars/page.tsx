@@ -36,7 +36,7 @@ export default function ScholarsPage() {
           className={`absolute inset-0 bg-gradient-to-b ${c.gradient} opacity-70`}
         />
 
-        <div className="relative max-w-7xl mx-auto px-4 py-10">
+        <div className="relative max-w-[1800px] mx-auto px-4 sm:px-6 lg:px-8 py-10">
           <nav className="flex items-center gap-1.5 text-white/60 text-xs mb-4">
             <Link href="/" className="hover:text-white transition-colors">
               الرئيسية
@@ -51,7 +51,7 @@ export default function ScholarsPage() {
         </div>
       </header>
 
-      <main className="max-w-7xl mx-auto px-4 py-8">
+      <main className="max-w-[1800px] mx-auto px-4 sm:px-6 lg:px-8 py-8 lg:py-10">
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5">
           {scholarsIndex.map((scholar, i) => {
             const { gradient, uniqueLevels, websiteUrl, youtubeUrl } = preparedScholars[i];

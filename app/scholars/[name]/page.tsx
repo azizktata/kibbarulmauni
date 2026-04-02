@@ -41,7 +41,7 @@ export default async function ScholarPage({
           className={`absolute inset-0 bg-gradient-to-b ${c.gradient} opacity-70`}
         />
 
-        <div className="relative max-w-7xl mx-auto px-4 py-10">
+        <div className="relative max-w-[1800px] mx-auto px-4 sm:px-6 lg:px-8 py-8 lg:py-10">
           <nav className="flex items-center gap-1.5 text-white/60 text-xs mb-4 flex-wrap">
             <Link href="/" className="hover:text-white transition-colors">
               الرئيسية
@@ -63,7 +63,7 @@ export default async function ScholarPage({
         </div>
       </header>
 
-      <main className="max-w-7xl mx-auto px-4 py-4">
+      <main className="max-w-[1800px] mx-auto px-4 sm:px-6 lg:px-8 py-4">
         <ScholarProfileTabs
           courses={scholar.courses}
           playlists={allPlaylists[scholar.name] ?? []}
