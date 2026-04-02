@@ -7,13 +7,13 @@ import Link from "next/link";
 
 export default function HomePage() {
   return (
-    <div className="relative min-h-screen">
+    <div className="relative min-h-screen ">
       {/* Hero */}
       <header className="relative bg-emerald-950 text-white overflow-hidden">
            <div className="absolute inset-0 bg-center" style={{ backgroundImage: "url('/islamic-geometric-4.jfif')" }} />
         <div className={`absolute inset-0 bg-gradient-to-b from-emerald-900 to-emerald-900 opacity-30`} />
 
-        <div className="relative max-w-7xl mx-auto px-4 py-10 md:py-12 text-center">
+        <div className="relative w-full max-w-[1800px] mx-auto px-4 sm:px-6 lg:px-8 py-10 md:py-12 text-center">
           {/* Top label */}
           {/* <div className="flex items-center justify-center gap-4 mb-8">
             <div className="h-px w-12 bg-gold/25" />
@@ -67,7 +67,7 @@ export default function HomePage() {
 
         <RecentlyWatched />
 
-        <div className="max-w-7xl mx-auto px-4 pt-8 pb-12">
+        <div className="w-full max-w-[1800px] mx-auto px-4 sm:px-6 lg:px-8 pt-8 pb-12">
           <div className="flex items-center gap-3 mb-5">
             <div className="h-px flex-1 bg-[#DEDAD0] dark:bg-white/10" />
             <span className="text-[10px] font-bold text-[#C9973A]/70 dark:text-gold/40 tracking-[.22em]">

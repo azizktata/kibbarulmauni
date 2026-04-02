@@ -34,8 +34,8 @@ export function Navbar() {
 
   return (
     <>
-      <nav className="bg-primary text-white h-12 flex items-center px-4 md:px-6 sticky top-0 z-50 shadow-md">
-        <div className="max-w-7xl w-full mx-auto px-4 flex items-center">
+      <nav className="bg-primary text-white h-12 flex items-center  sticky top-0 z-50 shadow-md">
+        <div className="max-w-[1800px] w-full mx-auto px-4 sm:px-6 lg:px-8 flex items-center">
           <Link href="/" className="shrink-0 hover:opacity-80 transition-opacity">
             <Image src="/logo.png" height={32} width={120} alt="جامعة كبار العلماء" className="object-contain" />
           </Link>

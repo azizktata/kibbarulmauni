@@ -36,7 +36,7 @@ export default async function CoursePage({
       <header className="relative text-white overflow-hidden lg:hidden">
         <div className="absolute inset-0 bg-center" style={{ backgroundImage: "url('/islamic-geometric-4.jfif')" }} />
         <div className={`absolute inset-0 bg-gradient-to-b ${col.gradient} opacity-70`} />
-        <div className="relative max-w-7xl mx-auto px-4 py-8">
+        <div className="relative max-w-7xl mx-auto px-4 py-6">
           <nav className="flex items-center gap-1.5 text-white/60 text-xs mb-4 flex-wrap">
             <Link href="/" className="hover:text-white transition-colors">الرئيسية</Link>
             <span className="text-gold">›</span>
@@ -50,7 +50,7 @@ export default async function CoursePage({
         </div>
       </header>
 
-      <main className="max-w-7xl mx-auto px-4 pb-8 lg:py-6 flex flex-col gap-4">
+      <main className="w-full max-w-[1800px] mx-auto px-4 sm:px-6 lg:px-8 py-4 flex flex-col gap-4">
         {/* Desktop breadcrumb */}
         <nav className="hidden lg:flex items-center gap-1.5 pr-1 text-stone-400 dark:text-white/40 text-xs flex-wrap">
           <Link href="/" className="hover:text-stone-700 dark:hover:text-white/70 transition-colors">الرئيسية</Link>

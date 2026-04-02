@@ -467,12 +467,12 @@ export default function AboutPage() {
         </div>
 
         {/* ── LEVEL EXPLORER ────────────────────────────────────── */}
-        <section className="bg-primary py-16 md:py-24 relative overflow-hidden">
+        <section className="bg-primary  py-16 md:py-24 relative overflow-hidden ">
           <div
             className="absolute inset-0 pointer-events-none"
             style={{ background: "radial-gradient(ellipse 80% 60% at 20% 50%,rgba(240,188,83,.04) 0%,transparent 65%)" }}
           />
-          <div className="max-w-[1200px] mx-auto px-6 md:px-12 relative z-[1]">
+          <div className="w-full max-w-[1800px] mx-auto px-4 sm:px-6 lg:px-8 relative z-[1]">
             <div className="grid md:grid-cols-2 gap-0 md:gap-20 items-start">
 
               {/* RIGHT column (first in DOM) — levels list */}
@@ -576,7 +576,7 @@ export default function AboutPage() {
 
         {/* ── BAND 2 — pull quote + scholars intro ──────────────── */}
         <section style={{ background: "#F6F5F1", borderTop: "1px solid #DEDAD0" }} className="py-16 md:py-24 px-6 md:px-12">
-          <div className="max-w-[1200px] mx-auto grid md:grid-cols-2 gap-16 md:gap-20 items-start">
+          <div className="w-full max-w-[1800px] mx-auto px-4 sm:px-6 lg:px-8 grid md:grid-cols-2 gap-16 md:gap-20 items-start">
 
             {/* LEFT col — pull quote + body */}
             <div>
@@ -600,13 +600,10 @@ export default function AboutPage() {
                 <cite className="not-italic text-[11px] text-[#C9973A] tracking-[.1em] font-bold">
                   رواه أبو داود والترمذي
                 </cite>
+                
               </div>
 
-              <p className="text-[13.5px] text-[#5A4E2A] leading-[2.1]">
-                تأسّس هذا المشروع على يقين راسخ بأن العلم الشرعي حق لكل مسلم، وأن أشرف طريق
-                لتلقيه هو ما سلكه السلف: الأخذ عن العلماء الثقات المتصلين بالكتاب والسنة.
-                ما تجده هنا ليس محتوى رقمياً فحسب — بل إرث علمي موثّق، أُتيح لكل طالب علم.
-              </p>
+             
             </div>
 
             {/* RIGHT col — scholars heading + bullet list + highlights grid */}
@@ -618,7 +615,11 @@ export default function AboutPage() {
               >
                 نخبة من كبار العلماء الثقات
               </h2>
-
+                 <p className="text-[13.5px] text-[#5A4E2A] leading-[2.1] mb-8 max-w-xl">
+                تأسّس هذا المشروع على يقين راسخ بأن العلم الشرعي حق لكل مسلم، وأن أشرف طريق
+                لتلقيه هو ما سلكه السلف: الأخذ عن العلماء الثقات المتصلين بالكتاب والسنة.
+                ما تجده هنا ليس محتوى رقمياً فحسب — بل إرث علمي موثّق، أُتيح لكل طالب علم.
+              </p>
               <ul className="flex flex-col gap-3 mb-8 list-none p-0">
                 {[
                   "يجمع دروس ابن باز وابن عثيمين والألباني والفوزان وعشرين غيرهم",
@@ -661,7 +662,7 @@ export default function AboutPage() {
 
         {/* ── SCHOLARS GRID ──────────────────────────────────── */}
         <section style={{ background: "#F6F5F1", borderTop: "1px solid #DEDAD0" }} className="py-16 md:py-20 px-6 md:px-12">
-          <div className="max-w-[1160px] mx-auto">
+          <div className="w-full max-w-[1800px] mx-auto px-4 sm:px-6 lg:px-8">
             <h2
               className="text-[28px] md:text-[32px] font-bold text-[#0F2822] mb-10 leading-[1.4]"
               style={{ fontFamily: "var(--font-amiri)" }}

@@ -104,7 +104,7 @@ export default async function PlaylistPage({
         </div>
       </header>
 
-      <main className="max-w-7xl mx-auto px-4 pb-8 lg:py-6 flex flex-col gap-4">
+      <main className="w-full max-w-[1800px] mx-auto px-4 sm:px-6 lg:px-8 pb-8 py-4 flex flex-col gap-4">
         {/* Desktop breadcrumb */}
         <nav className="hidden lg:flex items-center gap-1.5 pr-1 text-stone-400 dark:text-white/40 text-xs flex-wrap">
           <Link href="/" className="hover:text-stone-700 dark:hover:text-white/70 transition-colors">الرئيسية</Link>
@@ -125,11 +125,11 @@ export default async function PlaylistPage({
           <span className="text-stone-600 dark:text-white/60 font-medium line-clamp-1">{playlistTitle}</span>
         </nav>
 
-        {category && (
+        {/* {category && (
           <span className="self-start text-[11px] font-medium px-2.5 py-1 rounded-full bg-primary/10 text-primary dark:bg-white/[0.08] dark:text-white/50 hidden lg:inline-flex">
             {category}
           </span>
-        )}
+        )} */}
 
         <Suspense fallback={<div className="h-64 flex items-center justify-center text-stone-400 text-sm">جارٍ التحميل…</div>}>
           <CoursePlayer

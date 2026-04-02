@@ -51,8 +51,8 @@ export function RecentlyWatched() {
 
   if (loading) {
     return (
-      <div className="px-4 pt-6 pb-0 max-w-7xl mx-auto">
-        <p className="text-[10px] text-[#C9973A] dark:text-gold/60 tracking-[.22em] font-bold mb-3">
+      <div className="px-4 sm:px-6 lg:px-8 pt-6 pb-0 w-full max-w-[1800px] mx-auto">
+        <p className="text-[10px]  text-[#C9973A] dark:text-gold/60 tracking-[.22em] font-bold mb-3">
           شاهدت مؤخراً
         </p>
         <div className="flex flex-col md:flex-row border border-[#DEDAD0] dark:border-white/[.08]">
@@ -68,9 +68,9 @@ export function RecentlyWatched() {
   if (visible.length === 0) return null;
 
   return (
-    <div className="px-4 pt-6 pb-0 max-w-7xl mx-auto">
+    <div className="px-4 sm:px-6 lg:px-8 pt-6 pb-0 w-full max-w-[1800px] mx-auto">
       {/* Label */}
-      <p className="text-[10px] text-[#C9973A] dark:text-gold/60 tracking-[.22em] font-bold mb-3">
+      <p className="text-[10px] text-center text-[#C9973A] dark:text-gold/60 tracking-[.22em] font-bold mb-3">
         شاهدت مؤخراً
       </p>
 

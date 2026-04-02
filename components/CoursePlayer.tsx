@@ -579,6 +579,11 @@ export function CoursePlayer({ lessons, col, levelIdx, subjectIdx, courseIdx, co
               </div>
             )}
           </div>
+          <div>
+            <p className={`text-lg lg:text-xl font-semibold ${col.text} ${ambientMode ? "dark:text-white" : "dark:text-white/80"}`}>
+              {stripLeadingNumber(lesson.title)}
+            </p>
+          </div>
 
           {/* 2. Prev / Next */}
           <div className="flex justify-between gap-3">
