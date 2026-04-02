@@ -8,13 +8,16 @@ export function useTranscriptLoader(
   transcriptFilename: string | null,
   transcriptVersion: number
 ): { transcript: TranscriptSegment[]; transcriptLoading: boolean } {
+
+
+
   const [transcript, setTranscript] = useState<TranscriptSegment[]>([]);
   const [transcriptLoading, setTranscriptLoading] = useState(false);
 
   useEffect(() => {
     const controller = new AbortController();
     const { signal } = controller;
-
+    
     setTranscript([]);
 
     if (!transcriptFilename) return () => controller.abort();

@@ -71,7 +71,7 @@ function stripLeadingNumber(title: string): string {
 interface Props {
   lessons: Lesson[];
   col: LevelColor;
-  levelIdx: number;
+  levelIdx: number | null; // null for non-curriculum content like playlists
   subjectIdx: number;
   courseIdx: number;
   courseTitle: string;
@@ -339,7 +339,7 @@ export function CoursePlayer({ lessons, col, levelIdx, subjectIdx, courseIdx, co
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selected]);
 
-  const transcriptUploadFilename = `${levelIdx}-${subjectIdx}-${courseIdx}-${selected}.txt`;
+  const transcriptUploadFilename = levelIdx !== null ? `${levelIdx}-${subjectIdx}-${courseIdx}-${selected}.txt` : null;
   const transcriptFilename = lessons[selected]?.transcriptFile ?? transcriptUploadFilename;
 
   const { transcript, transcriptLoading } = useTranscriptLoader(selected, transcriptFilename, transcriptVersion);
@@ -439,7 +439,7 @@ export function CoursePlayer({ lessons, col, levelIdx, subjectIdx, courseIdx, co
         <div className="flex flex-col gap-5 self-start order-2 lg:order-none">
 
           {/* Transcript (collapsible, above playlist) */}
-          {transcript.length > 0 && (
+          { baseKey && transcript.length > 0 && (
             <div>
               <button onClick={() => setTranscriptOpen((v) => !v)}
                 className="w-full flex items-center justify-between gap-2 bg-white dark:bg-white/[0.04] border border-stone-100 dark:border-white/[0.08] rounded-xl px-4 py-2.5 shadow-sm dark:shadow-none hover:bg-stone-50 dark:hover:bg-white/[0.08] transition-colors">

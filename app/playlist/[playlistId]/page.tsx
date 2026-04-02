@@ -135,7 +135,7 @@ export default async function PlaylistPage({
           <CoursePlayer
             lessons={lessons}
             col={col}
-            levelIdx={0}
+            levelIdx={null}
             subjectIdx={0}
             courseIdx={0}
             courseTitle={playlistTitle}
