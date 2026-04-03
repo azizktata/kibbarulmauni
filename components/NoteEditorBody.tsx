@@ -200,7 +200,7 @@ export function NoteEditorBody({
           dir="rtl"
           autoFocus
           className={cn(
-            "flex-1 w-full min-w-0 resize-none px-4 py-4 text-[16px] md:text-sm leading-loose focus:outline-none",
+            "flex-1 w-full min-w-0 resize-none px-4 py-4 text-[16px] leading-loose focus:outline-none",
             isDark
               ? "bg-neutral-950 text-neutral-200 placeholder-neutral-700 caret-emerald-400"
               : "bg-white text-stone-800 placeholder-stone-300 caret-stone-600"

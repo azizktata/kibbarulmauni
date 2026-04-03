@@ -66,7 +66,7 @@ export function SearchClient() {
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               placeholder="ابحث عن درس أو مقرر أو مادة أو قائمة يوتيوب…"
-              className="w-full bg-white/10 text-white placeholder-white/30 rounded-2xl pr-12 pl-4 py-4 text-sm outline-none focus:bg-white/15 transition-colors ring-1 ring-white/10 focus:ring-white/20"
+              className="w-full bg-white/10 text-white placeholder-white/30 rounded-lg pr-12 pl-4 py-4 text-[16px] outline-none focus:bg-white/15 transition-colors ring-1 ring-white/10 focus:ring-white/20"
             />
           </div>
           {query.trim().length >= 2 && (
@@ -124,7 +124,7 @@ function ResultGroup({ title, items }: { title: string; items: SearchEntry[] }) 
             <Link
               key={i}
               href={item.href}
-              className="group bg-white rounded-xl border border-stone-100 shadow-sm px-4 py-3.5 flex items-start gap-3 hover:shadow-md hover:border-stone-200 transition-all"
+              className="group bg-white rounded-lg border border-stone-100 shadow-sm px-4 py-3.5 flex items-start gap-3 hover:shadow-md hover:border-stone-200 transition-all"
             >
               <span className="text-lg leading-none mt-0.5">{TYPE_ICON[item.type]}</span>
               <div className="flex-1 min-w-0">

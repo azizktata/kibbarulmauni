@@ -114,7 +114,7 @@ export function ScholarProfileTabs({ courses, playlists, knownPlaylistIds = new 
               value={courseSearch}
               onChange={(e) => changeCourseSearch(e.target.value)}
               placeholder="ابحث في المقررات..."
-              className="w-full text-sm border border-[#DEDAD0] dark:border-white/10 rounded-xl px-4 pe-9 py-2.5 bg-white dark:bg-white/[0.04] text-[#0F2822] dark:text-white/70 placeholder:text-[#0F2822]/30 dark:placeholder:text-white/25 outline-none focus:border-[#C9973A]/50 dark:focus:border-white/20 transition-colors"
+              className="w-full text-[16px] border border-[#DEDAD0] dark:border-white/10 rounded-lg px-4 pe-9 py-2.5 bg-white dark:bg-white/[0.04] text-[#0F2822] dark:text-white/70 placeholder:text-[#0F2822]/30 dark:placeholder:text-white/25 outline-none focus:border-[#C9973A]/50 dark:focus:border-white/20 transition-colors"
             />
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-5">

@@ -442,7 +442,7 @@ export function CoursePlayer({ lessons, col, levelIdx, subjectIdx, courseIdx, co
           { baseKey && transcript.length > 0 && (
             <div>
               <button onClick={() => setTranscriptOpen((v) => !v)}
-                className="w-full flex items-center justify-between gap-2 bg-white dark:bg-white/[0.04] border border-stone-100 dark:border-white/[0.08] rounded-xl px-4 py-2.5 shadow-sm dark:shadow-none hover:bg-stone-50 dark:hover:bg-white/[0.08] transition-colors">
+                className="w-full flex items-center justify-between gap-2 bg-white dark:bg-white/[0.04] border border-stone-100 dark:border-white/[0.08] rounded-lg px-4 py-2.5 shadow-sm dark:shadow-none hover:bg-stone-50 dark:hover:bg-white/[0.08] transition-colors">
                 <div className="flex items-center gap-2">
                   <svg className="w-3.5 h-3.5 text-stone-400 dark:text-white/35" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
                     <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
@@ -518,7 +518,7 @@ export function CoursePlayer({ lessons, col, levelIdx, subjectIdx, courseIdx, co
                     <Link
                       key={idx}
                       href={`/level/${levelIdx}/${subjectIdx}/${idx}`}
-                      className={`flex items-center gap-3 px-4 py-3 rounded-xl border text-sm font-medium transition-all ${
+                      className={`flex items-center gap-3 px-4 py-3 rounded-lg border text-sm font-medium transition-all ${
                         isActive
                           ? `${col.light} ${col.border} ${col.text}`
                           : "bg-white dark:bg-white/[0.04] border-stone-100 dark:border-white/[0.08] text-stone-600 dark:text-white/50 hover:border-stone-200 dark:hover:border-white/[0.15] hover:shadow-sm dark:hover:bg-white/[0.08]"
@@ -541,7 +541,7 @@ export function CoursePlayer({ lessons, col, levelIdx, subjectIdx, courseIdx, co
         <div className="flex flex-col gap-3 order-1 lg:order-none">
 
           {/* 1. Video */}
-          <div className="group relative aspect-video bg-stone-900 rounded-none lg:rounded-xl overflow-hidden shadow-lg lg:ring-1 ring-black/5 max-lg:-mx-4">
+          <div className="group relative aspect-video bg-stone-900 rounded-none lg:rounded-lg overflow-hidden shadow-lg lg:ring-1 ring-black/5 max-lg:-mx-4">
             {ytId ? <div ref={mainDivRef} className="w-full h-full" /> : noVideo}
             {ytId && (
               <button onClick={() => { ambientStartAtRef.current = Math.floor(currentTime); setAmbientMode(true); }}
@@ -580,20 +580,20 @@ export function CoursePlayer({ lessons, col, levelIdx, subjectIdx, courseIdx, co
             )}
           </div>
           <div>
-            <p className={`text-lg lg:text-xl font-semibold ${col.text} ${ambientMode ? "dark:text-white" : "dark:text-white/80"}`}>
+            <p className={`text-base sm:text-lg lg:text-xl font-semibold ${col.text} ${ambientMode ? "dark:text-white" : "dark:text-white/80"}`}>
               {stripLeadingNumber(lesson.title)}
             </p>
           </div>
 
           {/* 2. Prev / Next */}
-          <div className="flex justify-between gap-3">
+          <div className="flex justify-between gap-3 mt-2">
             <button onClick={goNext} disabled={selected === lessons.length - 1}
-              className="flex-1 flex items-center justify-center gap-2 bg-white dark:bg-white/[0.04] border border-stone-100 dark:border-white/[0.08] rounded-xl py-2.5 text-xs font-medium text-stone-500 dark:text-white/40 hover:bg-stone-50 dark:hover:bg-white/[0.08] hover:text-stone-700 dark:hover:text-white/70 disabled:opacity-30 disabled:cursor-not-allowed transition-colors shadow-sm dark:shadow-none">
+              className="flex-1 flex cursor-pointer items-center justify-center gap-2 bg-white dark:bg-white/[0.04] border border-stone-100 dark:border-white/[0.08] rounded-lg py-2.5 text-xs font-medium text-stone-500 dark:text-white/40 hover:bg-stone-50 dark:hover:bg-white/[0.08] hover:text-stone-700 dark:hover:text-white/70 disabled:opacity-30 disabled:cursor-not-allowed transition-colors shadow-sm dark:shadow-none">
               <svg className="w-4 h-4" viewBox="0 0 16 16" fill="currentColor"><path d="M10.5 8L6 4l-1 1L8.5 8 5 11l1 1 4.5-4z" /></svg>
               الدرس التالي
             </button>
             <button onClick={() => setSelected((s) => Math.max(s - 1, 0))} disabled={selected === 0}
-              className="flex-1 flex items-center justify-center gap-2 bg-white dark:bg-white/[0.04] border border-stone-100 dark:border-white/[0.08] rounded-xl py-2.5 text-xs font-medium text-stone-500 dark:text-white/40 hover:bg-stone-50 dark:hover:bg-white/[0.08] hover:text-stone-700 dark:hover:text-white/70 disabled:opacity-30 disabled:cursor-not-allowed transition-colors shadow-sm dark:shadow-none">
+              className="flex-1 flex cursor-pointer items-center justify-center gap-2 bg-white dark:bg-white/[0.04] border border-stone-100 dark:border-white/[0.08] rounded-lg py-2.5 text-xs font-medium text-stone-500 dark:text-white/40 hover:bg-stone-50 dark:hover:bg-white/[0.08] hover:text-stone-700 dark:hover:text-white/70 disabled:opacity-30 disabled:cursor-not-allowed transition-colors shadow-sm dark:shadow-none">
               الدرس السابق
               <svg className="w-4 h-4 rotate-180" viewBox="0 0 16 16" fill="currentColor"><path d="M10.5 8L6 4l-1 1L8.5 8 5 11l1 1 4.5-4z" /></svg>
             </button>
