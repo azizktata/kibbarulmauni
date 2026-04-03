@@ -105,7 +105,7 @@ export function NoteEditorBody({
         "shrink-0 flex items-center gap-1 px-3 py-1.5 border-b",
         isDark ? "border-neutral-800 bg-neutral-950" : "border-stone-100 bg-stone-50"
       )}>
-        <button
+        {/* <button
           onPointerDown={(e) => e.preventDefault()}
           onClick={() => insertMarkdown("**", "**")}
           className={cn("p-1.5 rounded text-xs font-bold transition-colors", isDark ? "text-neutral-400 hover:text-white hover:bg-neutral-800" : "text-stone-400 hover:text-stone-700 hover:bg-stone-200")}
@@ -136,12 +136,8 @@ export function NoteEditorBody({
           title="قائمة"
         >
           <ListIcon className="w-3.5 h-3.5" />
-        </button>
-
-        <div className="flex-1" />
-
-        {/* Word count + save status */}
-        <span className={cn("text-[11px]", isDark ? "text-neutral-600" : "text-stone-300")}>
+        </button> */}
+         <span className={cn("text-[11px]", isDark ? "text-neutral-600" : "text-stone-300")}>
           {wordCount} كلمة
         </span>
         <span className={cn(
@@ -152,6 +148,11 @@ export function NoteEditorBody({
         )}>
           {saveStatus === "saved" ? "✓ محفوظ" : saveStatus === "saving" ? "جاري الحفظ..." : "●"}
         </span>
+
+        <div className="flex-1" />
+
+        {/* Word count + save status */}
+       
 
         {/* Download */}
         <button
@@ -164,7 +165,7 @@ export function NoteEditorBody({
         </button>
 
         {/* Preview toggle */}
-        <button
+        {/* <button
           onClick={() => setIsPreview((v) => !v)}
           className={cn(
             "flex items-center gap-1 px-2 py-1 rounded text-[11px] font-medium transition-colors",
@@ -175,7 +176,7 @@ export function NoteEditorBody({
         >
           {isPreview ? <PencilIcon className="w-3 h-3" /> : <EyeIcon className="w-3 h-3" />}
           <span className="hidden sm:inline">{isPreview ? "تحرير" : "معاينة"}</span>
-        </button>
+        </button> */}
       </div>
 
       {/* Editor / Preview */}

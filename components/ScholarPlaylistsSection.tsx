@@ -62,7 +62,7 @@ export function ScholarPlaylistsSection({ playlists, knownPlaylistIds = new Set(
           value={search}
           onChange={(e) => changeSearch(e.target.value)}
           placeholder="ابحث في القوائم..."
-          className="w-full text-sm border border-stone-200 dark:border-white/10 rounded-xl px-4 pe-9 py-2.5 bg-white dark:bg-white/[0.04] text-stone-700 dark:text-white/70 placeholder:text-stone-400 dark:placeholder:text-white/25 outline-none focus:border-primary/40 dark:focus:border-white/20 transition-colors"
+          className="w-full text-[16px] border border-stone-200 dark:border-white/10 rounded-lg px-4 pe-9 py-2.5 bg-white dark:bg-white/[0.04] text-stone-700 dark:text-white/70 placeholder:text-stone-400 dark:placeholder:text-white/25 outline-none focus:border-primary/40 dark:focus:border-white/20 transition-colors"
         />
       </div>
 
