@@ -7,7 +7,7 @@ import scholarPlaylistsData from "@/data/scholar-playlists.json";
 import type { ScholarPlaylist } from "@/components/ScholarPlaylistsSection";
 
 export type WatchedEntry = {
-  levelIdx: number;
+  levelIdx: number | null; // 0 for playlist entries
   subjectIdx: number;
   courseIdx: number;
   lessonIdx: number;

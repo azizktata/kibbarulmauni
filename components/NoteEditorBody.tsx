@@ -198,6 +198,7 @@ export function NoteEditorBody({
           value={content}
           onChange={(e) => setContent(e.target.value)}
           dir="rtl"
+          autoFocus
           className={cn(
             "flex-1 w-full min-w-0 resize-none px-4 py-4 text-[16px] md:text-sm leading-loose focus:outline-none",
             isDark

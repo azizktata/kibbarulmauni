@@ -79,12 +79,12 @@ export function RecentlyWatched() {
         {visible.map((entry, i) => {
           const thumbUrl = entry.playlistId
             ? (playlistThumbnails[entry.playlistId] ?? null)
-            : getCourseThumbnail(entry.levelIdx, entry.subjectIdx, entry.courseIdx);
+            : getCourseThumbnail(entry.levelIdx ?? 0, entry.subjectIdx, entry.courseIdx);
           const href = entry.playlistId
             ? `/playlist/${entry.playlistId}?lesson=${entry.lessonIdx}`
-            : `/level/${entry.levelIdx}/${entry.subjectIdx}/${entry.courseIdx}?lesson=${entry.lessonIdx}`;
+            : `/level/${entry.levelIdx ?? 0}/${entry.subjectIdx}/${entry.courseIdx}?lesson=${entry.lessonIdx}`;
           const levelGrad = !entry.playlistId
-            ? (JOURNEY_GRADIENTS[entry.levelIdx] ?? JOURNEY_GRADIENTS[0])
+            ? (JOURNEY_GRADIENTS[entry.levelIdx ?? 0] ?? JOURNEY_GRADIENTS[0])
             : JOURNEY_GRADIENTS[0];
 
           return (

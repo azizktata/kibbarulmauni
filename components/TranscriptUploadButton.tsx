@@ -7,7 +7,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 const ADMIN_EMAIL = "azizktata77@gmail.com";
 
 interface Props {
-  filename: string;   // e.g. "0-2-2-0.txt"
+  filename: string | null;   // e.g. "0-2-2-0.txt"
   onSaved: () => void;
 }
 
@@ -46,7 +46,7 @@ export function TranscriptUploadButton({ filename, onSaved }: Props) {
       {/* Floating button */}
       <button
         onClick={() => setOpen(true)}
-        title={filename}
+        title={filename ? `تعديل نص ${filename}` : "إضافة نص الدرس"}
         className="fixed bottom-6 left-6 z-40 flex items-center gap-2 bg-stone-800 hover:bg-stone-700 text-white text-xs font-medium rounded-full px-4 py-2.5 shadow-lg transition-colors"
       >
         <svg className="w-3.5 h-3.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
