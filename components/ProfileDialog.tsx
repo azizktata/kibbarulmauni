@@ -19,6 +19,7 @@ export function ProfileDialog({ trigger, userName, userImage }: Props) {
   const [open, setOpen] = useState(false);
   const [name, setName] = useState(userName ?? "");
   const [age, setAge] = useState<string>("");
+  const [lessonsWatched, setLessonsWatched] = useState(0);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
 
@@ -26,9 +27,10 @@ export function ProfileDialog({ trigger, userName, userImage }: Props) {
     if (!open) return;
     fetch("/api/profile")
       .then((r) => r.json())
-      .then((data: { name: string | null; age: number | null }) => {
+      .then((data: { name: string | null; age: number | null; lessonsWatched: number }) => {
         setName(data.name ?? "");
         setAge(data.age != null ? String(data.age) : "");
+        setLessonsWatched(data.lessonsWatched ?? 0);
       })
       .catch(() => {});
   }, [open]);
@@ -104,6 +106,15 @@ export function ProfileDialog({ trigger, userName, userImage }: Props) {
           >
             {saved ? "تم الحفظ ✓" : saving ? "جارٍ الحفظ…" : "حفظ"}
           </button>
+
+          <div className="flex items-center justify-center py-3 border-t border-stone-100">
+            <div className="text-center">
+              <p className="text-lg font-bold text-emerald-700">{lessonsWatched}</p>
+              <p className="text-[10px] text-stone-400">
+                عدد الدروس التي شاهدتها
+              </p>
+            </div>
+          </div>
 
           <button
             onClick={() => signOut({ callbackUrl: "/" })}

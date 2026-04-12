@@ -104,6 +104,23 @@ export async function getRecentlyVisited(userId: string): Promise<{ key: string;
   return rows.map((r) => ({ key: r.lessonKey, position: r.playbackPosition ?? 0 }));
 }
 
+export async function getUserStats(userId: string): Promise<{ lessonsWatched: number; hoursWatched: number }> {
+  const lessons = await db
+    .select({ lessonKey: watchedLessons.lessonKey })
+    .from(watchedLessons)
+    .where(eq(watchedLessons.userId, userId));
+  
+  const recent = await db
+    .select({ playbackPosition: recentlyVisited.playbackPosition })
+    .from(recentlyVisited)
+    .where(eq(recentlyVisited.userId, userId));
+  
+  const totalSeconds = recent.reduce((sum, r) => sum + (r.playbackPosition ?? 0), 0);
+  const hoursWatched = Math.round(totalSeconds / 3600 * 10) / 10;
+  
+  return { lessonsWatched: lessons.length, hoursWatched };
+}
+
 // ── Note folders ──────────────────────────────────────────────────────────────
 
 export async function getFolders(userId: string) {

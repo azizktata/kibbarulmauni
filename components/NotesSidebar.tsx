@@ -521,7 +521,8 @@ export function NotesSidebar() {
       <SheetContent
         side="right"
         showCloseButton={false}
-        className="w-72 sm:w-80 flex flex-col p-0 gap-0 bg-[#F6F5F1] text-[oklch(0.15_0_0)]"
+        className="w-72 sm:w-80 flex flex-col p-0 gap-0"
+        style={{ backgroundColor: "#F6F5F1", color: "#1a1a1a" }}
       >
         {/* Header */}
         <SheetHeader className="px-4 pt-4 pb-3 border-b border-stone-100 shrink-0">

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
-import { getUserById, updateUser } from "@/db/queries";
+import { getUserById, updateUser, getUserStats } from "@/db/queries";
 import { apiError } from "@/lib/apiError";
 
 export async function GET() {
@@ -10,7 +10,12 @@ export async function GET() {
 
   try {
     const user = await getUserById(session.user.id);
-    return NextResponse.json({ name: user?.name ?? null, age: user?.age ?? null });
+    const stats = await getUserStats(session.user.id);
+    return NextResponse.json({ 
+      name: user?.name ?? null, 
+      age: user?.age ?? null,
+      lessonsWatched: stats.lessonsWatched,
+    });
   } catch (err) {
     return apiError("profile GET", err);
   }
