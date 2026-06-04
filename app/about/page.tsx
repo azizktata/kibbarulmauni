@@ -17,10 +17,10 @@ const HADITHS = [
     text: "«من يرد اللَّه به خيراً يفقهه في الدين»",
     source: "مُتَّفَقٌ عَلَيهِ",
   },
-  {
-    text: "« إنَّ اللهَ لا يقبضُ العلمَ انتزاعًا ينتزعُهُ منَ النَّاسِ ، ولَكن يقبضُ العلمَ بقبضِ العُلماءِ ، حتَّى إذا لم يترُك عالمًا اتَّخذَ النَّاسُ رؤوسًا جُهَّالًا ، فسُئلوا فأفتوا بغيرِ عِلمٍ فضلُّوا وأضلُّوا»",
-    source: "صحيح الترمذي ",
-  },
+  // {
+  //   text: "« إنَّ اللهَ لا يقبضُ العلمَ انتزاعًا ينتزعُهُ منَ النَّاسِ ، ولَكن يقبضُ العلمَ بقبضِ العُلماءِ ، حتَّى إذا لم يترُك عالمًا اتَّخذَ النَّاسُ رؤوسًا جُهَّالًا ، فسُئلوا فأفتوا بغيرِ عِلمٍ فضلُّوا وأضلُّوا»",
+  //   source: "صحيح الترمذي ",
+  // },
   {
     text: "«من خرج في طلب العلم فهو في سبيل اللَّه حتى يرجع»",
     source: "رَوَاهُ التِّرمِذِيُّ وَقَالَ حَدِيثٌ حَسَنٌ.",
@@ -352,7 +352,7 @@ export default function AboutPage() {
                 className="flex flex-col justify-center border-r-[3px] border-gold pr-6 mb-7 min-h-[72px] md:min-h-[110px]"
               >
                 <p
-                  className="text-lg md:text-2xl text-[#2A2014] leading-[1.95] mb-1.5 break-words text-right w-full"
+                  className="text-md sm:text-lg md:text-2xl text-[#2A2014] leading-[1.95] mb-1.5 break-words text-right w-full"
                   style={{ fontFamily: "var(--font-amiri)" }}
                 >
                   {displayedText}
