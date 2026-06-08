@@ -4,10 +4,13 @@ import Link from "next/link";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { NotebookPenIcon, MenuIcon, XIcon } from "lucide-react";
+import { NotebookPenIcon, MenuIcon, XIcon, ShieldIcon } from "lucide-react";
+import { useSession } from "next-auth/react";
 import { UserButton } from "./UserButton";
 import { ThemeToggle } from "./ThemeToggle";
 import { useNotes } from "@/lib/notesContext";
+
+const ADMIN_EMAIL = "azizktata77@gmail.com";
 
 const NAV_LINKS = [
   { href: "/", label: "الرئيسية" },
@@ -21,6 +24,8 @@ export function Navbar() {
   const [q, setQ] = useState("");
   const router = useRouter();
   const { isLoggedIn, notes, setSidebarOpen } = useNotes();
+  const { data: session } = useSession();
+  const isAdmin = session?.user?.email === ADMIN_EMAIL;
 
   function submit(e: React.FormEvent) {
     e.preventDefault();
@@ -51,6 +56,16 @@ export function Navbar() {
                 {label}
               </Link>
             ))}
+
+            {isAdmin && (
+              <Link
+                href="/admin"
+                className="flex items-center gap-1.5 text-xs text-gold/80 hover:text-gold transition-colors px-3 py-1.5 rounded-lg hover:bg-white/5"
+              >
+                <ShieldIcon className="w-3.5 h-3.5" />
+                الإدارة
+              </Link>
+            )}
 
             <button
               onClick={() => setSearchOpen((v) => !v)}
@@ -125,6 +140,17 @@ export function Navbar() {
                 {label}
               </Link>
             ))}
+
+            {isAdmin && (
+              <Link
+                href="/admin"
+                onClick={() => setMenuOpen(false)}
+                className="flex items-center gap-2 text-sm text-gold/80 hover:text-gold transition-colors px-3 py-2.5 rounded-lg hover:bg-white/5"
+              >
+                <ShieldIcon className="w-4 h-4" />
+                لوحة الإدارة
+              </Link>
+            )}
 
             <div className="flex items-center gap-2 px-3 pt-2 mt-1 border-t border-white/10">
               {isLoggedIn && (

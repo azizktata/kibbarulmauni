@@ -90,7 +90,18 @@ Next.js 16 app (App Router, React 19) that serves as a browsable index for Islam
 - `components/NoteEditor.tsx` / `NoteEditorBody.tsx` — rich note editor.
 - `components/AmbientNotePanel.tsx` — inline note panel shown within the lesson player.
 
-**Admin gating:** Both audio and transcript upload APIs check `session.user.email === "azizktata77@gmail.com"` directly (no DB role).
+**Book links:**
+- `data/kibbarulmauni.json` — each lesson object may have an optional `book` field (URL string) pointing to its reference book.
+- `/api/book` — admin-only POST that writes/deletes the `book` URL directly into the JSON file. Body: `{ lessonKey, book }` (empty string removes the field).
+- `components/BookLinkButton.tsx` — admin-only floating button on the lesson player; opens a dialog to set or remove the book URL.
+
+**Quizzes:**
+- `data/quizzes/{levelIdx}-{subjectIdx}-{courseIdx}-{lessonIdx}.json` — per-lesson quiz files. Format: `{ questions: QuizQuestion[] }` where each question has `text`, `options: string[]`, and `correct: number` (index).
+- `/api/quiz` — GET returns questions for `?file=N-N-N-N`; POST creates/replaces (admin-only); DELETE removes (admin-only).
+- `components/QuizPanel.tsx` — renders the quiz UI (paginated questions, score at the end).
+- `components/QuizAdminButton.tsx` — admin-only button to create/edit quizzes.
+
+**Admin gating:** Audio upload, transcript upload, book link, and quiz write APIs check `session.user.email === "azizktata77@gmail.com"` directly (no DB role). The `ADMIN_EMAIL` env var is used server-side; the client-side components hardcode the same email.
 
 **Scholar links:**
 - `lib/scholarWebsites.ts` — `SCHOLAR_WEBSITES` and `SCHOLAR_YOUTUBE` maps canonical scholar names to their official website and YouTube channel URLs. **Only add URLs explicitly provided by the user — never guess or construct URLs.**

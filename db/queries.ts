@@ -1,6 +1,6 @@
 import { db } from "./index";
 import { users, watchedLessons, recentlyVisited, noteFolders, notes } from "./schema";
-import { eq, and, desc, or, like, inArray } from "drizzle-orm";
+import { eq, and, desc, or, like, inArray, count, sql } from "drizzle-orm";
 
 export async function upsertUser(email: string, name: string | null): Promise<string> {
   const id = crypto.randomUUID();
@@ -309,4 +309,82 @@ export async function searchNotes(userId: string, q: string) {
     }
     return { ...summary, snippet };
   });
+}
+
+// ── Admin ─────────────────────────────────────────────────────────────────────
+
+export type AdminUser = {
+  id: string;
+  name: string | null;
+  email: string;
+  age: number | null;
+  createdAt: number;
+  watchedCount: number;
+  noteCount: number;
+  recentlyVisited: {
+    lessonKey: string;
+    visitedAt: number;
+    playbackPosition: number | null;
+  }[];
+  watchedLessons: {
+    lessonKey: string;
+    watchedAt: number;
+  }[];
+};
+
+export async function getAllUsersActivity(): Promise<AdminUser[]> {
+  const allUsers = await db
+    .select({
+      id: users.id,
+      name: users.name,
+      email: users.email,
+      age: users.age,
+      createdAt: users.createdAt,
+    })
+    .from(users)
+    .orderBy(desc(users.createdAt));
+
+  const results: AdminUser[] = [];
+
+  for (const user of allUsers) {
+    const [watched, recent, noteRow] = await Promise.all([
+      db
+        .select({ lessonKey: watchedLessons.lessonKey, watchedAt: watchedLessons.watchedAt })
+        .from(watchedLessons)
+        .where(eq(watchedLessons.userId, user.id))
+        .orderBy(desc(watchedLessons.watchedAt)),
+      db
+        .select({
+          lessonKey: recentlyVisited.lessonKey,
+          visitedAt: recentlyVisited.visitedAt,
+          playbackPosition: recentlyVisited.playbackPosition,
+        })
+        .from(recentlyVisited)
+        .where(eq(recentlyVisited.userId, user.id))
+        .orderBy(desc(recentlyVisited.visitedAt)),
+      db
+        .select({ c: count() })
+        .from(notes)
+        .where(eq(notes.userId, user.id))
+        .get(),
+    ]);
+
+    results.push({
+      ...user,
+      createdAt: user.createdAt ?? 0,
+      watchedCount: watched.length,
+      noteCount: noteRow?.c ?? 0,
+      recentlyVisited: recent.map((r) => ({
+        lessonKey: r.lessonKey,
+        visitedAt: r.visitedAt,
+        playbackPosition: r.playbackPosition ?? null,
+      })),
+      watchedLessons: watched.map((w) => ({
+        lessonKey: w.lessonKey,
+        watchedAt: w.watchedAt ?? 0,
+      })),
+    });
+  }
+
+  return results;
 }
