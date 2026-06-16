@@ -63,11 +63,11 @@ export function ProfileDialog({ trigger, userName, userImage }: Props) {
               // eslint-disable-next-line @next/next/no-img-element
               <img src={userImage} alt="" className="w-10 h-10 rounded-full" />
             ) : (
-              <div className="w-10 h-10 rounded-full bg-emerald-700 flex items-center justify-center text-white font-bold text-sm">
+              <div className="w-10 h-10 rounded-full bg-emerald-700 text-stone-300 flex items-center justify-center text-white font-bold text-sm">
                 {(userName ?? "؟")[0]}
               </div>
             )}
-            <DialogTitle className="text-base font-bold text-stone-800">
+            <DialogTitle className="text-base font-bold text-stone-800 dark:text-stone-200">
               الملف الشخصي
             </DialogTitle>
           </div>
@@ -82,7 +82,7 @@ export function ProfileDialog({ trigger, userName, userImage }: Props) {
               type="text"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              className="w-full border border-stone-200 rounded-lg px-3 py-2 text-sm text-stone-800 outline-none focus:border-emerald-500 transition-colors"
+              className="w-full border border-stone-200 rounded-lg px-3 py-2 text-sm text-stone-800 dark:text-stone-300 outline-none focus:border-emerald-500 transition-colors"
             />
           </div>
           <div>
@@ -95,7 +95,7 @@ export function ProfileDialog({ trigger, userName, userImage }: Props) {
               max={120}
               value={age}
               onChange={(e) => setAge(e.target.value)}
-              className="w-full border border-stone-200 rounded-lg px-3 py-2 text-sm text-stone-800 outline-none focus:border-emerald-500 transition-colors"
+              className="w-full border border-stone-200 rounded-lg px-3 py-2 text-sm text-stone-800 dark:text-stone-300 outline-none focus:border-emerald-500 transition-colors"
             />
           </div>
 

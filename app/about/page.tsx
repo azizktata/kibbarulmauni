@@ -9,10 +9,10 @@ import type { Level } from "@/lib/data";
 const DIG = ["١", "٢", "٣", "٤", "٥", "٦", "٧", "٨"];
 
 const HADITHS = [
-  {
-    text: "«مَنْ سَلَكَ طَرِيقًا يَلْتَمِسُ فِيهِ عِلْمًا سَهَّلَ اللهُ لَهُ طَرِيقًا إِلَى الْجَنَّةِ»",
-    source: "رواه مسلم",
-  },
+  // {
+  //   text: "«مَنْ سَلَكَ طَرِيقًا يَلْتَمِسُ فِيهِ عِلْمًا سَهَّلَ اللهُ لَهُ به طَرِيقًا إِلَى الْجَنَّةِ»",
+  //   source: "رواه مسلم",
+  // },
   {
     text: "«من يرد اللَّه به خيراً يفقهه في الدين»",
     source: "مُتَّفَقٌ عَلَيهِ",
@@ -349,7 +349,7 @@ export default function AboutPage() {
 
               {/* Typing hadith */}
               <div
-                className="flex flex-col justify-center border-r-[3px] border-gold pr-6 mb-7 min-h-[72px] md:min-h-[110px]"
+                className="flex flex-col justify-center border-r-[3px] border-gold pr-3 mb-7 min-h-[72px] md:min-h-[110px]"
               >
                 <p
                   className="text-md sm:text-lg md:text-2xl text-[#2A2014] leading-[1.95] mb-1.5 break-words text-right w-full"
@@ -721,7 +721,7 @@ export default function AboutPage() {
           className="grid md:grid-cols-2"
           style={{ background: "#082e27", borderTop: "1px solid rgba(240,188,83,.08)" }}
         >
-          <div className="px-10 py-7 text-[12px] text-cream/20 flex items-center">
+          <div className="px-10 py-7 text-sm text-white flex items-center">
             مرجعية موثوقة في تلقي العلم الشرعي — منهج وفق كلية الشريعة بصوتيات مشايخ كبار العلماء الثقات.
           </div>
           <div

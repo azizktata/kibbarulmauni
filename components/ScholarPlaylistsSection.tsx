@@ -86,16 +86,19 @@ export function ScholarPlaylistsSection({ playlists, knownPlaylistIds = new Set(
         </div>
 
         {/* Sort select */}
+
+      </div>
+
+        
         <select
           value={sort}
           onChange={(e) => changeSort(e.target.value as typeof sort)}
-          className="text-xs border border-stone-200 dark:border-white/10 rounded-lg px-3 py-1.5 bg-white dark:bg-white/[0.04] text-stone-500 dark:text-white/40 outline-none shrink-0"
+          className="text-xs mb-4 border border-stone-200 dark:border-white/10 rounded-lg px-3 py-1.5 bg-white dark:bg-stone-800 text-stone-500 dark:text-white/40 outline-none shrink-0"
         >
           <option value="videos">الأكثر دروساً</option>
           <option value="alpha">أبجدي</option>
           <option value="newest">الأحدث</option>
         </select>
-      </div>
 
       {/* Count */}
       <p className="text-xs text-stone-400 dark:text-white/30 mb-4">{filtered.length} قائمة</p>

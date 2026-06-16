@@ -86,7 +86,7 @@ export default function HomePage() {
           style={{ background: "linear-gradient(to left,transparent,rgba(240,188,83,.15) 20%,rgba(240,188,83,.35) 50%,rgba(240,188,83,.15) 80%,transparent)" }}
         />
         <div className="max-w-7xl mx-auto px-8 py-5 flex flex-col sm:flex-row items-center justify-between gap-6 bg-[#F6F5F1] dark:bg-transparent">
-          <p className="text-xs text-[#0F2822]/30 dark:text-white/25">
+          <p className="text-sm font-semibold text-[#5A4E2A] dark:text-white/25">
             مرجعية موثوقة في تلقي العلم الشرعي — منهج وفق كلية الشريعة بصوتيات مشايخ كبار العلماء الثقات.
           </p>
           <div className="flex items-center gap-5 shrink-0">
