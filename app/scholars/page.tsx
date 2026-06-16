@@ -35,6 +35,7 @@ export default function ScholarsPage() {
   const c = LEVEL_COLORS[0];
   return (
     <div className="min-h-screen">
+      <link rel="preload" as="image" href="/islamic-geometric-4.jfif" fetchPriority="high" />
       <header className="relative text-white overflow-hidden">
         <div
           className="absolute inset-0 bg-center"

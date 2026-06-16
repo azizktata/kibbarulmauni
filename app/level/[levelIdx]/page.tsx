@@ -62,6 +62,7 @@ export default async function LevelPage({
       dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }}
     />
     <div className="relative min-h-screen bg-[#F6F5F1] dark:bg-transparent">
+      <link rel="preload" as="image" href="/islamic-geometric-4.jfif" fetchPriority="high" />
 
       {/* Header — identical structure to subject page banner */}
       <header className="relative text-white overflow-hidden">

@@ -55,7 +55,7 @@ export const metadata: Metadata = {
     description,
     images: [
       {
-        url: absoluteUrl("/logo.png"),
+        url: absoluteUrl("/og-image.png"),
         width: 1200,
         height: 630,
         alt: SITE_NAME,
@@ -66,7 +66,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: `${SITE_NAME} | كلية شريعة عن بعد لطلب العلم الشرعي`,
     description,
-    images: [absoluteUrl("/logo.png")],
+    images: [absoluteUrl("/og-image.png")],
   },
   icons: {
     icon: "/favicon.ico",

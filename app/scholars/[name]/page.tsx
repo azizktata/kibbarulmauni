@@ -67,6 +67,7 @@ export default async function ScholarPage({
       dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }}
     />
     <div className="min-h-screen">
+      <link rel="preload" as="image" href="/islamic-geometric-4.jfif" fetchPriority="high" />
       <header className="relative text-white overflow-hidden">
         <div
           className="absolute inset-0 bg-center"

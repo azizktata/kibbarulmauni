@@ -63,6 +63,7 @@ export default async function SubjectPage({
       dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }}
     />
     <div className="relative min-h-screen">
+      <link rel="preload" as="image" href="/islamic-geometric-4.jfif" fetchPriority="high" />
       {/* <div
         className="fixed inset-0 -z-10 bg-center bg-cover opacity-[0.20]"
         style={{ backgroundImage: "url('/islamic-geometri-3.jfif')" }}

@@ -16,6 +16,7 @@ export const metadata: Metadata = {
 export default function HomePage() {
   return (
     <div className="relative min-h-screen ">
+      <link rel="preload" as="image" href="/islamic-geometric-4.jfif" fetchPriority="high" />
       {/* Hero */}
       <header className="relative bg-emerald-950 text-white overflow-hidden">
            <div className="absolute inset-0 bg-center" style={{ backgroundImage: "url('/islamic-geometric-4.jfif')" }} />

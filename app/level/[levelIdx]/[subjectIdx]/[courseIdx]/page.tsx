@@ -69,6 +69,7 @@ export default async function CoursePage({
       dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }}
     />
     <div className="relative min-h-screen">
+      <link rel="preload" as="image" href="/islamic-geometric-4.jfif" fetchPriority="high" />
       {/* Mobile decorative header */}
       <header className="relative text-white overflow-hidden lg:hidden">
         <div className="absolute inset-0 bg-center" style={{ backgroundImage: "url('/islamic-geometric-4.jfif')" }} />
