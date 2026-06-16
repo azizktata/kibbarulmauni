@@ -1,8 +1,10 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { university, getLevel, countLevelLessons } from "@/lib/data";
 import { LEVEL_COLORS } from "@/lib/constants";
 import { LevelSubjectsGrid } from "@/components/LevelSubjectsGrid";
+import { absoluteUrl } from "@/lib/seo";
 
 function subjectWord(n: number) {
   if (n === 2) return "مادتان";
@@ -12,6 +14,23 @@ function subjectWord(n: number) {
 
 export function generateStaticParams() {
   return university.map((_, idx) => ({ levelIdx: String(idx) }));
+}
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ levelIdx: string }>;
+}): Promise<Metadata> {
+  const { levelIdx } = await params;
+  const level = getLevel(Number(levelIdx));
+  if (!level) return {};
+  const description = `${level.title} — ${level.subjects.length} ${subjectWord(level.subjects.length)} و${countLevelLessons(level)} درس صوتي في العلم الشرعي، ضمن منهج جامعة كبار العلماء لطلاب العلم.`;
+  return {
+    title: level.title,
+    description,
+    alternates: { canonical: `/level/${levelIdx}` },
+    openGraph: { title: level.title, description, url: absoluteUrl(`/level/${levelIdx}`) },
+  };
 }
 
 export default async function LevelPage({
@@ -27,7 +46,21 @@ export default async function LevelPage({
   const totalLessons = countLevelLessons(level);
   const col =  LEVEL_COLORS[0];
 
+  const breadcrumbJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: [
+      { "@type": "ListItem", position: 1, name: "الرئيسية", item: absoluteUrl("/") },
+      { "@type": "ListItem", position: 2, name: level.title, item: absoluteUrl(`/level/${idx}`) },
+    ],
+  };
+
   return (
+    <>
+    <script
+      type="application/ld+json"
+      dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }}
+    />
     <div className="relative min-h-screen bg-[#F6F5F1] dark:bg-transparent">
 
       {/* Header — identical structure to subject page banner */}
@@ -56,5 +89,6 @@ export default async function LevelPage({
       </main>
 
     </div>
+    </>
   );
 }

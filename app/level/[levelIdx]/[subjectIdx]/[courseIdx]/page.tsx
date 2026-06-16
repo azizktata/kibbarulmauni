@@ -1,9 +1,11 @@
+import type { Metadata } from "next";
 import { Suspense } from "react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { university, getLevel, getSubject, getCourse } from "@/lib/data";
 import { LEVEL_COLORS } from "@/lib/constants";
 import { CoursePlayer } from "@/components/CoursePlayer";
+import { absoluteUrl } from "@/lib/seo";
 
 export function generateStaticParams() {
   const params = [];
@@ -12,6 +14,25 @@ export function generateStaticParams() {
       for (let c = 0; c < university[l].subjects[s].courses.length; c++)
         params.push({ levelIdx: String(l), subjectIdx: String(s), courseIdx: String(c) });
   return params;
+}
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ levelIdx: string; subjectIdx: string; courseIdx: string }>;
+}): Promise<Metadata> {
+  const { levelIdx, subjectIdx, courseIdx } = await params;
+  const subject = getSubject(Number(levelIdx), Number(subjectIdx));
+  const course = getCourse(Number(levelIdx), Number(subjectIdx), Number(courseIdx));
+  if (!subject || !course) return {};
+  const description = `${course.title} — مقرر ضمن ${subject.title}، ${course.files.length} درس صوتي في العلم الشرعي لطالب العلم، جامعة كبار العلماء.`;
+  const path = `/level/${levelIdx}/${subjectIdx}/${courseIdx}`;
+  return {
+    title: course.title,
+    description,
+    alternates: { canonical: path },
+    openGraph: { title: course.title, description, url: absoluteUrl(path) },
+  };
 }
 
 export default async function CoursePage({
@@ -30,7 +51,23 @@ export default async function CoursePage({
   const col = LEVEL_COLORS[0];
   const siblings = subject.courses;
 
+  const breadcrumbJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: [
+      { "@type": "ListItem", position: 1, name: "الرئيسية", item: absoluteUrl("/") },
+      { "@type": "ListItem", position: 2, name: level.title, item: absoluteUrl(`/level/${lIdx}`) },
+      { "@type": "ListItem", position: 3, name: subject.title, item: absoluteUrl(`/level/${lIdx}/${sIdx}`) },
+      { "@type": "ListItem", position: 4, name: course.title, item: absoluteUrl(`/level/${lIdx}/${sIdx}/${cIdx}`) },
+    ],
+  };
+
   return (
+    <>
+    <script
+      type="application/ld+json"
+      dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }}
+    />
     <div className="relative min-h-screen">
       {/* Mobile decorative header */}
       <header className="relative text-white overflow-hidden lg:hidden">
@@ -50,9 +87,9 @@ export default async function CoursePage({
         </div>
       </header>
 
-      <main className="w-full max-w-[1800px] mx-auto px-4 sm:px-6 lg:px-8 pb-4 flex flex-col gap-4">
+      <main className="w-full max-w-[1800px] mx-auto px-4 sm:px-6 lg:px-8 pb-4 lg:pt-4 flex flex-col gap-4">
         {/* Desktop breadcrumb */}
-        <nav className="hidden lg:flex items-center gap-1.5 pr-1 text-stone-400 dark:text-white/40 text-xs flex-wrap">
+        <nav className="hidden lg:flex items-center gap-1.5 pr-1 text-stone-400 dark:text-white/40 text-sm flex-wrap">
           <Link href="/" className="hover:text-stone-700 dark:hover:text-white/70 transition-colors">الرئيسية</Link>
           <span className="text-gold">›</span>
           <Link href={`/level/${lIdx}`} className="hover:text-stone-700 dark:hover:text-white/70 transition-colors">{level.title}</Link>
@@ -84,5 +121,6 @@ export default async function CoursePage({
         )}
       </main>
     </div>
+    </>
   );
 }

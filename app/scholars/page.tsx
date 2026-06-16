@@ -1,7 +1,15 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { scholarsIndex, type Scholar } from "@/lib/scholars";
 import { LEVEL_COLORS, JOURNEY_GRADIENTS, GRADIENTS } from "@/lib/constants";
 import { SCHOLAR_WEBSITES, SCHOLAR_YOUTUBE } from "@/lib/scholarWebsites";
+
+export const metadata: Metadata = {
+  title: "المشايخ",
+  description:
+    "تعرّف على كبار العلماء الذين تستمع إلى دروسهم في جامعة كبار العلماء، منهم الشيخ محمد بن صالح العثيمين والشيخ صالح الفوزان والشيخ عبد العزيز بن باز، وروابط مباشرة لدروسهم الصوتية في العلم الشرعي.",
+  alternates: { canonical: "/scholars" },
+};
 
 function prepareScholar(scholar: Scholar) {
   const levelCounts = new Map<number, number>();

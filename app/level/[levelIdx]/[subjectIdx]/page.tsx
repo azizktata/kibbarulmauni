@@ -1,8 +1,10 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { university, getSubject, getLevel } from "@/lib/data";
+import { university, getSubject, getLevel, countSubjectLessons } from "@/lib/data";
 import { LEVEL_COLORS } from "@/lib/constants";
 import { SubjectCoursesListClient } from "@/components/SubjectCoursesListClient";
+import { absoluteUrl } from "@/lib/seo";
 
 export function generateStaticParams() {
   const params = [];
@@ -10,6 +12,25 @@ export function generateStaticParams() {
     for (let s = 0; s < university[l].subjects.length; s++)
       params.push({ levelIdx: String(l), subjectIdx: String(s) });
   return params;
+}
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ levelIdx: string; subjectIdx: string }>;
+}): Promise<Metadata> {
+  const { levelIdx, subjectIdx } = await params;
+  const level = getLevel(Number(levelIdx));
+  const subject = getSubject(Number(levelIdx), Number(subjectIdx));
+  if (!level || !subject) return {};
+  const description = `${subject.title} ضمن ${level.title} — ${subject.courses.length} مقرر و${countSubjectLessons(subject)} درس صوتي في العلم الشرعي، جامعة كبار العلماء.`;
+  const path = `/level/${levelIdx}/${subjectIdx}`;
+  return {
+    title: subject.title,
+    description,
+    alternates: { canonical: path },
+    openGraph: { title: subject.title, description, url: absoluteUrl(path) },
+  };
 }
 
 export default async function SubjectPage({
@@ -25,7 +46,22 @@ export default async function SubjectPage({
   if (!level || !subject) notFound();
   const c = LEVEL_COLORS[0];
 
+  const breadcrumbJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: [
+      { "@type": "ListItem", position: 1, name: "الرئيسية", item: absoluteUrl("/") },
+      { "@type": "ListItem", position: 2, name: level.title, item: absoluteUrl(`/level/${lIdx}`) },
+      { "@type": "ListItem", position: 3, name: subject.title, item: absoluteUrl(`/level/${lIdx}/${sIdx}`) },
+    ],
+  };
+
   return (
+    <>
+    <script
+      type="application/ld+json"
+      dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }}
+    />
     <div className="relative min-h-screen">
       {/* <div
         className="fixed inset-0 -z-10 bg-center bg-cover opacity-[0.20]"
@@ -57,5 +93,6 @@ export default async function SubjectPage({
         />
       </main>
     </div>
+    </>
   );
 }

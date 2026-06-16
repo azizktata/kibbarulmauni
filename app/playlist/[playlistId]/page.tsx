@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { Suspense } from "react";
 import { readFileSync, readdirSync } from "fs";
 import { resolve } from "path";
@@ -9,10 +10,19 @@ import { CoursePlayer } from "@/components/CoursePlayer";
 import scholarPlaylistsJson from "@/data/scholar-playlists.json";
 import playlistIdsJson from "@/data/playlist-ids.json";
 import type { ScholarPlaylist } from "@/components/ScholarPlaylistsSection";
+import { absoluteUrl } from "@/lib/seo";
 
 const allPlaylists = scholarPlaylistsJson as Record<string, ScholarPlaylist[]>;
 const knownIds = new Set(playlistIdsJson as string[]);
 const playlistsDir = resolve(process.cwd(), "data/playlists");
+
+function findPlaylistMeta(playlistId: string) {
+  for (const [name, playlists] of Object.entries(allPlaylists)) {
+    const found = playlists.find((p) => p.playlistId === playlistId);
+    if (found) return { scholarName: name, playlist: found };
+  }
+  return { scholarName: "", playlist: undefined as ScholarPlaylist | undefined };
+}
 
 export function generateStaticParams() {
   try {
@@ -22,6 +32,26 @@ export function generateStaticParams() {
   } catch {
     return [];
   }
+}
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ playlistId: string }>;
+}): Promise<Metadata> {
+  const { playlistId } = await params;
+  const { scholarName, playlist } = findPlaylistMeta(playlistId);
+  const title = playlist?.title ?? playlistId;
+  const description = scholarName
+    ? `${title} — قائمة دروس صوتية للشيخ ${scholarName} في العلم الشرعي، جامعة كبار العلماء.`
+    : `${title} — قائمة دروس صوتية في العلم الشرعي، جامعة كبار العلماء.`;
+  const path = `/playlist/${playlistId}`;
+  return {
+    title,
+    description,
+    alternates: { canonical: path },
+    openGraph: { title, description, url: absoluteUrl(path) },
+  };
 }
 
 export default async function PlaylistPage({
@@ -40,12 +70,7 @@ export default async function PlaylistPage({
   if (items.length === 0) notFound();
 
   // Find which scholar owns this playlist
-  let scholarName = "";
-  let playlist: ScholarPlaylist | undefined;
-  for (const [name, playlists] of Object.entries(allPlaylists)) {
-    const found = playlists.find((p) => p.playlistId === playlistId);
-    if (found) { scholarName = name; playlist = found; break; }
-  }
+  const { scholarName, playlist } = findPlaylistMeta(playlistId);
 
   // Detect leading lesson number in title (e.g. "18 - تفسير..." → 18)
   function leadingNum(title: string): number | null {
@@ -77,7 +102,25 @@ export default async function PlaylistPage({
         .slice(0, 8)
     : [];
 
+  const breadcrumbJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: [
+      { "@type": "ListItem", position: 1, name: "الرئيسية", item: absoluteUrl("/") },
+      { "@type": "ListItem", position: 2, name: "المشايخ", item: absoluteUrl("/scholars") },
+      ...(scholarName
+        ? [{ "@type": "ListItem", position: 3, name: `الشيخ ${scholarName}`, item: absoluteUrl(`/scholars/${encodeURIComponent(scholarName)}`) }]
+        : []),
+      { "@type": "ListItem", position: scholarName ? 4 : 3, name: playlistTitle, item: absoluteUrl(`/playlist/${playlistId}`) },
+    ],
+  };
+
   return (
+    <>
+    <script
+      type="application/ld+json"
+      dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }}
+    />
     <div className="relative min-h-screen">
       {/* Mobile decorative header */}
       <header className="relative text-white overflow-hidden lg:hidden">
@@ -99,8 +142,8 @@ export default async function PlaylistPage({
             <span className="text-gold">›</span>
             <span className="text-white font-medium line-clamp-1">{playlistTitle}</span>
           </nav>
-          {/* <h1 className="text-xl font-bold">{playlistTitle}</h1>
-          {category && <p className="text-white/60 text-xs mt-1">{category}</p>} */}
+          <h1 className="text-xl font-bold">{playlistTitle}</h1>
+          {category && <p className="text-white/60 text-xs mt-1">{category}</p>}
         </div>
       </header>
 
@@ -197,5 +240,6 @@ export default async function PlaylistPage({
         )}
       </main>
     </div>
+    </>
   );
 }

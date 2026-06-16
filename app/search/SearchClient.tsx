@@ -51,7 +51,7 @@ export function SearchClient() {
       {/* Search header */}
       <header className="bg-emerald-950 px-6 py-10">
         <div className="max-w-2xl mx-auto">
-          <p className="text-emerald-400 text-xs font-semibold tracking-widest mb-3">البحث</p>
+          <h1 className="text-emerald-400 text-xs font-semibold tracking-widest mb-3">البحث</h1>
           <div className="relative">
             <svg
               className="absolute right-4 top-1/2 -translate-y-1/2 w-5 h-5 text-white/30"

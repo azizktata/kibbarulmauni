@@ -1,9 +1,17 @@
+import type { Metadata } from "next";
 import { university } from "@/lib/data";
 import { RecentlyWatched } from "@/components/RecentlyWatched";
 import { HomeLevelsGrid } from "@/components/HomeLevelsGrid";
 import { RotatingQuote } from "@/components/RotatingQuote";
 import Image from "next/image";
 import Link from "next/link";
+
+export const metadata: Metadata = {
+  title: "كلية شريعة عن بعد لطلب العلم الشرعي",
+  description:
+    "ابدأ رحلتك في طلب العلم الشرعي عن بعد مع جامعة كبار العلماء — منهج متكامل لكلية الشريعة، دروس صوتية بأصوات كبار العلماء كالشيخ محمد بن صالح العثيمين والشيخ صالح الفوزان، مناسب لطالب العلم المبتدئ والمتقدم.",
+  alternates: { canonical: "/" },
+};
 
 export default function HomePage() {
   return (
@@ -31,6 +39,10 @@ export default function HomePage() {
               priority
             />
           </div>
+
+          <h1 className="sr-only">
+            جامعة كبار العلماء — كلية شريعة عن بعد لطلب العلم الشرعي بأصوات كبار العلماء
+          </h1>
 
           <RotatingQuote />
 
