@@ -171,7 +171,7 @@ export function NoteEditor() {
         >
           <TrashIcon className="w-3.5 h-3.5" />
         </button>
-        {!isMobileMode && (
+        {/* {!isMobileMode && (
           <button
             onPointerDown={(e) => e.stopPropagation()}
             onClick={() => setMinimized((v) => !v)}
@@ -180,7 +180,7 @@ export function NoteEditor() {
           >
             <MinusIcon className="w-3.5 h-3.5" />
           </button>
-        )}
+        )} */}
         <button
           onPointerDown={(e) => e.stopPropagation()}
           onClick={() => openNote(null)}
