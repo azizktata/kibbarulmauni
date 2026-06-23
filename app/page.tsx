@@ -41,9 +41,9 @@ export default function HomePage() {
             />
           </div>
 
-          <h1 className="sr-only">
-            جامعة كبار العلماء — كلية شريعة عن بعد لطلب العلم الشرعي بأصوات كبار العلماء
-          </h1>
+          {/* <h1 className="text-xs text-gold/40 tracking-[.18em] font-bold mb-6">
+            كلية شريعة عن بعد — طلب علم شرعي مع كبار العلماء
+          </h1> */}
 
           <RotatingQuote />
 
@@ -92,6 +92,39 @@ export default function HomePage() {
         </div>
       </main>
 
+      {/* SEO text section — server-rendered, crawlable by Google */}
+      <section className="bg-[#F6F5F1] dark:bg-[#111111] border-t border-[#DEDAD0] dark:border-white/10 py-12">
+        <div className="max-w-7xl mx-auto px-6 sm:px-8">
+          <h2 className="text-xl font-bold text-[#0F2822] dark:text-cream mb-4" style={{ fontFamily: "var(--font-amiri)" }}>
+            عن جامعة كبار العلماء 
+          </h2>
+          <div className="grid sm:grid-cols-2 gap-8 text-sm text-[#4A3E22] dark:text-stone-400 leading-[2]">
+            <div>
+              <p className="mb-4">
+                نحن مشروع كبار العلماء للتسهيل على طلبة العلم، قمنا بعمل منهج وفقاً لكلية الشريعة
+                في جامعة الإمام محمد بن سعود الإسلامية، وتم اختيار الصوتيات لمشايخ كبار العلماء
+                وعلى منهج الجامعة.
+              </p>
+              <p>
+                المنصة مخصصة لكل من يريد <strong className="font-semibold text-[#0F2822] dark:text-cream">طلب علم عن بعد</strong> بمنهج
+                منظّم ومتكامل — من مرحلة الأساس حتى التمكن، مجاناً بالكامل.
+              </p>
+            </div>
+            <div>
+              <p className="mb-4">
+                تضم الجامعة ثمانية مستويات دراسية تغطي مواد{" "}
+                العقيدة والتوحيد، الفقه، الحديث وعلومه، التفسير، أصول الفقه، النحو والصرف،
+                والسيرة النبوية.
+              </p>
+              <p>
+                الدروس بأصوات كبار العلماء الثقات: الشيخ محمد بن صالح العثيمين، الشيخ صالح
+                الفوزان، الشيخ عبد العزيز بن باز، وعشرة من العلماء الربانيين.
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* Option C: split footer */}
       <footer style={{ borderTop: "1px solid rgba(240,188,83,.12)" }}>
         <div
@@ -100,7 +133,8 @@ export default function HomePage() {
         />
         <div className="max-w-7xl mx-auto px-8 py-5 flex flex-col sm:flex-row items-center justify-between gap-6 bg-[#F6F5F1] dark:bg-transparent">
           <p className="text-sm font-semibold text-[#5A4E2A] dark:text-white/25">
-            مرجعية موثوقة في تلقي العلم الشرعي — منهج وفق كلية الشريعة بصوتيات مشايخ كبار العلماء الثقات.
+            
+          أكاديمية كبار العلماء — منهج وفق كلية الشريعة في جامعة الإمام محمد بن سعود الإسلامية، بصوتيات مشايخ كبار العلماء الثقات.
           </p>
           <div className="flex items-center gap-5 shrink-0">
             <a
