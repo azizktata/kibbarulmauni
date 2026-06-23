@@ -128,6 +128,7 @@ Next.js 16 app (App Router, React 19) that serves as a browsable index for Islam
 - `/playlist/[playlistId]` — YouTube playlist player (statically generated from `data/playlists/`)
 - `/search` — fuzzy search across subjects, courses, and lessons
 - `/about` — about page
+- `/admin` — admin-only dashboard showing all users' activity (watched lessons, recently visited, notes). Calls `getAllUsersActivity()` from `db/queries.ts` via `/api/admin/users`. Gated by the hardcoded admin email.
 - `/3` — experimental alternate landing page (not linked from the main nav)
 
 **Key directories:**
