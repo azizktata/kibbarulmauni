@@ -25,15 +25,17 @@ AUTH_GOOGLE_SECRET=
 AUTH_SECRET=          # NextAuth secret (generate with: openssl rand -base64 32)
 TURSO_DATABASE_URL=
 TURSO_AUTH_TOKEN=
-YOUTUBE_API_KEY=      # Only needed when running playlist sync scripts
+YOUTUBE_API_KEY=      # Only needed when running playlist sync / duration scripts
 ADMIN_EMAIL=          # Email address allowed to upload audio/transcripts
+NEXT_PUBLIC_SITE_URL= # Canonical origin for SEO/JSON-LD (defaults to prod URL in lib/seo.ts)
 ```
 
-**Playlist sync scripts** (run once, commit output — scholars are frozen/no longer uploading):
+**Data-generation scripts** (run once, commit output — scholars are frozen/no longer uploading; all read `YOUTUBE_API_KEY` from `.env.local`):
 ```bash
 node scripts/sync-scholar-playlists.mjs  # Fetches all playlists per scholar → data/scholar-playlists.json
 node scripts/sync-playlist-items.mjs     # Fetches video IDs for each playlist → data/playlists/{id}.json
 node scripts/recategorize-playlists.mjs  # Re-assigns category labels on existing playlist data
+node scripts/fetch-durations.mjs         # Fetches YouTube video durations for all lessons → data/durations.json
 ```
 
 ## Architecture
