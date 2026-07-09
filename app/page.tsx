@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { university } from "@/lib/data";
 import { RecentlyWatched } from "@/components/RecentlyWatched";
-import { Recommended } from "@/components/Recommended";
+// import { Recommended } from "@/components/Recommended";
 import { HomeLevelsGrid } from "@/components/HomeLevelsGrid";
 import { RotatingQuote } from "@/components/RotatingQuote";
 import Image from "next/image";
@@ -81,7 +81,7 @@ export default function HomePage() {
 
         <RecentlyWatched />
 
-        <Recommended />
+        {/* <Recommended /> */}
 
         <div className="w-full max-w-[1800px] mx-auto px-4 sm:px-6 lg:px-8 pt-8 pb-12">
           <div className="flex items-center gap-3 mb-5">
